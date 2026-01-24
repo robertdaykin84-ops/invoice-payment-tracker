@@ -1,0 +1,31 @@
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Google Sheets Integration
+google-api-python-client==2.110.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0
+
+# Anthropic API
+anthropic==0.18.0
+
+# PDF Processing
+PyPDF2==3.0.1
+pdf2image==1.17.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Data Processing
+pandas==2.1.4
+openpyxl==3.1.2
+
+# File Upload Handling
+Werkzeug==3.0.1
+
+# Date/Time
+python-dateutil==2.8.2
+
+# Utilities
+requests==2.31.0

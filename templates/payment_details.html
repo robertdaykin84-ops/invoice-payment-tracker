@@ -1,0 +1,834 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Details - Invoice Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Quick Stats Cards */
+    .stats-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        flex: 1;
+        min-width: 140px;
+        background: #fff;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+    }
+
+    .stat-icon.total { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+    .stat-icon.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .stat-icon.paid { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .stat-icon.overdue { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    /* Table Styling */
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .table-controls-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .table-controls-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .search-box {
+        position: relative;
+        width: 280px;
+    }
+
+    .search-box input {
+        padding-left: 2.25rem;
+        font-size: 0.875rem;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+    }
+
+    .row-count {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .payment-table {
+        font-size: 0.875rem;
+    }
+
+    .payment-table thead th {
+        background: var(--gray-50);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        color: var(--gray-600);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .payment-table thead th:hover {
+        background: var(--gray-100);
+    }
+
+    .payment-table thead th .sort-icon {
+        margin-left: 0.25rem;
+        opacity: 0.3;
+    }
+
+    .payment-table thead th.sorted .sort-icon {
+        opacity: 1;
+    }
+
+    .payment-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .payment-table tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+
+    .payment-table tbody tr.expanded {
+        background-color: rgba(37, 99, 235, 0.05);
+    }
+
+    .payment-table tbody td {
+        padding: 0.875rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .invoice-cell {
+        font-weight: 600;
+        color: var(--primary-blue);
+    }
+
+    .supplier-cell {
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+
+    .iban-cell {
+        font-family: 'SF Mono', Monaco, monospace;
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+    }
+
+    .expand-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        transition: transform 0.2s ease;
+    }
+
+    .expand-btn.expanded {
+        transform: rotate(180deg);
+    }
+
+    /* Expanded Row Details */
+    .expanded-details {
+        display: none;
+        background: var(--gray-50);
+        border-bottom: 2px solid var(--primary-blue);
+    }
+
+    .expanded-details.show {
+        display: table-row;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .expanded-content {
+        padding: 1.25rem;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .detail-item {
+        background: #fff;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .detail-label {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-500);
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        color: var(--gray-800);
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .detail-value.mono {
+        font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .copy-btn {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .expanded-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    /* Empty State */
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 3.5rem;
+        color: var(--gray-300);
+        margin-bottom: 1rem;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10000;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .stats-row {
+            flex-direction: column;
+        }
+
+        .stat-card {
+            min-width: 100%;
+        }
+
+        .table-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .payment-table {
+            font-size: 0.8125rem;
+        }
+
+        .payment-table thead th,
+        .payment-table tbody td {
+            padding: 0.625rem 0.5rem;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hide-mobile {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted fw-medium" id="loading-text">Processing...</p>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Payment Details</h2>
+        <p class="text-muted mb-0">Manage supplier banking information linked to invoices</p>
+    </div>
+    <button class="btn btn-primary" id="downloadReportBtn">
+        <i class="bi bi-download me-2"></i>Download Report
+    </button>
+</div>
+
+<!-- Quick Stats Row -->
+{% set stats = namespace(total=0, pending=0, paid=0, overdue=0) %}
+{% for payment in payment_details %}
+    {% set stats.total = stats.total + 1 %}
+    {% set inv_status = '' %}
+    {% for invoice in invoices %}
+        {% if invoice.invoice_number == payment.invoice_number %}
+            {% set inv_status = invoice.status|lower %}
+        {% endif %}
+    {% endfor %}
+    {% if 'paid' in inv_status %}
+        {% set stats.paid = stats.paid + 1 %}
+    {% elif 'overdue' in inv_status %}
+        {% set stats.overdue = stats.overdue + 1 %}
+    {% else %}
+        {% set stats.pending = stats.pending + 1 %}
+    {% endif %}
+{% endfor %}
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon total"><i class="bi bi-credit-card-2-front"></i></div>
+        <div>
+            <div class="stat-value text-primary" id="statTotal">{{ stats.total }}</div>
+            <div class="stat-label">Total Records</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon pending"><i class="bi bi-clock"></i></div>
+        <div>
+            <div class="stat-value text-warning" id="statPending">{{ stats.pending }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon paid"><i class="bi bi-check-circle"></i></div>
+        <div>
+            <div class="stat-value text-success" id="statPaid">{{ stats.paid }}</div>
+            <div class="stat-label">Paid</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon overdue"><i class="bi bi-exclamation-circle"></i></div>
+        <div>
+            <div class="stat-value text-danger" id="statOverdue">{{ stats.overdue }}</div>
+            <div class="stat-label">Overdue</div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Table -->
+<div class="card">
+    <div class="card-header py-3">
+        <div class="table-controls">
+            <div class="table-controls-left">
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by invoice or supplier...">
+                </div>
+                <span class="row-count" id="rowCount">Showing {{ payment_details|length if payment_details else 0 }} of {{ payment_details|length if payment_details else 0 }} records</span>
+            </div>
+            <div class="table-controls-right">
+                <button class="btn btn-sm btn-outline-secondary" id="expandAllBtn">
+                    <i class="bi bi-arrows-expand me-1"></i>Expand All
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="collapseAllBtn">
+                    <i class="bi bi-arrows-collapse me-1"></i>Collapse All
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if payment_details %}
+        <div class="table-responsive">
+            <table class="table payment-table mb-0" id="paymentTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll" title="Select all">
+                        </th>
+                        <th data-sort="invoice_number">Invoice # <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-sort="supplier_name">Supplier <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-sort="bank_name" class="hide-mobile">Bank <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-sort="iban" class="hide-mobile">IBAN <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-sort="status">Status <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="paymentTableBody">
+                    {% for payment in payment_details %}
+                    {% set invoice_status = namespace(value='Pending Review') %}
+                    {% for invoice in invoices %}
+                        {% if invoice.invoice_number == payment.invoice_number %}
+                            {% set invoice_status.value = invoice.status %}
+                        {% endif %}
+                    {% endfor %}
+                    <tr class="main-row" data-id="{{ loop.index }}" data-invoice="{{ payment.invoice_number|default('')|lower }}" data-supplier="{{ payment.supplier_name|lower }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input row-select" value="{{ payment.supplier_name }}">
+                        </td>
+                        <td class="invoice-cell">{{ payment.invoice_number|default('—') }}</td>
+                        <td class="supplier-cell">{{ payment.supplier_name }}</td>
+                        <td class="hide-mobile">{{ payment.bank_name }}</td>
+                        <td class="iban-cell hide-mobile">
+                            {% if payment.iban %}
+                                {{ payment.iban[:8] }}...{{ payment.iban[-4:] if payment.iban|length > 12 else payment.iban }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if 'paid' in invoice_status.value|lower %}
+                                <span class="badge bg-success status-badge">Paid</span>
+                            {% elif 'overdue' in invoice_status.value|lower %}
+                                <span class="badge bg-danger status-badge">Overdue</span>
+                            {% elif 'cancelled' in invoice_status.value|lower or 'rejected' in invoice_status.value|lower %}
+                                <span class="badge bg-secondary status-badge">Cancelled</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark status-badge">{{ invoice_status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-secondary expand-btn" title="Expand details">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="expanded-details" data-parent="{{ loop.index }}">
+                        <td colspan="7">
+                            <div class="expanded-content">
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Beneficiary Account Name</div>
+                                        <div class="detail-value">{{ payment.beneficiary_account_name|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Account Number</div>
+                                        <div class="detail-value mono">
+                                            {{ payment.account_number|default('—') }}
+                                            {% if payment.account_number %}
+                                            <button class="btn btn-outline-secondary copy-btn" data-copy="{{ payment.account_number }}" title="Copy">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Sort Code</div>
+                                        <div class="detail-value mono">{{ payment.sort_code|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Full IBAN</div>
+                                        <div class="detail-value mono">
+                                            {{ payment.iban|default('—') }}
+                                            {% if payment.iban %}
+                                            <button class="btn btn-outline-secondary copy-btn" data-copy="{{ payment.iban }}" title="Copy">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">SWIFT/BIC Code</div>
+                                        <div class="detail-value mono">{{ payment.swift_code|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Bank Address</div>
+                                        <div class="detail-value">{{ payment.bank_address|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Payment Reference</div>
+                                        <div class="detail-value">{{ payment.payment_reference|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Upload Date</div>
+                                        <div class="detail-value">{{ payment.upload_date|default('—') }}</div>
+                                    </div>
+                                    <div class="detail-item" style="grid-column: 1 / -1;">
+                                        <div class="detail-label">Notes</div>
+                                        <div class="detail-value">{{ payment.notes|default('No notes') }}</div>
+                                    </div>
+                                </div>
+                                <div class="expanded-actions">
+                                    <button class="btn btn-sm btn-outline-danger delete-payment-btn" data-supplier="{{ payment.supplier_name }}">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-credit-card-2-front"></i>
+            <h5 class="text-muted mb-2">No payment details yet</h5>
+            <p class="text-muted mb-3">Payment details will be auto-populated when invoices are saved,<br>or you can add them manually using the form above.</p>
+            <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                <i class="bi bi-cloud-upload me-2"></i>Upload Invoice
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete payment details for <strong id="deleteSupplierName"></strong>?</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // DOM Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const searchInput = document.getElementById('searchInput');
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.main-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const invoice = row.dataset.invoice || '';
+            const supplier = row.dataset.supplier || '';
+            const matches = invoice.includes(searchTerm) || supplier.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+            const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+            if (expandedRow) {
+                expandedRow.style.display = matches && expandedRow.classList.contains('show') ? '' : 'none';
+            }
+
+            if (matches) visibleCount++;
+        });
+
+        document.getElementById('rowCount').textContent = `Showing ${visibleCount} of {{ payment_details|length if payment_details else 0 }} records`;
+    });
+
+    // Expand/Collapse row functionality
+    document.querySelectorAll('.main-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.row-select') || e.target.closest('.expand-btn')) return;
+            toggleRow(this);
+        });
+    });
+
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleRow(this.closest('.main-row'));
+        });
+    });
+
+    function toggleRow(row) {
+        const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+        const expandBtn = row.querySelector('.expand-btn');
+
+        row.classList.toggle('expanded');
+        expandedRow.classList.toggle('show');
+        expandBtn.classList.toggle('expanded');
+    }
+
+    // Expand/Collapse All
+    document.getElementById('expandAllBtn').addEventListener('click', function() {
+        document.querySelectorAll('.main-row').forEach(row => {
+            const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+            row.classList.add('expanded');
+            expandedRow.classList.add('show');
+            row.querySelector('.expand-btn').classList.add('expanded');
+        });
+    });
+
+    document.getElementById('collapseAllBtn').addEventListener('click', function() {
+        document.querySelectorAll('.main-row').forEach(row => {
+            const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+            row.classList.remove('expanded');
+            expandedRow.classList.remove('show');
+            row.querySelector('.expand-btn').classList.remove('expanded');
+        });
+    });
+
+    // Table sorting
+    let currentSort = { column: null, direction: 'asc' };
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', function() {
+            const column = this.dataset.sort;
+            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            currentSort = { column, direction };
+
+            // Update sort icons
+            document.querySelectorAll('th[data-sort]').forEach(h => {
+                h.classList.remove('sorted');
+                h.querySelector('.sort-icon').className = 'bi bi-chevron-expand sort-icon';
+            });
+            this.classList.add('sorted');
+            this.querySelector('.sort-icon').className = `bi bi-chevron-${direction === 'asc' ? 'up' : 'down'} sort-icon`;
+
+            // Sort rows
+            const tbody = document.getElementById('paymentTableBody');
+            const rows = Array.from(tbody.querySelectorAll('.main-row'));
+
+            rows.sort((a, b) => {
+                let aVal = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim().toLowerCase();
+                let bVal = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim().toLowerCase();
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+
+            rows.forEach(row => {
+                const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+                tbody.appendChild(row);
+                tbody.appendChild(expandedRow);
+            });
+        });
+    });
+
+    function getColumnIndex(column) {
+        const columns = { invoice_number: 2, supplier_name: 3, bank_name: 4, iban: 5, status: 6 };
+        return columns[column] || 2;
+    }
+
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-select');
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                selectAllCheckbox.checked = Array.from(rowCheckboxes).every(c => c.checked);
+                selectAllCheckbox.indeterminate = Array.from(rowCheckboxes).some(c => c.checked) && !selectAllCheckbox.checked;
+            });
+        });
+    }
+
+    // Copy to clipboard
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const text = this.dataset.copy;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!', 'success');
+                const icon = this.querySelector('i');
+                icon.classList.replace('bi-clipboard', 'bi-check');
+                setTimeout(() => icon.classList.replace('bi-check', 'bi-clipboard'), 1500);
+            });
+        });
+    });
+
+    // Delete payment
+    let deleteSupplier = null;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    document.querySelectorAll('.delete-payment-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteSupplier = this.dataset.supplier;
+            document.getElementById('deleteSupplierName').textContent = deleteSupplier;
+            deleteModal.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (!deleteSupplier) return;
+
+        loadingOverlay.classList.add('active');
+        document.getElementById('loading-text').textContent = 'Deleting...';
+
+        fetch(`/api/payment-details/${encodeURIComponent(deleteSupplier)}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingOverlay.classList.remove('active');
+            deleteModal.hide();
+            if (data.success) {
+                showToast('Payment details deleted successfully', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to delete'), 'danger');
+            }
+        })
+        .catch(err => {
+            loadingOverlay.classList.remove('active');
+            showToast('Error deleting payment details', 'danger');
+        });
+    });
+
+    // Download Report
+    document.getElementById('downloadReportBtn').addEventListener('click', function() {
+        const selectedRows = document.querySelectorAll('.row-select:checked');
+        let dataToExport = [];
+
+        const rows = selectedRows.length > 0 ? Array.from(selectedRows).map(cb => cb.closest('.main-row')) : document.querySelectorAll('.main-row');
+
+        rows.forEach(row => {
+            const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
+            if (!expandedRow) return;
+
+            dataToExport.push({
+                invoice_number: row.querySelector('.invoice-cell').textContent.trim(),
+                supplier: row.querySelector('.supplier-cell').textContent.trim(),
+                bank: row.cells[3].textContent.trim(),
+                iban: expandedRow.querySelector('.detail-value.mono')?.textContent.replace(/Copy/g, '').trim() || '',
+                status: row.querySelector('.status-badge').textContent.trim()
+            });
+        });
+
+        if (dataToExport.length === 0) {
+            showToast('No payment details to export', 'warning');
+            return;
+        }
+
+        const headers = ['Invoice Number', 'Supplier', 'Bank', 'IBAN', 'Status'];
+        let csv = headers.join(',') + '\n';
+        dataToExport.forEach(row => {
+            csv += Object.values(row).map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',') + '\n';
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'payment_details_' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+
+        showToast('Report downloaded successfully', 'success');
+    });
+
+    // Toast notification helper
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+</script>
+{% endblock %}

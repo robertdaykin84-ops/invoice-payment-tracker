@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}Review Invoice - Invoice Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: var(--gray-700);
+        margin-bottom: 0.375rem;
+    }
+
+    .form-label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        padding: 0.625rem 0.875rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #ef4444;
+    }
+
+    .form-control.is-invalid:focus, .form-select.is-invalid:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .invalid-feedback {
+        font-size: 0.875rem;
+    }
+
+    .section-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.625rem;
+        border-radius: 1rem;
+        margin-left: 0.5rem;
+    }
+
+    .ai-badge i {
+        margin-right: 0.25rem;
+        font-size: 0.625rem;
+    }
+
+    .input-group-text {
+        background-color: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        color: var(--gray-600);
+    }
+
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .btn-save {
+        min-width: 180px;
+    }
+
+    .confidence-indicator {
+        display: flex;
+        align-items: center;
+        margin-top: 0.375rem;
+        font-size: 0.75rem;
+    }
+
+    .confidence-indicator .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.375rem;
+    }
+
+    .confidence-high .dot { background-color: #10b981; }
+    .confidence-medium .dot { background-color: #f59e0b; }
+    .confidence-low .dot { background-color: #ef4444; }
+
+    .confidence-high { color: #10b981; }
+    .confidence-medium { color: #f59e0b; }
+    .confidence-low { color: #ef4444; }
+
+    /* Preview panel */
+    .preview-panel {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .preview-image {
+        max-width: 100%;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-overlay .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        color: var(--primary-blue);
+    }
+
+    .loading-overlay p {
+        margin-top: 1rem;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Saving to Google Sheets...</p>
+</div>
+
+<div class="review-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Review Invoice</h2>
+            <p class="text-muted mb-0">
+                Verify the extracted information before saving
+                <span class="ai-badge"><i class="bi bi-stars"></i>AI Extracted</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    {% if success_message %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>{{ success_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    {% if error_message %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <form id="invoice-form" action="{{ url_for('save_invoice') }}" method="POST" novalidate data-track-changes>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+        <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <!-- Invoice Details Section -->
+                <h6 class="section-title"><i class="bi bi-receipt me-2"></i>Invoice Details</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="invoice_number" class="form-label">
+                            Invoice Number<span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                               value="{{ invoice.invoice_number|default('') }}" required>
+                        <div class="invalid-feedback">Please enter the invoice number.</div>
+                        {% if invoice.confidence and invoice.confidence.invoice_number %}
+                        <div class="confidence-indicator confidence-{{ invoice.confidence.invoice_number }}">
+                            <span class="dot"></span>
+                            {{ invoice.confidence.invoice_number|capitalize }} confidence
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">
+                            Status<span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="">Select status...</option>
+                            <option value="pending" {% if invoice.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="overdue" {% if invoice.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                            <option value="cancelled" {% if invoice.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a status.</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="invoice_date" class="form-label">
+                            Invoice Date<span class="required">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="invoice_date" name="invoice_date"
+                               value="{{ invoice.invoice_date|default('') }}" required>
+                        <div class="invalid-feedback">Please enter the invoice date.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="due_date" class="form-label">
+                            Due Date<span class="required">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="due_date" name="due_date"
+                               value="{{ invoice.due_date|default('') }}" required>
+                        <div class="invalid-feedback">Please enter the due date.</div>
+                    </div>
+                </div>
+
+                <!-- Supplier Information Section -->
+                <h6 class="section-title"><i class="bi bi-building me-2"></i>Supplier Information</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <label for="supplier_name" class="form-label">
+                            Supplier Name<span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="supplier_name" name="supplier_name"
+                               value="{{ invoice.supplier_name|default('') }}" required>
+                        <div class="invalid-feedback">Please enter the supplier name.</div>
+                        {% if invoice.confidence and invoice.confidence.supplier_name %}
+                        <div class="confidence-indicator confidence-{{ invoice.confidence.supplier_name }}">
+                            <span class="dot"></span>
+                            {{ invoice.confidence.supplier_name|capitalize }} confidence
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="contact_email" class="form-label">Contact Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="contact_email" name="contact_email"
+                                   value="{{ invoice.contact_email|default('') }}" placeholder="supplier@example.com">
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid email address.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="contact_phone" class="form-label">Contact Phone</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone"
+                                   value="{{ invoice.contact_phone|default('') }}" placeholder="+1 (555) 123-4567">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information Section -->
+                <h6 class="section-title"><i class="bi bi-credit-card me-2"></i>Payment Information</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="amount" class="form-label">
+                            Amount<span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   value="{{ invoice.amount|default('') }}" step="0.01" min="0" required
+                                   placeholder="0.00">
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid amount.</div>
+                        {% if invoice.confidence and invoice.confidence.amount %}
+                        <div class="confidence-indicator confidence-{{ invoice.confidence.amount }}">
+                            <span class="dot"></span>
+                            {{ invoice.confidence.amount|capitalize }} confidence
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="currency" class="form-label">
+                            Currency<span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="currency" name="currency" required>
+                            <option value="USD" {% if invoice.currency == 'USD' or not invoice.currency %}selected{% endif %}>USD - US Dollar</option>
+                            <option value="EUR" {% if invoice.currency == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                            <option value="GBP" {% if invoice.currency == 'GBP' %}selected{% endif %}>GBP - British Pound</option>
+                            <option value="CAD" {% if invoice.currency == 'CAD' %}selected{% endif %}>CAD - Canadian Dollar</option>
+                            <option value="AUD" {% if invoice.currency == 'AUD' %}selected{% endif %}>AUD - Australian Dollar</option>
+                            <option value="JPY" {% if invoice.currency == 'JPY' %}selected{% endif %}>JPY - Japanese Yen</option>
+                            <option value="CHF" {% if invoice.currency == 'CHF' %}selected{% endif %}>CHF - Swiss Franc</option>
+                            <option value="CNY" {% if invoice.currency == 'CNY' %}selected{% endif %}>CNY - Chinese Yuan</option>
+                            <option value="INR" {% if invoice.currency == 'INR' %}selected{% endif %}>INR - Indian Rupee</option>
+                            <option value="MXN" {% if invoice.currency == 'MXN' %}selected{% endif %}>MXN - Mexican Peso</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a currency.</div>
+                    </div>
+                </div>
+
+                <!-- Banking Details Section -->
+                <h6 class="section-title"><i class="bi bi-bank me-2"></i>Banking Details (Auto-populates Payment Tab)</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="beneficiary_account_name" class="form-label">Beneficiary Account Name</label>
+                        <input type="text" class="form-control" id="beneficiary_account_name" name="beneficiary_account_name"
+                               value="{{ invoice.payment_details.beneficiary_account_name|default('') if invoice.payment_details else '' }}"
+                               placeholder="Account holder name">
+                        {% if invoice.confidence and invoice.confidence.payment_details %}
+                        <div class="confidence-indicator confidence-{{ invoice.confidence.payment_details }}">
+                            <span class="dot"></span>
+                            {{ invoice.confidence.payment_details|capitalize }} confidence
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="bank_name" class="form-label">Bank Name</label>
+                        <input type="text" class="form-control" id="bank_name" name="bank_name"
+                               value="{{ invoice.payment_details.bank_name|default('') if invoice.payment_details else '' }}"
+                               placeholder="e.g., Barclays, HSBC">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="account_number" class="form-label">Account Number</label>
+                        <input type="text" class="form-control" id="account_number" name="account_number"
+                               value="{{ invoice.payment_details.account_number|default('') if invoice.payment_details else '' }}"
+                               placeholder="e.g., 12345678">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="sort_code" class="form-label">Sort Code</label>
+                        <input type="text" class="form-control" id="sort_code" name="sort_code"
+                               value="{{ invoice.payment_details.sort_code|default('') if invoice.payment_details else '' }}"
+                               placeholder="e.g., 12-34-56">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="iban" class="form-label">IBAN</label>
+                        <input type="text" class="form-control" id="iban" name="iban"
+                               value="{{ invoice.payment_details.iban|default('') if invoice.payment_details else '' }}"
+                               placeholder="e.g., GB82 WEST 1234 5698 7654 32">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="swift_code" class="form-label">SWIFT/BIC Code</label>
+                        <input type="text" class="form-control" id="swift_code" name="swift_code"
+                               value="{{ invoice.payment_details.swift_code|default('') if invoice.payment_details else '' }}"
+                               placeholder="e.g., BUKBGB22">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="payment_reference" class="form-label">Payment Reference</label>
+                        <input type="text" class="form-control" id="payment_reference" name="payment_reference"
+                               value="{{ invoice.payment_details.payment_reference|default('') if invoice.payment_details else '' }}"
+                               placeholder="Reference to use when paying">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="bank_address" class="form-label">Bank Address</label>
+                        <input type="text" class="form-control" id="bank_address" name="bank_address"
+                               value="{{ invoice.payment_details.bank_address|default('') if invoice.payment_details else '' }}"
+                               placeholder="Bank branch address">
+                    </div>
+                </div>
+
+                <!-- Notes Section -->
+                <h6 class="section-title"><i class="bi bi-sticky me-2"></i>Additional Notes</h6>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                                  placeholder="Add any additional notes or comments about this invoice...">{{ invoice.notes|default('') }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-actions mb-4">
+            <a href="{{ url_for('upload') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-2"></i>Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-save">
+                <i class="bi bi-cloud-upload me-2"></i>Save to Google Sheets
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const form = document.getElementById('invoice-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Track which fields have been touched by the user
+    const touchedFields = new Set();
+
+    // Auto-calculate due date if empty but invoice date exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const invoiceDateField = document.getElementById('invoice_date');
+        const dueDateField = document.getElementById('due_date');
+
+        if (invoiceDateField.value && !dueDateField.value) {
+            // Set default due date to 30 days from invoice date
+            const invoiceDate = new Date(invoiceDateField.value);
+            invoiceDate.setDate(invoiceDate.getDate() + 30);
+            dueDateField.value = invoiceDate.toISOString().split('T')[0];
+        }
+    });
+
+    // Form validation on submit
+    form.addEventListener('submit', function(event) {
+        // Clear previous validation states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+
+        // Email validation
+        const emailField = document.getElementById('contact_email');
+        if (emailField.value && !isValidEmail(emailField.value)) {
+            emailField.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Amount validation
+        const amountField = document.getElementById('amount');
+        if (amountField.value && parseFloat(amountField.value) < 0) {
+            amountField.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Date validation - due date should be after or equal to invoice date
+        const invoiceDate = document.getElementById('invoice_date').value;
+        const dueDate = document.getElementById('due_date').value;
+        if (invoiceDate && dueDate && new Date(dueDate) < new Date(invoiceDate)) {
+            document.getElementById('due_date').classList.add('is-invalid');
+            const feedback = document.getElementById('due_date').nextElementSibling;
+            if (feedback) feedback.textContent = 'Due date cannot be before invoice date.';
+            isValid = false;
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+            // Scroll to first invalid field
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+        } else {
+            // Show loading overlay
+            loadingOverlay.classList.add('active');
+        }
+    });
+
+    // Track when fields are focused (touched)
+    form.querySelectorAll('[required]').forEach(field => {
+        field.addEventListener('focus', function() {
+            touchedFields.add(this.id);
+        });
+
+        // Only validate on blur if the field has been touched
+        field.addEventListener('blur', function() {
+            if (touchedFields.has(this.id)) {
+                if (!this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            }
+        });
+
+        field.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+
+    // Email validation helper
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // Email field validation on blur (only if touched)
+    document.getElementById('contact_email').addEventListener('focus', function() {
+        touchedFields.add(this.id);
+    });
+
+    document.getElementById('contact_email').addEventListener('blur', function() {
+        if (touchedFields.has(this.id) && this.value && !isValidEmail(this.value)) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+</script>
+{% endblock %}

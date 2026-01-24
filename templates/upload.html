@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Invoice - Invoice Tracker{% endblock %}
+
+{% block extra_css %}
+<!-- Dropzone CSS -->
+<link href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css" rel="stylesheet">
+
+<style>
+    .upload-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .dropzone {
+        border: 2px dashed var(--gray-300, #d1d5db);
+        border-radius: 1rem;
+        background: #fff;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .dropzone:hover {
+        border-color: var(--primary-blue);
+        background-color: var(--light-blue, #eff6ff);
+    }
+
+    .dropzone.dz-drag-hover {
+        border-color: var(--primary-blue);
+        background-color: var(--light-blue, #eff6ff);
+        transform: scale(1.01);
+    }
+
+    .dropzone .dz-message {
+        margin: 0;
+    }
+
+    .upload-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue, #3b82f6) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 2rem;
+    }
+
+    .upload-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-subtitle {
+        color: var(--gray-500);
+        margin-bottom: 1.5rem;
+    }
+
+    .file-types {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .file-type-badge {
+        background-color: var(--gray-100);
+        color: var(--gray-600);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Preview styling */
+    .dropzone .dz-preview {
+        margin: 1rem;
+    }
+
+    .dropzone .dz-preview .dz-image {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .dropzone .dz-preview .dz-details {
+        padding: 1rem;
+    }
+
+    .dropzone .dz-preview .dz-progress {
+        top: 50%;
+        margin-top: -4px;
+        height: 8px;
+        border-radius: 4px;
+        background: var(--gray-200);
+    }
+
+    .dropzone .dz-preview .dz-progress .dz-upload {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue, #3b82f6) 100%);
+        border-radius: 4px;
+    }
+
+    .dropzone .dz-preview .dz-success-mark,
+    .dropzone .dz-preview .dz-error-mark {
+        margin-top: -1.5rem;
+    }
+
+    .dropzone .dz-preview .dz-success-mark svg,
+    .dropzone .dz-preview .dz-error-mark svg {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Processing status */
+    .processing-status {
+        display: none;
+        margin-top: 2rem;
+    }
+
+    .processing-status.active {
+        display: block;
+    }
+
+    .processing-step {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        color: var(--gray-500);
+    }
+
+    .processing-step.active {
+        color: var(--primary-blue);
+    }
+
+    .processing-step.completed {
+        color: #10b981;
+    }
+
+    .processing-step .step-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        background: var(--gray-100);
+    }
+
+    .processing-step.active .step-icon {
+        background: var(--light-blue, #eff6ff);
+    }
+
+    .processing-step.completed .step-icon {
+        background: #d1fae5;
+    }
+
+    .processing-step .spinner-border {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* Instructions card */
+    .instructions-card {
+        background: var(--light-blue, #eff6ff);
+        border: 1px solid #bfdbfe;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+    }
+
+    .instructions-card h6 {
+        color: var(--primary-blue);
+        margin-bottom: 0.75rem;
+    }
+
+    .instructions-card ul {
+        margin-bottom: 0;
+        padding-left: 1.25rem;
+    }
+
+    .instructions-card li {
+        color: var(--gray-600);
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <!-- Page Header -->
+    <div class="text-center mb-4">
+        <h2 class="mb-2">Upload Invoice</h2>
+        <p class="text-muted">Upload your invoice and we'll automatically extract the details using AI</p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <form action="{{ url_for('upload') }}" class="dropzone" id="invoice-dropzone">
+                <div class="dz-message">
+                    <div class="upload-icon">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                    </div>
+                    <h4 class="upload-title">Drag & drop your invoice here</h4>
+                    <p class="upload-subtitle">or click to browse files</p>
+                    <div class="file-types">
+                        <span class="file-type-badge"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                        <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>PNG</span>
+                        <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>JPG</span>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Processing Status -->
+            <div class="processing-status" id="processing-status">
+                <hr class="my-4">
+                <h6 class="mb-3">Processing Invoice</h6>
+                <div class="processing-step" id="step-upload">
+                    <div class="step-icon">
+                        <i class="bi bi-cloud-upload"></i>
+                    </div>
+                    <span>Uploading file...</span>
+                </div>
+                <div class="processing-step" id="step-extract">
+                    <div class="step-icon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <span>Extracting invoice data with AI...</span>
+                </div>
+                <div class="processing-step" id="step-sync">
+                    <div class="step-icon">
+                        <i class="bi bi-table"></i>
+                    </div>
+                    <span>Syncing to Google Sheets...</span>
+                </div>
+                <div class="processing-step" id="step-complete">
+                    <div class="step-icon">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <span>Complete!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions-card">
+        <h6><i class="bi bi-info-circle me-2"></i>Tips for best results</h6>
+        <ul>
+            <li>Ensure the invoice is clear and readable</li>
+            <li>Include the full invoice in the image or PDF</li>
+            <li>Supported formats: PDF, PNG, JPG (max 16MB)</li>
+            <li>The AI will extract: Invoice number, date, vendor, line items, and total</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Dropzone JS -->
+<script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
+
+<script>
+    // Disable auto-discover
+    Dropzone.autoDiscover = false;
+
+    // Initialize Dropzone
+    const dropzone = new Dropzone("#invoice-dropzone", {
+        url: "{{ url_for('upload') }}",
+        paramName: "file",
+        maxFilesize: 16, // MB
+        acceptedFiles: ".pdf,.png,.jpg,.jpeg",
+        maxFiles: 1,
+        addRemoveLinks: true,
+        dictRemoveFile: "Remove",
+        dictInvalidFileType: "Only PDF, PNG, and JPG files are allowed.",
+        dictFileTooBig: "File is too large. Maximum size is 16MB.",
+        dictMaxFilesExceeded: "You can only upload one invoice at a time.",
+
+        init: function() {
+            const dz = this;
+            const processingStatus = document.getElementById('processing-status');
+            const steps = {
+                upload: document.getElementById('step-upload'),
+                extract: document.getElementById('step-extract'),
+                sync: document.getElementById('step-sync'),
+                complete: document.getElementById('step-complete')
+            };
+
+            function setStepActive(stepId) {
+                Object.keys(steps).forEach(key => {
+                    steps[key].classList.remove('active');
+                    steps[key].querySelector('.step-icon').innerHTML = getStepIcon(key);
+                });
+                if (steps[stepId]) {
+                    steps[stepId].classList.add('active');
+                    steps[stepId].querySelector('.step-icon').innerHTML =
+                        '<div class="spinner-border text-primary" role="status"></div>';
+                }
+            }
+
+            function setStepCompleted(stepId) {
+                if (steps[stepId]) {
+                    steps[stepId].classList.remove('active');
+                    steps[stepId].classList.add('completed');
+                    steps[stepId].querySelector('.step-icon').innerHTML =
+                        '<i class="bi bi-check-lg"></i>';
+                }
+            }
+
+            function getStepIcon(stepId) {
+                const icons = {
+                    upload: '<i class="bi bi-cloud-upload"></i>',
+                    extract: '<i class="bi bi-cpu"></i>',
+                    sync: '<i class="bi bi-table"></i>',
+                    complete: '<i class="bi bi-check-lg"></i>'
+                };
+                return icons[stepId] || '';
+            }
+
+            function resetSteps() {
+                Object.keys(steps).forEach(key => {
+                    steps[key].classList.remove('active', 'completed');
+                    steps[key].querySelector('.step-icon').innerHTML = getStepIcon(key);
+                });
+            }
+
+            // File added
+            this.on("addedfile", function(file) {
+                // Remove any existing files (only allow one)
+                if (dz.files.length > 1) {
+                    dz.removeFile(dz.files[0]);
+                }
+            });
+
+            // Upload started
+            this.on("sending", function(file, xhr, formData) {
+                processingStatus.classList.add('active');
+                resetSteps();
+                setStepActive('upload');
+            });
+
+            // Upload progress
+            this.on("uploadprogress", function(file, progress) {
+                if (progress === 100) {
+                    setStepCompleted('upload');
+                    setStepActive('extract');
+                }
+            });
+
+            // Upload success
+            this.on("success", function(file, response) {
+                setStepCompleted('extract');
+                setStepActive('sync');
+
+                // Simulate sync completion (actual sync happens server-side)
+                setTimeout(() => {
+                    setStepCompleted('sync');
+                    setStepActive('complete');
+
+                    setTimeout(() => {
+                        setStepCompleted('complete');
+
+                        // Show success message and redirect
+                        if (response.success) {
+                            // Redirect to dashboard or show success
+                            window.location.href = response.redirect || "{{ url_for('dashboard') }}";
+                        }
+                    }, 500);
+                }, 1000);
+            });
+
+            // Upload error
+            this.on("error", function(file, errorMessage, xhr) {
+                processingStatus.classList.remove('active');
+                resetSteps();
+
+                // Show error alert
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ${typeof errorMessage === 'string' ? errorMessage : errorMessage.error || 'Upload failed. Please try again.'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                document.querySelector('.upload-container').insertAdjacentHTML('afterbegin', alertHtml);
+            });
+
+            // File removed
+            this.on("removedfile", function(file) {
+                processingStatus.classList.remove('active');
+                resetSteps();
+            });
+        }
+    });
+</script>
+{% endblock %}
