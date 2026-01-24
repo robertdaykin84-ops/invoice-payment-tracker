@@ -47,6 +47,19 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'png', 'jpg', 'jpeg'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+# ========== Authentication ==========
+
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 # ========== Helper Functions ==========
 
 def allowed_file(filename):
@@ -116,10 +129,48 @@ def get_sheets_manager():
         raise
 
 
+# ========== Authentication Routes ==========
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if session.get('authenticated'):
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        app_password = os.environ.get('APP_PASSWORD', '')
+
+        if not app_password:
+            flash('APP_PASSWORD not configured. Please set it in your .env file.', 'error')
+            return render_template('login.html')
+
+        if password == app_password:
+            session['authenticated'] = True
+            session.permanent = True
+            logger.info("User logged in successfully")
+            next_url = request.args.get('next')
+            return redirect(next_url or url_for('index'))
+        else:
+            flash('Invalid password. Please try again.', 'error')
+            logger.warning("Failed login attempt")
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    """Logout and clear session"""
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+
 # ========== Main Routes ==========
 
 @app.route('/')
 @handle_errors
+@login_required
 def index():
     """Home page with dashboard"""
     try:
@@ -141,6 +192,7 @@ def index():
 
 @app.route('/dashboard')
 @handle_errors
+@login_required
 def dashboard():
     """Dashboard page showing all invoices"""
     try:
@@ -159,6 +211,7 @@ def dashboard():
 
 @app.route('/upload', methods=['GET', 'POST'])
 @handle_errors
+@login_required
 def upload():
     """Handle invoice upload and processing"""
     if request.method == 'POST':
@@ -246,6 +299,7 @@ def upload():
 @app.route('/review')
 @app.route('/review/<filename>')
 @handle_errors
+@login_required
 def review(filename=None):
     """Review and edit extracted invoice data"""
     # Try to get data from session or query params
@@ -260,6 +314,7 @@ def review(filename=None):
 
 @app.route('/save-invoice', methods=['POST'])
 @handle_errors
+@login_required
 def save_invoice():
     """Save invoice data to Google Sheets"""
     # Get form data
@@ -383,6 +438,7 @@ def save_invoice():
 
 @app.route('/payment-details', methods=['GET', 'POST'])
 @handle_errors
+@login_required
 def payment_details():
     """Manage payment details"""
     if request.method == 'POST':
@@ -479,6 +535,7 @@ def payment_details():
 
 @app.route('/save-payment-details', methods=['POST'])
 @handle_errors
+@login_required
 def save_payment_details_route():
     """Alternative endpoint for saving payment details"""
     return payment_details()
@@ -488,6 +545,7 @@ def save_payment_details_route():
 
 @app.route('/api/invoices')
 @handle_errors
+@login_required
 def api_get_invoices():
     """API: Get all invoices from Google Sheets"""
     try:
@@ -507,6 +565,7 @@ def api_get_invoices():
 
 @app.route('/api/invoices/<invoice_number>')
 @handle_errors
+@login_required
 def api_get_invoice(invoice_number):
     """API: Get a specific invoice by number"""
     try:
@@ -533,6 +592,7 @@ def api_get_invoice(invoice_number):
 
 @app.route('/api/invoices/stats')
 @handle_errors
+@login_required
 def api_get_invoice_stats():
     """API: Get invoice statistics"""
     try:
@@ -552,6 +612,7 @@ def api_get_invoice_stats():
 
 @app.route('/api/payment-details')
 @handle_errors
+@login_required
 def api_get_payment_details():
     """API: Get all payment details from Google Sheets"""
     try:
@@ -571,6 +632,7 @@ def api_get_payment_details():
 
 @app.route('/api/payment-details/<supplier_name>')
 @handle_errors
+@login_required
 def api_get_payment_by_supplier(supplier_name):
     """API: Get payment details for a specific supplier"""
     try:
@@ -597,6 +659,7 @@ def api_get_payment_by_supplier(supplier_name):
 
 @app.route('/api/payment-details/<supplier_name>', methods=['DELETE'])
 @handle_errors
+@login_required
 def api_delete_payment_details(supplier_name):
     """API: Delete payment details for a specific supplier"""
     try:
@@ -624,6 +687,7 @@ def api_delete_payment_details(supplier_name):
 
 @app.route('/api/suppliers')
 @handle_errors
+@login_required
 def api_get_suppliers():
     """API: Get list of unique suppliers"""
     try:
@@ -644,6 +708,7 @@ def api_get_suppliers():
 
 @app.route('/api/invoices/<invoice_number>', methods=['DELETE'])
 @handle_errors
+@login_required
 def api_delete_invoice(invoice_number):
     """API: Delete an invoice by number and its associated payment details"""
     try:
@@ -689,6 +754,7 @@ def api_delete_invoice(invoice_number):
 
 @app.route('/api/test-connection')
 @handle_errors
+@login_required
 def api_test_connection():
     """API: Test Google Sheets connection"""
     try:
@@ -704,6 +770,7 @@ def api_test_connection():
 
 @app.route('/api/initialize-sheets')
 @handle_errors
+@login_required
 def api_initialize_sheets():
     """API: Initialize Google Sheets with headers"""
     try:
