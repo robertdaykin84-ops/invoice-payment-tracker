@@ -357,9 +357,11 @@
         <h2 class="mb-1">Payment Details</h2>
         <p class="text-muted mb-0">Manage supplier banking information linked to invoices</p>
     </div>
-    <button class="btn btn-primary" id="downloadReportBtn">
-        <i class="bi bi-download me-2"></i>Download Report
-    </button>
+    <a href="{{ url_for('download_payment_report') }}" class="btn btn-success" id="downloadReportBtn">
+        <i class="bi bi-file-earmark-excel me-2" id="downloadIcon"></i>
+        <span class="spinner-border spinner-border-sm me-2 d-none" id="downloadSpinner" role="status"></span>
+        <span id="downloadText">Download Excel Report</span>
+    </a>
 </div>
 
 <!-- Quick Stats Row -->
@@ -774,43 +776,51 @@
     });
 
     // Download Report
-    document.getElementById('downloadReportBtn').addEventListener('click', function() {
-        const selectedRows = document.querySelectorAll('.row-select:checked');
-        let dataToExport = [];
+    document.getElementById('downloadReportBtn').addEventListener('click', function(e) {
+        const btn = this;
+        const icon = document.getElementById('downloadIcon');
+        const spinner = document.getElementById('downloadSpinner');
+        const text = document.getElementById('downloadText');
 
-        const rows = selectedRows.length > 0 ? Array.from(selectedRows).map(cb => cb.closest('.main-row')) : document.querySelectorAll('.main-row');
+        // Show loading state
+        icon.classList.add('d-none');
+        spinner.classList.remove('d-none');
+        text.textContent = 'Generating...';
+        btn.style.pointerEvents = 'none';
 
-        rows.forEach(row => {
-            const expandedRow = document.querySelector(`.expanded-details[data-parent="${row.dataset.id}"]`);
-            if (!expandedRow) return;
+        // Use fetch to handle potential errors
+        fetch(btn.href)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to generate report');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Payment_Report_' + new Date().toISOString().split('T')[0] + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
 
-            dataToExport.push({
-                invoice_number: row.querySelector('.invoice-cell').textContent.trim(),
-                supplier: row.querySelector('.supplier-cell').textContent.trim(),
-                bank: row.cells[3].textContent.trim(),
-                iban: expandedRow.querySelector('.detail-value.mono')?.textContent.replace(/Copy/g, '').trim() || '',
-                status: row.querySelector('.status-badge').textContent.trim()
+                showToast('Report downloaded successfully', 'success');
+            })
+            .catch(err => {
+                showToast('Failed to download report: ' + err.message, 'danger');
+            })
+            .finally(() => {
+                // Reset button state
+                icon.classList.remove('d-none');
+                spinner.classList.add('d-none');
+                text.textContent = 'Download Excel Report';
+                btn.style.pointerEvents = 'auto';
             });
-        });
 
-        if (dataToExport.length === 0) {
-            showToast('No payment details to export', 'warning');
-            return;
-        }
-
-        const headers = ['Invoice Number', 'Supplier', 'Bank', 'IBAN', 'Status'];
-        let csv = headers.join(',') + '\n';
-        dataToExport.forEach(row => {
-            csv += Object.values(row).map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',') + '\n';
-        });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'payment_details_' + new Date().toISOString().split('T')[0] + '.csv';
-        link.click();
-
-        showToast('Report downloaded successfully', 'success');
+        e.preventDefault();
     });
 
     // Toast notification helper

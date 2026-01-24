@@ -4,12 +4,16 @@ Handles invoice upload, OCR processing, and Google Sheets integration
 """
 
 import os
+import io
 import logging
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    redirect, url_for, flash, session
+    redirect, url_for, flash, session, make_response
 )
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -541,6 +545,94 @@ def save_payment_details_route():
     return payment_details()
 
 
+@app.route('/download-payment-report')
+@handle_errors
+@login_required
+def download_payment_report():
+    """Download all payment details as an Excel file"""
+    try:
+        manager = get_sheets_manager()
+        payments = manager.get_all_payment_details()
+
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Payment Details"
+
+        # Define headers
+        headers = [
+            'Invoice Number',
+            'Supplier Name',
+            'Beneficiary Account Name',
+            'Account Number',
+            'IBAN',
+            'Sort Code',
+            'SWIFT/BIC Code',
+            'Bank Name',
+            'Bank Address',
+            'Payment Reference',
+            'Status',
+            'Upload Date',
+            'Notes'
+        ]
+
+        # Write headers with bold formatting
+        bold_font = Font(bold=True)
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = bold_font
+
+        # Write data rows
+        for row_num, payment in enumerate(payments, 2):
+            ws.cell(row=row_num, column=1, value=payment.get('invoice_number', ''))
+            ws.cell(row=row_num, column=2, value=payment.get('supplier_name', ''))
+            ws.cell(row=row_num, column=3, value=payment.get('beneficiary_account_name', ''))
+            ws.cell(row=row_num, column=4, value=payment.get('account_number', ''))
+            ws.cell(row=row_num, column=5, value=payment.get('iban', ''))
+            ws.cell(row=row_num, column=6, value=payment.get('sort_code', ''))
+            ws.cell(row=row_num, column=7, value=payment.get('swift_code', ''))
+            ws.cell(row=row_num, column=8, value=payment.get('bank_name', ''))
+            ws.cell(row=row_num, column=9, value=payment.get('bank_address', ''))
+            ws.cell(row=row_num, column=10, value=payment.get('payment_reference', ''))
+            ws.cell(row=row_num, column=11, value=payment.get('status', ''))
+            ws.cell(row=row_num, column=12, value=payment.get('upload_date', ''))
+            ws.cell(row=row_num, column=13, value=payment.get('notes', ''))
+
+        # Auto-size columns
+        for col in range(1, len(headers) + 1):
+            max_length = 0
+            column_letter = get_column_letter(col)
+            for row in range(1, len(payments) + 2):
+                cell_value = ws.cell(row=row, column=col).value
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Save to memory buffer
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        # Create response
+        today = datetime.now().strftime('%Y-%m-%d')
+        filename = f'Payment_Report_{today}.xlsx'
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+
+        logger.info(f"Payment report downloaded: {len(payments)} records")
+        return response
+
+    except Exception as e:
+        logger.error(f"Error generating payment report: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate report: {str(e)}'
+        }), 500
+
+
 # ========== API Routes ==========
 
 @app.route('/api/invoices')
@@ -714,24 +806,19 @@ def api_delete_invoice(invoice_number):
     try:
         manager = get_sheets_manager()
 
-        # First, get the invoice to find the supplier name
-        invoice = manager.get_invoice_by_number(invoice_number)
-        supplier_name = invoice.get('supplier_name') if invoice else None
-
         # Delete the invoice
         result = manager.delete_invoice(invoice_number)
 
         if result.get('success'):
             logger.info(f"Invoice deleted: {invoice_number}")
 
-            # Also delete associated payment details if supplier found
-            if supplier_name:
-                try:
-                    payment_result = manager.delete_payment_by_supplier(supplier_name)
-                    if payment_result.get('success'):
-                        logger.info(f"Payment details deleted for supplier: {supplier_name}")
-                except Exception as e:
-                    logger.warning(f"Failed to delete payment details for {supplier_name}: {e}")
+            # Also delete associated payment details by invoice number
+            try:
+                payment_result = manager.delete_payment_by_invoice(invoice_number)
+                if payment_result.get('success'):
+                    logger.info(f"Payment details deleted for invoice: {invoice_number}")
+            except Exception as e:
+                logger.warning(f"Failed to delete payment details for invoice {invoice_number}: {e}")
 
             return jsonify({
                 'success': True,

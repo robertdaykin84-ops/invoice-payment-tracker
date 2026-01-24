@@ -355,6 +355,70 @@ class SheetsManager:
 
         raise SheetsManagerError(f"Sheet '{sheet_name}' not found")
 
+    def delete_payment_by_invoice(self, invoice_number: str) -> dict:
+        """
+        Delete payment details by invoice number
+
+        Args:
+            invoice_number: The invoice number to delete
+
+        Returns:
+            dict: Result with 'success' and 'message'
+        """
+        self._ensure_authenticated()
+
+        try:
+            # Find the row number for this invoice in payment sheet (column A is Invoice Number)
+            range_name = f"'{self.payment_sheet}'!A:A"
+            result = self.service.spreadsheets().values().get(
+                spreadsheetId=self.spreadsheet_id,
+                range=range_name
+            ).execute()
+
+            values = result.get('values', [])
+            row_to_delete = None
+
+            for i, row in enumerate(values):
+                if row and row[0] == invoice_number:
+                    row_to_delete = i + 1  # 1-indexed
+                    break
+
+            if row_to_delete is None:
+                return {
+                    'success': False,
+                    'message': f'Payment details for invoice {invoice_number} not found'
+                }
+
+            # Delete the row using batchUpdate
+            requests = [{
+                'deleteDimension': {
+                    'range': {
+                        'sheetId': self._get_sheet_id(self.payment_sheet),
+                        'dimension': 'ROWS',
+                        'startIndex': row_to_delete - 1,  # 0-indexed
+                        'endIndex': row_to_delete
+                    }
+                }
+            }]
+
+            self.service.spreadsheets().batchUpdate(
+                spreadsheetId=self.spreadsheet_id,
+                body={'requests': requests}
+            ).execute()
+
+            logger.info(f"Deleted payment details for invoice {invoice_number} from row {row_to_delete}")
+            return {
+                'success': True,
+                'message': f'Payment details for invoice {invoice_number} deleted successfully'
+            }
+
+        except HttpError as e:
+            logger.error(f"HTTP error deleting payment details: {e}")
+            raise SheetsManagerError(f"Failed to delete payment details: {e}")
+        except Exception as e:
+            logger.error(f"Error deleting payment details: {e}")
+            raise SheetsManagerError(f"Failed to delete payment details: {e}")
+
     def delete_payment_by_supplier(self, supplier_name: str) -> dict:
         """
         Delete payment details by supplier name
