@@ -85,6 +85,10 @@ class SheetsManager:
         """
         Authenticate with Google Sheets API
 
+        Supports two methods:
+        1. GOOGLE_CREDENTIALS environment variable (for Render/production)
+        2. credentials.json file (for local development)
+
         Raises:
             AuthenticationError: If authentication fails
         """
@@ -101,16 +105,27 @@ class SheetsManager:
                     logger.info("Refreshing expired credentials")
                     self.creds.refresh(Request())
                 else:
-                    if not os.path.exists(self.credentials_path):
+                    # Try environment variable first (for Render/production)
+                    google_creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+
+                    if google_creds_json:
+                        # Load from environment variable
+                        logger.info("Loading credentials from GOOGLE_CREDENTIALS environment variable")
+                        creds_dict = json.loads(google_creds_json)
+                        flow = InstalledAppFlow.from_client_config(creds_dict, SCOPES)
+                    elif os.path.exists(self.credentials_path):
+                        # Fall back to file (for local development)
+                        logger.info("Loading credentials from credentials.json file")
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                            self.credentials_path, SCOPES
+                        )
+                    else:
                         raise AuthenticationError(
-                            f"Credentials file not found: {self.credentials_path}. "
-                            "Download it from Google Cloud Console."
+                            "No Google credentials found. "
+                            "Set GOOGLE_CREDENTIALS env var or provide credentials.json"
                         )
 
                     logger.info("Starting OAuth flow for new credentials")
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        self.credentials_path, SCOPES
-                    )
                     self.creds = flow.run_local_server(port=0)
 
                 # Save credentials for future use
