@@ -189,10 +189,10 @@
         </div>
         {% if total_invoices is defined and total_invoices > 1 and not is_editing %}
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-primary fs-6">{{ current_index + 1 }} of {{ total_invoices }}</span>
+            <span class="badge bg-primary fs-6">Invoice {{ current_index + 1 }} of {{ total_invoices }}</span>
             <div class="btn-group">
-                {% if has_previous %}
-                <a href="{{ url_for('review', index=current_index - 1) }}" class="btn btn-outline-secondary btn-sm">
+                {% if current_index > 0 %}
+                <a href="{{ url_for('review', filename=queue[current_index - 1]) }}?queue={{ queue|join(',') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-chevron-left"></i> Prev
                 </a>
                 {% else %}
@@ -200,8 +200,8 @@
                     <i class="bi bi-chevron-left"></i> Prev
                 </button>
                 {% endif %}
-                {% if has_next %}
-                <a href="{{ url_for('review', index=current_index + 1) }}" class="btn btn-outline-secondary btn-sm">
+                {% if current_index < total_invoices - 1 %}
+                <a href="{{ url_for('review', filename=queue[current_index + 1]) }}?queue={{ queue|join(',') }}" class="btn btn-outline-secondary btn-sm">
                     Next <i class="bi bi-chevron-right"></i>
                 </a>
                 {% else %}
@@ -234,6 +234,8 @@
         <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">
         <input type="hidden" name="is_editing" value="{{ 'true' if is_editing else 'false' }}">
         <input type="hidden" name="_row_id" value="{{ invoice._row_id|default('') }}">
+        <input type="hidden" name="queue" value="{{ queue|join(',') if queue else '' }}">
+        <input type="hidden" name="current_index" value="{{ current_index|default(0) }}">
 
         <div class="card mb-4">
             <div class="card-body">
@@ -478,15 +480,15 @@
                 <i class="bi bi-x-lg me-2"></i>Cancel
             </a>
             <div class="d-flex gap-2">
-                {% if total_invoices is defined and total_invoices > 1 %}
-                <a href="{{ url_for('skip_invoice', index=current_index) }}" class="btn btn-outline-warning">
+                {% if total_invoices is defined and total_invoices > 1 and current_index < total_invoices - 1 %}
+                <a href="{{ url_for('review', filename=queue[current_index + 1]) }}?queue={{ queue|join(',') }}" class="btn btn-outline-warning">
                     <i class="bi bi-skip-forward me-2"></i>Skip This Invoice
                 </a>
                 {% endif %}
                 <button type="submit" class="btn btn-primary btn-save">
                     <i class="bi bi-cloud-upload me-2"></i>
-                    {% if total_invoices is defined and total_invoices > 1 %}
-                        Save & Continue ({{ total_invoices - 1 }} remaining)
+                    {% if total_invoices is defined and total_invoices > 1 and current_index < total_invoices - 1 %}
+                        Save & Next ({{ total_invoices - current_index - 1 }} remaining)
                     {% else %}
                         Save to Google Sheets
                     {% endif %}

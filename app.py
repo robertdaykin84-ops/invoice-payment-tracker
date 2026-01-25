@@ -398,6 +398,18 @@ def review(filename=None):
     filename = filename or session.get('invoice_filename') or request.args.get('filename')
     invoice_data = {}
 
+    # Handle queue of multiple invoices
+    queue_param = request.args.get('queue', '')
+    queue = queue_param.split(',') if queue_param else []
+    current_index = 0
+    total_invoices = len(queue) if queue else 1
+
+    if filename and queue:
+        try:
+            current_index = queue.index(filename)
+        except ValueError:
+            current_index = 0
+
     if filename:
         # Try to load extracted data from JSON file
         json_filename = filename.rsplit('.', 1)[0] + '_data.json'
@@ -417,7 +429,13 @@ def review(filename=None):
         flash('No invoice data found. Please upload an invoice first.', 'warning')
         return redirect(url_for('upload'))
 
-    return render_template('review.html', invoice=invoice_data, is_editing=False)
+    return render_template('review.html',
+                           invoice=invoice_data,
+                           is_editing=False,
+                           queue=queue,
+                           current_index=current_index,
+                           total_invoices=total_invoices,
+                           current_filename=filename)
 
 
 @app.route('/save-invoice', methods=['POST'])
@@ -543,6 +561,29 @@ def save_invoice():
             success_msg = 'Invoice updated successfully!' if is_editing else 'Invoice saved successfully!'
             logger.info(f"Invoice {'updated' if is_editing else 'saved'} to sheets: {invoice_data['invoice_number']}")
 
+            # Handle queue navigation - go to next invoice if there's more in queue
+            queue_param = data.get('queue', '')
+            current_index = int(data.get('current_index', 0))
+            queue = queue_param.split(',') if queue_param else []
+
+            if queue and current_index < len(queue) - 1:
+                # There are more invoices to review
+                next_index = current_index + 1
+                next_filename = queue[next_index]
+                next_url = url_for('review', filename=next_filename) + f'?queue={queue_param}'
+                remaining = len(queue) - next_index
+                flash(f'{success_msg} {remaining} more invoice(s) to review.', 'success')
+
+                if request.is_json:
+                    return jsonify({
+                        'success': True,
+                        'message': success_msg,
+                        'redirect': next_url,
+                        'remaining': remaining
+                    })
+                return redirect(next_url)
+
+            # No more invoices in queue, go to dashboard
             if request.is_json:
                 return jsonify({
                     'success': True,
@@ -763,6 +804,151 @@ def download_payment_report():
 
     except Exception as e:
         logger.error(f"Error generating payment report: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate report: {str(e)}'
+        }), 500
+
+
+@app.route('/api/invoices/download-report', methods=['POST'])
+@handle_errors
+@login_required
+def download_invoice_report():
+    """Download selected invoices as an Excel file with payment details and totals"""
+    try:
+        # Get selected invoice numbers from request
+        data = request.get_json() or {}
+        selected_invoices = data.get('invoice_numbers', [])
+
+        manager = get_sheets_manager()
+        all_invoices = manager.get_all_invoices()
+        all_payments = manager.get_all_payment_details()
+
+        # Filter invoices if specific ones were selected
+        if selected_invoices:
+            invoices = [inv for inv in all_invoices if inv.get('invoice_number') in selected_invoices]
+        else:
+            invoices = all_invoices
+
+        # Create payment lookup by invoice number
+        payment_lookup = {}
+        for payment in all_payments:
+            inv_num = payment.get('invoice_number', '')
+            if inv_num:
+                payment_lookup[inv_num] = payment
+
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Invoice Report"
+
+        # Define headers
+        headers = [
+            'Invoice Number',
+            'Supplier Name',
+            'Contact Email',
+            'Contact Phone',
+            'Invoice Date',
+            'Due Date',
+            'Amount',
+            'Currency',
+            'Status',
+            'Payment Date',
+            'Notes',
+            # Payment Details
+            'Beneficiary Account Name',
+            'Bank Name',
+            'Account Number',
+            'Sort Code',
+            'IBAN',
+            'SWIFT/BIC Code',
+            'Payment Reference',
+            'Bank Address'
+        ]
+
+        # Write headers with bold formatting
+        bold_font = Font(bold=True)
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = bold_font
+
+        # Track total amount
+        total_amount = 0.0
+
+        # Write data rows
+        for row_num, invoice in enumerate(invoices, 2):
+            inv_num = invoice.get('invoice_number', '')
+            payment = payment_lookup.get(inv_num, {})
+            amount = invoice.get('amount', 0) or 0
+
+            # Try to convert amount to float
+            try:
+                amount = float(amount)
+            except (ValueError, TypeError):
+                amount = 0.0
+
+            total_amount += amount
+
+            # Invoice details
+            ws.cell(row=row_num, column=1, value=inv_num)
+            ws.cell(row=row_num, column=2, value=invoice.get('supplier_name', ''))
+            ws.cell(row=row_num, column=3, value=invoice.get('contact_email', ''))
+            ws.cell(row=row_num, column=4, value=invoice.get('contact_phone', ''))
+            ws.cell(row=row_num, column=5, value=invoice.get('invoice_date', ''))
+            ws.cell(row=row_num, column=6, value=invoice.get('due_date', ''))
+            ws.cell(row=row_num, column=7, value=amount)
+            ws.cell(row=row_num, column=8, value=invoice.get('currency', 'GBP'))
+            ws.cell(row=row_num, column=9, value=invoice.get('status', ''))
+            ws.cell(row=row_num, column=10, value=invoice.get('payment_date', ''))
+            ws.cell(row=row_num, column=11, value=invoice.get('notes', ''))
+
+            # Payment details
+            ws.cell(row=row_num, column=12, value=payment.get('beneficiary_account_name', ''))
+            ws.cell(row=row_num, column=13, value=payment.get('bank_name', ''))
+            ws.cell(row=row_num, column=14, value=payment.get('account_number', ''))
+            ws.cell(row=row_num, column=15, value=payment.get('sort_code', ''))
+            ws.cell(row=row_num, column=16, value=payment.get('iban', ''))
+            ws.cell(row=row_num, column=17, value=payment.get('swift_code', ''))
+            ws.cell(row=row_num, column=18, value=payment.get('payment_reference', ''))
+            ws.cell(row=row_num, column=19, value=payment.get('bank_address', ''))
+
+        # Add total row
+        total_row = len(invoices) + 2
+        ws.cell(row=total_row, column=1, value='')
+        ws.cell(row=total_row, column=6, value='TOTAL:')
+        ws.cell(row=total_row, column=6).font = bold_font
+        ws.cell(row=total_row, column=7, value=total_amount)
+        ws.cell(row=total_row, column=7).font = bold_font
+
+        # Auto-size columns
+        for col in range(1, len(headers) + 1):
+            max_length = 0
+            column_letter = get_column_letter(col)
+            for row in range(1, len(invoices) + 3):
+                cell_value = ws.cell(row=row, column=col).value
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Save to memory buffer
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        # Create response
+        today = datetime.now().strftime('%Y-%m-%d')
+        filename = f'Invoice_Report_{today}.xlsx'
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+
+        logger.info(f"Invoice report downloaded: {len(invoices)} invoices, total: {total_amount}")
+        return response
+
+    except Exception as e:
+        logger.error(f"Error generating invoice report: {e}")
         return jsonify({
             'success': False,
             'error': f'Failed to generate report: {str(e)}'

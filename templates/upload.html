@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Invoice - Invoice Tracker{% endblock %}
+{% block title %}Upload Invoices - Invoice Tracker{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -28,6 +28,11 @@
         border-color: var(--primary-blue);
         background-color: var(--light-blue, #eff6ff);
         transform: scale(1.01);
+    }
+
+    .upload-area.processing {
+        pointer-events: none;
+        opacity: 0.7;
     }
 
     .upload-icon {
@@ -60,7 +65,6 @@
         justify-content: center;
         gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 1.5rem;
     }
 
     .file-type-badge {
@@ -76,39 +80,6 @@
         display: none;
     }
 
-    .selected-file {
-        display: none;
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background: var(--light-blue, #eff6ff);
-        border-radius: 0.5rem;
-        text-align: left;
-    }
-
-    .selected-file.visible {
-        display: block;
-    }
-
-    .selected-file .file-name {
-        font-weight: 600;
-        color: var(--gray-800);
-    }
-
-    .selected-file .file-size {
-        font-size: 0.875rem;
-        color: var(--gray-500);
-    }
-
-    .selected-file .remove-file {
-        color: #dc3545;
-        cursor: pointer;
-        font-size: 0.875rem;
-    }
-
-    .selected-file .remove-file:hover {
-        text-decoration: underline;
-    }
-
     /* Processing overlay */
     .processing-overlay {
         display: none;
@@ -117,7 +88,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.98);
         z-index: 9999;
         justify-content: center;
         align-items: center;
@@ -143,7 +114,8 @@
 
     .processing-text {
         margin-top: 1.5rem;
-        font-size: 1.125rem;
+        font-size: 1.25rem;
+        font-weight: 600;
         color: var(--gray-700);
         text-align: center;
     }
@@ -152,6 +124,70 @@
         margin-top: 0.5rem;
         font-size: 0.875rem;
         color: var(--gray-500);
+    }
+
+    .processing-progress {
+        margin-top: 1.5rem;
+        width: 300px;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: var(--gray-200);
+    }
+
+    .progress-bar {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue, #3b82f6) 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .file-list {
+        margin-top: 1rem;
+        max-width: 400px;
+        text-align: left;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.875rem;
+    }
+
+    .file-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-item i {
+        margin-right: 0.5rem;
+        color: var(--gray-400);
+    }
+
+    .file-item.completed i {
+        color: #10b981;
+    }
+
+    .file-item.processing i {
+        color: var(--primary-blue);
+    }
+
+    .file-item.error i {
+        color: #ef4444;
+    }
+
+    .file-item-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-item-status {
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
     }
 
     /* Instructions card */
@@ -176,12 +212,6 @@
         color: var(--gray-600);
         margin-bottom: 0.25rem;
     }
-
-    .btn-upload {
-        padding: 0.75rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-    }
 </style>
 {% endblock %}
 
@@ -189,47 +219,26 @@
 <div class="upload-container">
     <!-- Page Header -->
     <div class="text-center mb-4">
-        <h2 class="mb-2">Upload Invoice</h2>
-        <p class="text-muted">Upload your invoice and we'll automatically extract the details using AI</p>
+        <h2 class="mb-2">Upload Invoices</h2>
+        <p class="text-muted">Drop your invoices here - they'll be processed automatically</p>
     </div>
 
     <!-- Upload Card -->
     <div class="card mb-4">
         <div class="card-body p-4">
-            <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-icon">
-                        <i class="bi bi-cloud-arrow-up"></i>
-                    </div>
-                    <h4 class="upload-title">Drag & drop your invoice here</h4>
-                    <p class="upload-subtitle">or click to browse files</p>
-                    <div class="file-types">
-                        <span class="file-type-badge"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
-                        <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>PNG</span>
-                        <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>JPG</span>
-                    </div>
-                    <input type="file" name="file" id="file-input" class="file-input" accept=".pdf,.png,.jpg,.jpeg" required>
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">
+                    <i class="bi bi-cloud-arrow-up"></i>
                 </div>
-
-                <!-- Selected File Display -->
-                <div class="selected-file" id="selected-file">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-file-earmark me-2"></i>
-                            <span class="file-name" id="file-name"></span>
-                            <span class="file-size" id="file-size"></span>
-                        </div>
-                        <span class="remove-file" id="remove-file"><i class="bi bi-x-lg"></i> Remove</span>
-                    </div>
+                <h4 class="upload-title">Drag & drop invoices here</h4>
+                <p class="upload-subtitle">or click to browse - processing starts automatically</p>
+                <div class="file-types">
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>PNG</span>
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>JPG</span>
                 </div>
-
-                <!-- Submit Button -->
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-primary btn-upload" id="submit-btn" disabled>
-                        <i class="bi bi-cpu me-2"></i>Process Invoice
-                    </button>
-                </div>
-            </form>
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple>
+            </div>
         </div>
     </div>
 
@@ -237,10 +246,10 @@
     <div class="instructions-card">
         <h6><i class="bi bi-info-circle me-2"></i>Tips for best results</h6>
         <ul>
-            <li>Ensure the invoice is clear and readable</li>
-            <li>Include the full invoice in the image or PDF</li>
-            <li>Supported formats: PDF, PNG, JPG (max 16MB)</li>
-            <li>After processing, you'll review and verify the extracted data before saving</li>
+            <li>You can upload multiple invoices at once</li>
+            <li>Processing starts automatically when you drop or select files</li>
+            <li>Supported formats: PDF, PNG, JPG (max 16MB each)</li>
+            <li>After processing, you'll review each invoice before saving</li>
         </ul>
     </div>
 </div>
@@ -248,8 +257,14 @@
 <!-- Processing Overlay -->
 <div class="processing-overlay" id="processing-overlay">
     <div class="processing-spinner"></div>
-    <div class="processing-text">Processing your invoice...</div>
-    <div class="processing-subtext">AI is extracting invoice details. This may take a few seconds.</div>
+    <div class="processing-text" id="processing-text">Processing invoices...</div>
+    <div class="processing-subtext" id="processing-subtext">AI is extracting invoice details</div>
+    <div class="processing-progress">
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+        </div>
+    </div>
+    <div class="file-list" id="file-list"></div>
 </div>
 {% endblock %}
 
@@ -257,15 +272,13 @@
 <script>
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('file-input');
-    const selectedFile = document.getElementById('selected-file');
-    const fileName = document.getElementById('file-name');
-    const fileSize = document.getElementById('file-size');
-    const removeFile = document.getElementById('remove-file');
-    const submitBtn = document.getElementById('submit-btn');
-    const uploadForm = document.getElementById('upload-form');
     const processingOverlay = document.getElementById('processing-overlay');
+    const processingText = document.getElementById('processing-text');
+    const processingSubtext = document.getElementById('processing-subtext');
+    const progressBar = document.getElementById('progress-bar');
+    const fileList = document.getElementById('file-list');
 
-    // Click to select file
+    // Click to select files
     uploadArea.addEventListener('click', () => {
         fileInput.click();
     });
@@ -284,68 +297,161 @@
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('drag-over');
-
-        const files = e.dataTransfer.files;
+        const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            handleFile(files[0]);
+            processFiles(files);
         }
     });
 
-    // File input change handler
+    // File input change handler - auto process
     fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFile(e.target.files[0]);
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            processFiles(files);
         }
     });
 
-    // Handle selected file
-    function handleFile(file) {
-        // Validate file type
+    // Validate file
+    function validateFile(file) {
         const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
-            alert('Invalid file type. Please upload a PDF, PNG, or JPG file.');
-            return;
+            return { valid: false, error: 'Invalid file type' };
         }
-
-        // Validate file size (16MB)
         if (file.size > 16 * 1024 * 1024) {
-            alert('File is too large. Maximum size is 16MB.');
+            return { valid: false, error: 'File too large (max 16MB)' };
+        }
+        return { valid: true };
+    }
+
+    // Process multiple files
+    async function processFiles(files) {
+        // Filter valid files
+        const validFiles = [];
+        const invalidFiles = [];
+
+        for (const file of files) {
+            const validation = validateFile(file);
+            if (validation.valid) {
+                validFiles.push(file);
+            } else {
+                invalidFiles.push({ file, error: validation.error });
+            }
+        }
+
+        if (validFiles.length === 0) {
+            alert('No valid files selected. Please upload PDF, PNG, or JPG files (max 16MB each).');
             return;
         }
 
-        // Update the file input
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput.files = dataTransfer.files;
-
-        // Show selected file info
-        fileName.textContent = file.name;
-        fileSize.textContent = `(${formatFileSize(file.size)})`;
-        selectedFile.classList.add('visible');
-        submitBtn.disabled = false;
-    }
-
-    // Format file size
-    function formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    // Remove file
-    removeFile.addEventListener('click', (e) => {
-        e.stopPropagation();
-        fileInput.value = '';
-        selectedFile.classList.remove('visible');
-        submitBtn.disabled = true;
-    });
-
-    // Form submit - show processing overlay
-    uploadForm.addEventListener('submit', (e) => {
         // Show processing overlay
         processingOverlay.classList.add('active');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-    });
+        uploadArea.classList.add('processing');
+
+        // Build file list UI
+        fileList.innerHTML = validFiles.map((f, i) => `
+            <div class="file-item" id="file-item-${i}">
+                <i class="bi bi-hourglass-split"></i>
+                <span class="file-item-name">${f.name}</span>
+                <span class="file-item-status text-muted">Waiting...</span>
+            </div>
+        `).join('');
+
+        const processedFiles = [];
+        let completed = 0;
+
+        // Process each file sequentially
+        for (let i = 0; i < validFiles.length; i++) {
+            const file = validFiles[i];
+            const fileItem = document.getElementById(`file-item-${i}`);
+
+            // Update UI for current file
+            fileItem.querySelector('i').className = 'bi bi-arrow-repeat';
+            fileItem.classList.add('processing');
+            fileItem.querySelector('.file-item-status').textContent = 'Processing...';
+            processingText.textContent = `Processing invoice ${i + 1} of ${validFiles.length}`;
+            processingSubtext.textContent = file.name;
+
+            try {
+                // Upload and process file
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('{{ url_for("upload") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.redirected) {
+                    // Extract filename from redirect URL
+                    const redirectUrl = response.url;
+                    processedFiles.push({ success: true, url: redirectUrl, file: file.name });
+
+                    fileItem.querySelector('i').className = 'bi bi-check-circle-fill';
+                    fileItem.classList.remove('processing');
+                    fileItem.classList.add('completed');
+                    fileItem.querySelector('.file-item-status').textContent = 'Done';
+                    fileItem.querySelector('.file-item-status').className = 'file-item-status text-success';
+                } else {
+                    const data = await response.json();
+                    if (data.success) {
+                        processedFiles.push({ success: true, redirect: data.redirect, file: file.name });
+
+                        fileItem.querySelector('i').className = 'bi bi-check-circle-fill';
+                        fileItem.classList.remove('processing');
+                        fileItem.classList.add('completed');
+                        fileItem.querySelector('.file-item-status').textContent = 'Done';
+                        fileItem.querySelector('.file-item-status').className = 'file-item-status text-success';
+                    } else {
+                        throw new Error(data.error || 'Processing failed');
+                    }
+                }
+            } catch (error) {
+                processedFiles.push({ success: false, error: error.message, file: file.name });
+
+                fileItem.querySelector('i').className = 'bi bi-x-circle-fill';
+                fileItem.classList.remove('processing');
+                fileItem.classList.add('error');
+                fileItem.querySelector('.file-item-status').textContent = 'Error';
+                fileItem.querySelector('.file-item-status').className = 'file-item-status text-danger';
+            }
+
+            completed++;
+            progressBar.style.width = `${(completed / validFiles.length) * 100}%`;
+        }
+
+        // All done - redirect to review all successful invoices
+        const successfulFiles = processedFiles.filter(f => f.success);
+
+        processingText.textContent = 'Processing complete!';
+        processingSubtext.textContent = `${successfulFiles.length} invoice(s) ready for review`;
+
+        setTimeout(() => {
+            if (successfulFiles.length > 0) {
+                // Extract filenames from URLs/redirects
+                const filenames = successfulFiles.map(f => {
+                    if (f.url) {
+                        // Extract filename from URL like /review/filename.jpg
+                        const match = f.url.match(/\/review\/([^?]+)/);
+                        return match ? match[1] : null;
+                    } else if (f.redirect) {
+                        const match = f.redirect.match(/\/review\/([^?]+)/);
+                        return match ? match[1] : null;
+                    }
+                    return null;
+                }).filter(f => f);
+
+                // Redirect to review with all filenames in queue
+                if (filenames.length > 0) {
+                    const queueParam = encodeURIComponent(filenames.join(','));
+                    window.location.href = `/review/${filenames[0]}?queue=${queueParam}`;
+                }
+            } else {
+                // No successful uploads
+                processingOverlay.classList.remove('active');
+                uploadArea.classList.remove('processing');
+                alert('All files failed to process. Please try again.');
+            }
+        }, 1000);
+    }
 </script>
 {% endblock %}
