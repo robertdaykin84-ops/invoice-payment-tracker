@@ -4,6 +4,7 @@ Google Sheets Manager - Handles all interactions with Google Sheets API
 
 import os
 import json
+import base64
 import logging
 from typing import Optional
 from google.oauth2.credentials import Credentials
@@ -85,16 +86,26 @@ class SheetsManager:
         """
         Authenticate with Google Sheets API
 
-        Supports two methods:
-        1. GOOGLE_CREDENTIALS environment variable (for Render/production)
-        2. credentials.json file (for local development)
+        Supports multiple methods for flexibility:
+        - GOOGLE_TOKEN env var (base64 encoded pickle) for production
+        - token.pickle file for local development
+        - GOOGLE_CREDENTIALS env var for OAuth flow
+        - credentials.json file for OAuth flow
 
         Raises:
             AuthenticationError: If authentication fails
         """
         try:
-            # Try to load existing token
-            if os.path.exists(self.token_path):
+            # Try to load existing token from environment variable first (for Render/production)
+            google_token_b64 = os.environ.get('GOOGLE_TOKEN')
+
+            if google_token_b64:
+                # Load from base64 encoded environment variable
+                logger.info("Loading token from GOOGLE_TOKEN environment variable")
+                token_bytes = base64.b64decode(google_token_b64)
+                self.creds = pickle.loads(token_bytes)
+            elif os.path.exists(self.token_path):
+                # Fall back to token file (for local development)
                 with open(self.token_path, 'rb') as token:
                     self.creds = pickle.load(token)
                 logger.info("Loaded existing credentials from token file")
@@ -104,6 +115,10 @@ class SheetsManager:
                 if self.creds and self.creds.expired and self.creds.refresh_token:
                     logger.info("Refreshing expired credentials")
                     self.creds.refresh(Request())
+
+                    # Update GOOGLE_TOKEN env var if running in production
+                    if google_token_b64:
+                        logger.info("Token refreshed - update GOOGLE_TOKEN env var with new value")
                 else:
                     # Try environment variable first (for Render/production)
                     google_creds_json = os.environ.get('GOOGLE_CREDENTIALS')
@@ -128,10 +143,11 @@ class SheetsManager:
                     logger.info("Starting OAuth flow for new credentials")
                     self.creds = flow.run_local_server(port=0)
 
-                # Save credentials for future use
-                with open(self.token_path, 'wb') as token:
-                    pickle.dump(self.creds, token)
-                logger.info("Saved new credentials to token file")
+                # Save credentials for future use (local development only)
+                if not google_token_b64:
+                    with open(self.token_path, 'wb') as token:
+                        pickle.dump(self.creds, token)
+                    logger.info("Saved new credentials to token file")
 
             # Build the service
             self.service = build('sheets', 'v4', credentials=self.creds)
