@@ -5,6 +5,7 @@ Handles invoice upload, OCR processing, and Google Sheets integration
 
 import os
 import io
+import json
 import logging
 from openpyxl import Workbook
 from openpyxl.styles import Font
@@ -219,29 +220,42 @@ def dashboard():
 def upload():
     """Handle invoice upload and processing"""
     if request.method == 'POST':
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.best == 'application/json'
+
         # Check if file was uploaded (support both 'file' and 'invoice' field names)
         file = request.files.get('file') or request.files.get('invoice')
 
         if not file:
             logger.warning("Upload attempted with no file")
-            return jsonify({
-                'success': False,
-                'error': 'No file uploaded'
-            }), 400
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': 'No file uploaded'
+                }), 400
+            flash('No file uploaded', 'danger')
+            return redirect(url_for('upload'))
 
         if file.filename == '':
             logger.warning("Upload attempted with empty filename")
-            return jsonify({
-                'success': False,
-                'error': 'No file selected'
-            }), 400
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': 'No file selected'
+                }), 400
+            flash('No file selected', 'danger')
+            return redirect(url_for('upload'))
 
         if not allowed_file(file.filename):
             logger.warning(f"Upload attempted with invalid file type: {file.filename}")
-            return jsonify({
-                'success': False,
-                'error': f'Invalid file type. Allowed types: {", ".join(app.config["ALLOWED_EXTENSIONS"])}'
-            }), 400
+            error_msg = f'Invalid file type. Allowed types: {", ".join(app.config["ALLOWED_EXTENSIONS"])}'
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': error_msg
+                }), 400
+            flash(error_msg, 'danger')
+            return redirect(url_for('upload'))
 
         # Generate unique filename and save
         filename = generate_unique_filename(file.filename)
@@ -252,10 +266,13 @@ def upload():
             logger.info(f"File saved: {filepath}")
         except Exception as e:
             logger.error(f"Failed to save file: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Failed to save uploaded file'
-            }), 500
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to save uploaded file'
+                }), 500
+            flash('Failed to save uploaded file', 'danger')
+            return redirect(url_for('upload'))
 
         # Process invoice with Claude API
         try:
@@ -265,34 +282,42 @@ def upload():
             # Check for processing errors
             if extracted_data.get('error'):
                 logger.warning(f"Invoice processing returned error: {extracted_data.get('error')}")
-                # Still return success but include the error info
+                flash(f"Warning: {extracted_data.get('error')}", 'warning')
+
+            logger.info(f"Invoice processed successfully: {extracted_data.get('invoice_number', 'N/A')}")
+
+            # Save extracted data to JSON file (session cookie is too small)
+            json_filename = filename.rsplit('.', 1)[0] + '_data.json'
+            json_filepath = os.path.join(app.config['UPLOAD_FOLDER'], json_filename)
+            with open(json_filepath, 'w') as f:
+                json.dump(extracted_data, f)
+            logger.info(f"Extracted data saved to: {json_filepath}")
+
+            # Store only the filename in session (small enough for cookie)
+            session['invoice_filename'] = filename
+
+            # Always redirect to review page for verification
+            if is_ajax:
                 return jsonify({
                     'success': True,
-                    'warning': extracted_data.get('error'),
                     'data': extracted_data,
                     'filename': filename,
                     'redirect': url_for('review', filename=filename)
                 })
 
-            # Store extracted data in session for review page
-            session['extracted_invoice'] = extracted_data
-            session['invoice_filename'] = filename
-
-            logger.info(f"Invoice processed successfully: {extracted_data.get('invoice_number', 'N/A')}")
-
-            return jsonify({
-                'success': True,
-                'data': extracted_data,
-                'filename': filename,
-                'redirect': url_for('review', filename=filename)
-            })
+            # Direct redirect for form submission
+            return redirect(url_for('review', filename=filename))
 
         except Exception as e:
             logger.error(f"Invoice processing failed: {e}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'error': f'Failed to process invoice: {str(e)}'
-            }), 500
+            error_msg = f'Failed to process invoice: {str(e)}'
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': error_msg
+                }), 500
+            flash(error_msg, 'danger')
+            return redirect(url_for('upload'))
 
     # GET request - show upload form
     return render_template('upload.html')
@@ -300,32 +325,115 @@ def upload():
 
 # ========== Review Routes ==========
 
+def convert_date_for_form(date_str):
+    """Convert date from DD/MM/YYYY to YYYY-MM-DD format for HTML date inputs"""
+    if not date_str:
+        return ''
+    # If already in YYYY-MM-DD format, return as is
+    if len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-':
+        return date_str
+    # Try to parse DD/MM/YYYY format
+    try:
+        parts = date_str.split('/')
+        if len(parts) == 3:
+            day, month, year = parts
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+    except (ValueError, IndexError):
+        pass
+    return date_str
+
+
 @app.route('/review')
 @app.route('/review/<filename>')
 @handle_errors
 @login_required
 def review(filename=None):
     """Review and edit extracted invoice data"""
-    # Try to get data from session or query params
-    invoice_data = session.get('extracted_invoice', {})
+
+    # Check if editing an existing invoice from Google Sheets
+    invoice_number = request.args.get('invoice_number')
+    if invoice_number:
+        logger.info(f"Loading existing invoice for editing: {invoice_number}")
+        try:
+            manager = get_sheets_manager()
+            invoice = manager.get_invoice_by_number(invoice_number)
+
+            if not invoice:
+                flash(f'Invoice {invoice_number} not found.', 'warning')
+                return redirect(url_for('dashboard'))
+
+            # Get associated payment details
+            payment_details = None
+            all_payments = manager.get_all_payment_details()
+            for payment in all_payments:
+                if payment.get('invoice_number') == invoice_number:
+                    payment_details = payment
+                    break
+
+            # Format invoice data for the template (convert dates for form inputs)
+            invoice_data = {
+                'invoice_number': invoice.get('invoice_number', ''),
+                'supplier_name': invoice.get('supplier_name', ''),
+                'contact_email': invoice.get('contact_email', ''),
+                'contact_phone': invoice.get('contact_phone', ''),
+                'invoice_date': convert_date_for_form(invoice.get('invoice_date', '')),
+                'due_date': convert_date_for_form(invoice.get('due_date', '')),
+                'amount': invoice.get('amount', 0),
+                'currency': invoice.get('currency', 'GBP'),
+                'status': invoice.get('status', ''),
+                'payment_date': convert_date_for_form(invoice.get('payment_date', '')),
+                'notes': invoice.get('notes', ''),
+                'payment_details': payment_details,
+                '_row_id': invoice.get('id')  # Row number for updates
+            }
+
+            return render_template('review.html', invoice=invoice_data, is_editing=True)
+
+        except Exception as e:
+            logger.error(f"Error loading invoice for editing: {e}")
+            flash(f'Error loading invoice: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))
+
+    # Try to get data from JSON file or query params (for new uploads)
     filename = filename or session.get('invoice_filename') or request.args.get('filename')
+    invoice_data = {}
 
     if filename:
+        # Try to load extracted data from JSON file
+        json_filename = filename.rsplit('.', 1)[0] + '_data.json'
+        json_filepath = os.path.join(app.config['UPLOAD_FOLDER'], json_filename)
+
+        if os.path.exists(json_filepath):
+            try:
+                with open(json_filepath, 'r') as f:
+                    invoice_data = json.load(f)
+                logger.info(f"Loaded extracted data from: {json_filepath}")
+            except Exception as e:
+                logger.warning(f"Could not load JSON data: {e}")
+
         invoice_data['file_path'] = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-    return render_template('review.html', invoice=invoice_data)
+    if not invoice_data or not invoice_data.get('invoice_number'):
+        flash('No invoice data found. Please upload an invoice first.', 'warning')
+        return redirect(url_for('upload'))
+
+    return render_template('review.html', invoice=invoice_data, is_editing=False)
 
 
 @app.route('/save-invoice', methods=['POST'])
 @handle_errors
 @login_required
 def save_invoice():
-    """Save invoice data to Google Sheets"""
+    """Save invoice data to Google Sheets (create new or update existing)"""
     # Get form data
     if request.is_json:
         data = request.get_json()
     else:
         data = request.form.to_dict()
+
+    # Check if this is an edit of an existing invoice
+    is_editing = data.get('is_editing') == 'true' or data.get('is_editing') == True
+    row_id = data.get('_row_id')
 
     # Validate required fields
     required_fields = ['invoice_number', 'supplier_name', 'amount']
@@ -373,12 +481,21 @@ def save_invoice():
                 'payment_reference': data.get('payment_reference', '').strip()
             }
 
-    # Save to Google Sheets
+    # Save to Google Sheets (update or create)
     try:
-        result = save_to_sheets(invoice_data)
+        manager = get_sheets_manager()
+
+        if is_editing and row_id:
+            # Update existing invoice
+            row_number = int(row_id)
+            result = manager.update_invoice(row_number, invoice_data)
+            logger.info(f"Updated existing invoice: {invoice_data['invoice_number']} at row {row_number}")
+        else:
+            # Create new invoice
+            result = save_to_sheets(invoice_data)
 
         if result.get('success'):
-            # Always save supplier to payment details tab
+            # Handle payment details
             has_payment_info = payment_details and any(payment_details.values())
             payment_data = {
                 'invoice_number': invoice_data['invoice_number'],
@@ -395,25 +512,44 @@ def save_invoice():
                 'upload_date': '',
                 'notes': f'Auto-populated from invoice {invoice_data["invoice_number"]}' if has_payment_info else f'Awaiting payment details - from invoice {invoice_data["invoice_number"]}'
             }
+
             try:
-                save_payment_to_sheets(payment_data)
-                logger.info(f"Payment details saved for supplier: {invoice_data['supplier_name']}")
+                if is_editing:
+                    # Check if payment details exist for this invoice and update them
+                    existing_payment = None
+                    all_payments = manager.get_all_payment_details()
+                    for p in all_payments:
+                        if p.get('invoice_number') == invoice_data['invoice_number']:
+                            existing_payment = p
+                            break
+
+                    if existing_payment:
+                        manager.update_payment_details(existing_payment['id'], payment_data)
+                        logger.info(f"Payment details updated for invoice: {invoice_data['invoice_number']}")
+                    else:
+                        save_payment_to_sheets(payment_data)
+                        logger.info(f"Payment details created for invoice: {invoice_data['invoice_number']}")
+                else:
+                    save_payment_to_sheets(payment_data)
+                    logger.info(f"Payment details saved for supplier: {invoice_data['supplier_name']}")
             except Exception as e:
                 logger.warning(f"Failed to save payment details: {e}")
 
-            # Clear session data
-            session.pop('extracted_invoice', None)
-            session.pop('invoice_filename', None)
+            # Clear session data (only for new uploads)
+            if not is_editing:
+                session.pop('extracted_invoice', None)
+                session.pop('invoice_filename', None)
 
-            logger.info(f"Invoice saved to sheets: {invoice_data['invoice_number']}")
+            success_msg = 'Invoice updated successfully!' if is_editing else 'Invoice saved successfully!'
+            logger.info(f"Invoice {'updated' if is_editing else 'saved'} to sheets: {invoice_data['invoice_number']}")
 
             if request.is_json:
                 return jsonify({
                     'success': True,
-                    'message': 'Invoice saved successfully',
+                    'message': success_msg,
                     'redirect': url_for('dashboard')
                 })
-            flash('Invoice saved successfully!', 'success')
+            flash(success_msg, 'success')
             return redirect(url_for('dashboard'))
         else:
             error_msg = result.get('message', 'Failed to save invoice')

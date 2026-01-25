@@ -13,7 +13,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import pickle
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -37,6 +37,42 @@ PAYMENT_COLUMNS = [
     'Sort Code', 'SWIFT/BIC', 'Bank Name', 'Bank Address',
     'Payment Reference', 'Status', 'Upload Date', 'Notes'
 ]
+
+
+def excel_date_to_string(excel_date):
+    """
+    Convert Excel serial date to DD/MM/YYYY string format.
+
+    Args:
+        excel_date: Excel serial date number or string date
+
+    Returns:
+        Date string in DD/MM/YYYY format, or original value if already a string
+    """
+    if excel_date is None or excel_date == '':
+        return ''
+
+    # If it's already a string that looks like a date, return it
+    if isinstance(excel_date, str):
+        # Check if it's a numeric string (Excel serial)
+        try:
+            num = float(excel_date)
+            if num > 1000:  # Likely an Excel serial date
+                date = datetime(1899, 12, 30) + timedelta(days=int(num))
+                return date.strftime('%d/%m/%Y')
+        except ValueError:
+            pass
+        return excel_date
+
+    # If it's a number, convert from Excel serial
+    if isinstance(excel_date, (int, float)):
+        try:
+            date = datetime(1899, 12, 30) + timedelta(days=int(excel_date))
+            return date.strftime('%d/%m/%Y')
+        except (ValueError, OverflowError):
+            return str(excel_date)
+
+    return str(excel_date)
 
 
 class SheetsManagerError(Exception):
@@ -277,12 +313,12 @@ class SheetsManager:
                     'supplier_name': row[1],
                     'contact_email': row[2],
                     'contact_phone': row[3],
-                    'invoice_date': row[4],
-                    'due_date': row[5],
+                    'invoice_date': excel_date_to_string(row[4]),
+                    'due_date': excel_date_to_string(row[5]),
                     'amount': amount,
                     'currency': row[7] or 'GBP',
                     'status': row[8] or 'Pending Review',
-                    'payment_date': row[9],
+                    'payment_date': excel_date_to_string(row[9]),
                     'notes': row[10]
                 }
                 invoices.append(invoice)
@@ -625,29 +661,58 @@ class SheetsManager:
         stats = {
             'total_invoices': len(invoices),
             'paid': 0,
+            'approved': 0,
             'pending': 0,
             'overdue': 0,
+            'rejected': 0,
             'total_amount': 0.0,
             'paid_amount': 0.0,
+            'approved_amount': 0.0,
             'pending_amount': 0.0
         }
 
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = datetime.now().date()
 
         for invoice in invoices:
             amount = invoice.get('amount', 0)
             status = invoice.get('status', '').lower()
-            due_date = invoice.get('due_date', '')
+            due_date_str = invoice.get('due_date', '')
 
             stats['total_amount'] += amount
+
+            # Parse due date for overdue check (handles DD/MM/YYYY format)
+            due_date = None
+            if due_date_str:
+                try:
+                    # Try DD/MM/YYYY format first
+                    if '/' in due_date_str:
+                        parts = due_date_str.split('/')
+                        if len(parts) == 3:
+                            due_date = datetime(int(parts[2]), int(parts[1]), int(parts[0])).date()
+                    # Try YYYY-MM-DD format
+                    elif '-' in due_date_str and len(due_date_str) == 10:
+                        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+                except (ValueError, IndexError):
+                    due_date = None
 
             if 'paid' in status:
                 stats['paid'] += 1
                 stats['paid_amount'] += amount
-            elif due_date and due_date < today and 'paid' not in status:
+            elif 'reject' in status:
+                stats['rejected'] += 1
+            elif 'approved' in status:
+                stats['approved'] += 1
+                stats['approved_amount'] += amount
+            elif 'overdue' in status:
+                # Only count as overdue if explicitly marked as overdue
                 stats['overdue'] += 1
                 stats['pending_amount'] += amount
+            elif 'pending' in status or 'review' in status:
+                # Pending or pending review stays pending
+                stats['pending'] += 1
+                stats['pending_amount'] += amount
             else:
+                # No explicit status - count as pending
                 stats['pending'] += 1
                 stats['pending_amount'] += amount
 
@@ -758,7 +823,7 @@ class SheetsManager:
                     'bank_address': row[8],
                     'payment_reference': row[9],
                     'status': row[10] or 'Ready for Upload',
-                    'upload_date': row[11],
+                    'upload_date': excel_date_to_string(row[11]),
                     'notes': row[12]
                 }
                 payments.append(payment)

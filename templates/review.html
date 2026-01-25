@@ -166,19 +166,52 @@
     <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
-    <p>Saving to Google Sheets...</p>
+    <p>{% if is_editing %}Updating invoice...{% else %}Saving to Google Sheets...{% endif %}</p>
 </div>
 
 <div class="review-container">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
+            {% if is_editing %}
+            <h2 class="mb-1">Update Invoice Details</h2>
+            <p class="text-muted mb-0">
+                Edit the invoice information below and save changes
+                <span class="badge bg-secondary ms-2"><i class="bi bi-pencil me-1"></i>Editing</span>
+            </p>
+            {% else %}
             <h2 class="mb-1">Review Invoice</h2>
             <p class="text-muted mb-0">
                 Verify the extracted information before saving
                 <span class="ai-badge"><i class="bi bi-stars"></i>AI Extracted</span>
             </p>
+            {% endif %}
         </div>
+        {% if total_invoices is defined and total_invoices > 1 and not is_editing %}
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary fs-6">{{ current_index + 1 }} of {{ total_invoices }}</span>
+            <div class="btn-group">
+                {% if has_previous %}
+                <a href="{{ url_for('review', index=current_index - 1) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>
+                    <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                {% endif %}
+                {% if has_next %}
+                <a href="{{ url_for('review', index=current_index + 1) }}" class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Success/Error Messages -->
@@ -199,6 +232,8 @@
     <form id="invoice-form" action="{{ url_for('save_invoice') }}" method="POST" novalidate data-track-changes>
         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
         <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">
+        <input type="hidden" name="is_editing" value="{{ 'true' if is_editing else 'false' }}">
+        <input type="hidden" name="_row_id" value="{{ invoice._row_id|default('') }}">
 
         <div class="card mb-4">
             <div class="card-body">
@@ -227,10 +262,13 @@
                         </label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="">Select status...</option>
-                            <option value="pending" {% if invoice.status == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
-                            <option value="overdue" {% if invoice.status == 'overdue' %}selected{% endif %}>Overdue</option>
-                            <option value="cancelled" {% if invoice.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            <option value="Pending Review" {% if 'pending review' in invoice.status|lower or (not invoice.status and not is_editing) %}selected{% endif %}>Pending Review</option>
+                            <option value="Pending" {% if invoice.status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="Approved" {% if 'approved' in invoice.status|lower %}selected{% endif %}>Approved</option>
+                            <option value="Paid" {% if 'paid' in invoice.status|lower %}selected{% endif %}>Paid</option>
+                            <option value="Overdue" {% if 'overdue' in invoice.status|lower %}selected{% endif %}>Overdue</option>
+                            <option value="Rejected" {% if 'reject' in invoice.status|lower %}selected{% endif %}>Rejected</option>
+                            <option value="Cancelled" {% if 'cancel' in invoice.status|lower %}selected{% endif %}>Cancelled</option>
                         </select>
                         <div class="invalid-feedback">Please select a status.</div>
                     </div>
@@ -428,12 +466,33 @@
 
         <!-- Action Buttons -->
         <div class="btn-actions mb-4">
-            <a href="{{ url_for('upload') }}" class="btn btn-outline-secondary">
+            {% if is_editing %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-lg me-2"></i>Cancel
             </a>
             <button type="submit" class="btn btn-primary btn-save">
-                <i class="bi bi-cloud-upload me-2"></i>Save to Google Sheets
+                <i class="bi bi-check-lg me-2"></i>Update Invoice
             </button>
+            {% else %}
+            <a href="{{ url_for('upload', clear=1) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-2"></i>Cancel
+            </a>
+            <div class="d-flex gap-2">
+                {% if total_invoices is defined and total_invoices > 1 %}
+                <a href="{{ url_for('skip_invoice', index=current_index) }}" class="btn btn-outline-warning">
+                    <i class="bi bi-skip-forward me-2"></i>Skip This Invoice
+                </a>
+                {% endif %}
+                <button type="submit" class="btn btn-primary btn-save">
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    {% if total_invoices is defined and total_invoices > 1 %}
+                        Save & Continue ({{ total_invoices - 1 }} remaining)
+                    {% else %}
+                        Save to Google Sheets
+                    {% endif %}
+                </button>
+            </div>
+            {% endif %}
         </div>
     </form>
 </div>

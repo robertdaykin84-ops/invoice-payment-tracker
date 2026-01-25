@@ -2,7 +2,216 @@
 
 {% block title %}Home - Invoice Tracker{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Stat Items */
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.15s ease;
+    }
+
+    .stat-item:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon i {
+        font-size: 1.25rem;
+    }
+
+    .stat-content {
+        min-width: 0;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        font-weight: 500;
+    }
+
+    /* Light red reject button */
+    .btn-danger-soft {
+        background-color: #fee2e2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+
+    .btn-danger-soft:hover {
+        background-color: #fecaca;
+        border-color: #fca5a5;
+        color: #b91c1c;
+    }
+
+    /* Selection Badge */
+    .selection-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8125rem;
+    }
+
+    .selection-badge .btn-close {
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Toast Container */
+    .toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10000;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    /* Checkbox styling */
+    .invoice-table .form-check-input {
+        cursor: pointer;
+    }
+
+    .invoice-table tbody tr.main-row {
+        transition: background-color 0.15s ease;
+    }
+
+    .invoice-table tbody tr.main-row.selected {
+        background-color: rgba(37, 99, 235, 0.08);
+    }
+
+    .invoice-table tbody tr.main-row:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+
+    .invoice-table tbody tr.main-row.selected:hover {
+        background-color: rgba(37, 99, 235, 0.12);
+    }
+
+    .invoice-table tbody tr.main-row.expanded {
+        background-color: rgba(37, 99, 235, 0.05);
+    }
+
+    /* Expanded Row Details */
+    .expanded-details {
+        display: none;
+        background: var(--gray-50, #f9fafb);
+        border-bottom: 2px solid #3b82f6;
+    }
+
+    .expanded-details.show {
+        display: table-row;
+        animation: slideDown 0.3s ease;
+    }
+
+    .expanded-content {
+        padding: 1.25rem;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .detail-item {
+        background: #fff;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .detail-label {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        color: #1f2937;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .detail-value.mono {
+        font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .detail-value.empty {
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+    .copy-btn {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .no-payment-details {
+        text-align: center;
+        padding: 1.5rem;
+        color: #6b7280;
+    }
+
+    .no-payment-details i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted fw-medium" id="loadingText">Processing...</p>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 <!-- Welcome Section -->
 <div class="row mb-4">
     <div class="col-12">
@@ -25,70 +234,78 @@
 </div>
 
 <!-- Quick Stats Section -->
-<div class="row mb-4">
-    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                            <i class="bi bi-receipt text-primary fs-4"></i>
-                        </div>
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <div class="row g-3">
+            <!-- Total -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon bg-primary bg-opacity-10">
+                        <i class="bi bi-receipt text-primary"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1">Total Invoices</h6>
-                        <h3 class="mb-0">{{ stats.total_invoices|default(0) }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                            <i class="bi bi-check-circle text-success fs-4"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1">Paid</h6>
-                        <h3 class="mb-0">{{ stats.paid|default(0) }}</h3>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.total_invoices|default(0) }}</div>
+                        <div class="stat-label">Total</div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                            <i class="bi bi-clock text-warning fs-4"></i>
-                        </div>
+            <!-- Paid -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon bg-success bg-opacity-10">
+                        <i class="bi bi-check-circle text-success"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1">Pending</h6>
-                        <h3 class="mb-0">{{ stats.pending|default(0) }}</h3>
+                    <div class="stat-content">
+                        <div class="stat-value text-success">{{ stats.paid|default(0) }}</div>
+                        <div class="stat-label">Paid</div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
-                            <i class="bi bi-exclamation-circle text-danger fs-4"></i>
-                        </div>
+            <!-- Approved -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon bg-info bg-opacity-10">
+                        <i class="bi bi-check2-square text-info"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1">Overdue</h6>
-                        <h3 class="mb-0">{{ stats.overdue|default(0) }}</h3>
+                    <div class="stat-content">
+                        <div class="stat-value text-info">{{ stats.approved|default(0) }}</div>
+                        <div class="stat-label">Approved</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Pending -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon bg-warning bg-opacity-10">
+                        <i class="bi bi-clock text-warning"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value text-warning">{{ stats.pending|default(0) }}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Overdue -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon bg-danger bg-opacity-10">
+                        <i class="bi bi-exclamation-circle text-danger"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value text-danger">{{ stats.overdue|default(0) }}</div>
+                        <div class="stat-label">Overdue</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Rejected -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-item">
+                    <div class="stat-icon" style="background-color: rgba(244, 63, 94, 0.1);">
+                        <i class="bi bi-x-circle" style="color: #f43f5e;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" style="color: #f43f5e;">{{ stats.rejected|default(0) }}</div>
+                        <div class="stat-label">Rejected</div>
                     </div>
                 </div>
             </div>
@@ -100,16 +317,37 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-clock-history me-2"></i>Recent Invoices</span>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><i class="bi bi-clock-history me-2"></i>Recent Invoices</span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Selection indicator - only shows when items selected -->
+                        <span class="badge bg-primary selection-badge" id="selectionBadge" style="display: none;">
+                            <span id="selectedCount">0</span> selected
+                            <button type="button" class="btn-close btn-close-white ms-2" id="clearSelectionBtn" style="font-size: 0.6rem;"></button>
+                        </span>
+                        <!-- Action buttons - always visible -->
+                        <button class="btn btn-sm btn-success" id="approveSelectedBtn">
+                            <i class="bi bi-check-circle me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger-soft" id="rejectSelectedBtn">
+                            <i class="bi bi-x-circle me-1"></i>Reject
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="downloadSelectedBtn">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Download Excel
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 {% if recent_invoices %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle invoice-table" id="invoiceTable">
                         <thead>
                             <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="selectAll" title="Select all">
+                                </th>
                                 <th>Invoice #</th>
                                 <th>Supplier</th>
                                 <th>Invoice Date</th>
@@ -121,18 +359,35 @@
                         </thead>
                         <tbody>
                             {% for invoice in recent_invoices %}
-                            <tr>
+                            {% set payment = namespace(data=none) %}
+                            {% for p in payment_details %}
+                                {% if p.invoice_number == invoice.invoice_number %}
+                                    {% set payment.data = p %}
+                                {% endif %}
+                            {% endfor %}
+                            <tr class="main-row" data-invoice="{{ invoice.invoice_number }}" data-id="{{ loop.index }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-select"
+                                           value="{{ invoice.invoice_number }}"
+                                           data-supplier="{{ invoice.supplier_name }}"
+                                           data-amount="{{ invoice.amount }}"
+                                           data-currency="{{ invoice.currency|default('GBP') }}">
+                                </td>
                                 <td><strong>{{ invoice.invoice_number }}</strong></td>
                                 <td>{{ invoice.supplier_name }}</td>
                                 <td>{{ invoice.invoice_date }}</td>
                                 <td>{{ invoice.due_date }}</td>
-                                <td>${{ "%.2f"|format(invoice.amount) }}</td>
+                                <td>{{ invoice.currency|default('GBP') }} {{ "%.2f"|format(invoice.amount) }}</td>
                                 <td>
-                                    {% if invoice.status == 'paid' %}
+                                    {% if 'paid' in invoice.status|lower %}
                                         <span class="badge bg-success">Paid</span>
-                                    {% elif invoice.status == 'pending' %}
+                                    {% elif 'approved' in invoice.status|lower %}
+                                        <span class="badge bg-info">Approved</span>
+                                    {% elif 'reject' in invoice.status|lower %}
+                                        <span class="badge" style="background-color: #f43f5e;">Rejected</span>
+                                    {% elif 'pending' in invoice.status|lower %}
                                         <span class="badge bg-warning text-dark">Pending</span>
-                                    {% elif invoice.status == 'overdue' %}
+                                    {% elif 'overdue' in invoice.status|lower %}
                                         <span class="badge bg-danger">Overdue</span>
                                     {% else %}
                                         <span class="badge bg-secondary">{{ invoice.status }}</span>
@@ -149,6 +404,11 @@
                                                     <i class="bi bi-pencil me-2"></i>Update Details
                                                 </a>
                                             </li>
+                                            <li>
+                                                <a class="dropdown-item payment-details-btn" href="#" data-id="{{ loop.index }}">
+                                                    <i class="bi bi-credit-card me-2"></i>Payment Details
+                                                </a>
+                                            </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
                                                 <a class="dropdown-item text-danger" href="#" onclick="deleteInvoice('{{ invoice.invoice_number }}'); return false;">
@@ -156,6 +416,80 @@
                                                 </a>
                                             </li>
                                         </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Expanded Payment Details Row -->
+                            <tr class="expanded-details" data-parent="{{ loop.index }}">
+                                <td colspan="8">
+                                    <div class="expanded-content">
+                                        {% if payment.data %}
+                                        <div class="detail-grid">
+                                            <div class="detail-item">
+                                                <div class="detail-label">Beneficiary Account Name</div>
+                                                <div class="detail-value {% if not payment.data.beneficiary_account_name %}empty{% endif %}">
+                                                    {{ payment.data.beneficiary_account_name|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Account Number</div>
+                                                <div class="detail-value mono {% if not payment.data.account_number %}empty{% endif %}">
+                                                    {{ payment.data.account_number|default('Not provided') }}
+                                                    {% if payment.data.account_number %}
+                                                    <button class="btn btn-outline-secondary copy-btn" data-copy="{{ payment.data.account_number }}" title="Copy">
+                                                        <i class="bi bi-clipboard"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Sort Code</div>
+                                                <div class="detail-value mono {% if not payment.data.sort_code %}empty{% endif %}">
+                                                    {{ payment.data.sort_code|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">IBAN</div>
+                                                <div class="detail-value mono {% if not payment.data.iban %}empty{% endif %}">
+                                                    {{ payment.data.iban|default('Not provided') }}
+                                                    {% if payment.data.iban %}
+                                                    <button class="btn btn-outline-secondary copy-btn" data-copy="{{ payment.data.iban }}" title="Copy">
+                                                        <i class="bi bi-clipboard"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">SWIFT/BIC Code</div>
+                                                <div class="detail-value mono {% if not payment.data.swift_code %}empty{% endif %}">
+                                                    {{ payment.data.swift_code|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Bank Name</div>
+                                                <div class="detail-value {% if not payment.data.bank_name %}empty{% endif %}">
+                                                    {{ payment.data.bank_name|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Bank Address</div>
+                                                <div class="detail-value {% if not payment.data.bank_address %}empty{% endif %}">
+                                                    {{ payment.data.bank_address|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Payment Reference</div>
+                                                <div class="detail-value {% if not payment.data.payment_reference %}empty{% endif %}">
+                                                    {{ payment.data.payment_reference|default('Not provided') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="no-payment-details">
+                                            <i class="bi bi-credit-card-2-front"></i>
+                                            <p class="mb-0">No payment details available for this invoice</p>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -183,30 +517,286 @@
 
 {% block extra_js %}
 <script>
-function deleteInvoice(invoiceNumber) {
-    if (!confirm('Are you sure you want to delete invoice ' + invoiceNumber + '? This action cannot be undone.')) {
-        return;
+    // DOM Elements
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-select');
+    const selectionBadge = document.getElementById('selectionBadge');
+    const selectedCountEl = document.getElementById('selectedCount');
+    const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+    const approveSelectedBtn = document.getElementById('approveSelectedBtn');
+    const rejectSelectedBtn = document.getElementById('rejectSelectedBtn');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+
+    // Update selection UI
+    function updateSelectionUI() {
+        const checkedBoxes = document.querySelectorAll('.row-select:checked');
+        const count = checkedBoxes.length;
+
+        if (selectedCountEl) {
+            selectedCountEl.textContent = count;
+        }
+
+        // Show/hide selection badge
+        if (selectionBadge) {
+            selectionBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Update row highlighting
+        document.querySelectorAll('.invoice-table tbody tr.main-row').forEach(row => {
+            const checkbox = row.querySelector('.row-select');
+            if (checkbox && checkbox.checked) {
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+        });
+
+        // Update select all checkbox state
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = count > 0 && count === rowCheckboxes.length;
+            selectAllCheckbox.indeterminate = count > 0 && count < rowCheckboxes.length;
+        }
     }
 
-    fetch('/api/invoices/' + encodeURIComponent(invoiceNumber), {
-        method: 'DELETE',
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Invoice deleted successfully');
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'Failed to delete invoice'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error deleting invoice. Please try again.');
+    // Get selected invoice numbers
+    function getSelectedInvoices() {
+        const checkedBoxes = document.querySelectorAll('.row-select:checked');
+        return Array.from(checkedBoxes).map(cb => cb.value);
+    }
+
+    // Select All checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateSelectionUI();
+        });
+    }
+
+    // Individual row checkboxes
+    rowCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelectionUI);
     });
-}
+
+    // Clear selection button
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', function() {
+            rowCheckboxes.forEach(cb => cb.checked = false);
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateSelectionUI();
+        });
+    }
+
+    // Toggle payment details expansion
+    function togglePaymentDetails(rowId) {
+        const mainRow = document.querySelector(`.main-row[data-id="${rowId}"]`);
+        const expandedRow = document.querySelector(`.expanded-details[data-parent="${rowId}"]`);
+
+        if (mainRow && expandedRow) {
+            mainRow.classList.toggle('expanded');
+            expandedRow.classList.toggle('show');
+        }
+    }
+
+    // Payment Details button click handler
+    document.querySelectorAll('.payment-details-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const rowId = this.dataset.id;
+            togglePaymentDetails(rowId);
+        });
+    });
+
+    // Copy to clipboard
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const text = this.dataset.copy;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!', 'success');
+                const icon = this.querySelector('i');
+                icon.classList.replace('bi-clipboard', 'bi-check');
+                setTimeout(() => icon.classList.replace('bi-check', 'bi-clipboard'), 1500);
+            });
+        });
+    });
+
+    // Download Excel Report for selected invoices
+    if (downloadSelectedBtn) {
+        downloadSelectedBtn.addEventListener('click', function() {
+            const selectedInvoices = getSelectedInvoices();
+            if (selectedInvoices.length === 0) {
+                showToast('Please select one or more invoices using the checkboxes first', 'warning');
+                return;
+            }
+
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Generating Excel report...';
+
+            fetch('/api/invoices/download-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ invoice_numbers: selectedInvoices })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to generate report');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Invoice_Report_' + new Date().toISOString().split('T')[0] + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                showToast('Report downloaded successfully', 'success');
+            })
+            .catch(err => {
+                showToast('Failed to download report: ' + err.message, 'danger');
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active');
+            });
+        });
+    }
+
+    // Approve Payments for selected invoices
+    if (approveSelectedBtn) {
+        approveSelectedBtn.addEventListener('click', function() {
+            const selectedInvoices = getSelectedInvoices();
+            if (selectedInvoices.length === 0) {
+                showToast('Please select one or more invoices using the checkboxes first', 'warning');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to approve payment for ${selectedInvoices.length} invoice(s)? This will mark them as Approved.`)) {
+                return;
+            }
+
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Approving payments...';
+
+            fetch('/api/invoices/approve-payments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ invoice_numbers: selectedInvoices })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Successfully approved ${data.approved_count} invoice(s)`, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error: ' + (data.error || 'Failed to approve payments'), 'danger');
+                }
+            })
+            .catch(err => {
+                showToast('Error approving payments: ' + err.message, 'danger');
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active');
+            });
+        });
+    }
+
+    // Reject selected invoices
+    if (rejectSelectedBtn) {
+        rejectSelectedBtn.addEventListener('click', function() {
+            const selectedInvoices = getSelectedInvoices();
+            if (selectedInvoices.length === 0) {
+                showToast('Please select one or more invoices using the checkboxes first', 'warning');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to reject ${selectedInvoices.length} invoice(s)? This will mark them as Rejected.`)) {
+                return;
+            }
+
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Rejecting invoices...';
+
+            fetch('/api/invoices/reject', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ invoice_numbers: selectedInvoices })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Successfully rejected ${data.rejected_count} invoice(s)`, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error: ' + (data.error || 'Failed to reject invoices'), 'danger');
+                }
+            })
+            .catch(err => {
+                showToast('Error rejecting invoices: ' + err.message, 'danger');
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active');
+            });
+        });
+    }
+
+    // Delete invoice function
+    function deleteInvoice(invoiceNumber) {
+        if (!confirm('Are you sure you want to delete invoice ' + invoiceNumber + '? This action cannot be undone.')) {
+            return;
+        }
+
+        loadingOverlay.classList.add('active');
+        loadingText.textContent = 'Deleting invoice...';
+
+        fetch('/api/invoices/' + encodeURIComponent(invoiceNumber), {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Invoice deleted successfully', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to delete invoice'), 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting invoice. Please try again.', 'danger');
+        })
+        .finally(() => {
+            loadingOverlay.classList.remove('active');
+        });
+    }
+
+    // Toast notification helper
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
 </script>
 {% endblock %}
