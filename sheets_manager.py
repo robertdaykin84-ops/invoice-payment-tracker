@@ -148,7 +148,26 @@ class SheetsManager:
                 # Load from base64 encoded environment variable
                 logger.info("Loading token from GOOGLE_TOKEN environment variable")
                 token_bytes = base64.b64decode(google_token_b64)
-                self.creds = pickle.loads(token_bytes)
+
+                # Try JSON format first (more portable), then pickle
+                try:
+                    token_str = token_bytes.decode('utf-8')
+                    token_data = json.loads(token_str)
+                    # Reconstruct credentials from JSON
+                    from google.oauth2.credentials import Credentials
+                    self.creds = Credentials(
+                        token=token_data.get('token'),
+                        refresh_token=token_data.get('refresh_token'),
+                        token_uri=token_data.get('token_uri'),
+                        client_id=token_data.get('client_id'),
+                        client_secret=token_data.get('client_secret'),
+                        scopes=token_data.get('scopes')
+                    )
+                    logger.info("Loaded credentials from JSON format")
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    # Fall back to pickle format
+                    self.creds = pickle.loads(token_bytes)
+                    logger.info("Loaded credentials from pickle format")
             elif os.path.exists(self.token_path):
                 # Fall back to token file (for local development)
                 with open(self.token_path, 'rb') as token:
