@@ -265,9 +265,11 @@ Return ONLY the JSON object, no additional text or markdown formatting."""
                 currency = 'GBP'  # Default
         result['currency'] = currency
 
-        # Clean phone number
+        # Clean phone number - ensure it's a string first
         phone = result.get('contact_phone', '')
         if phone:
+            # Convert to string in case AI returned a number
+            phone = str(phone)
             # Remove extra spaces but keep formatting
             result['contact_phone'] = ' '.join(phone.split())
 

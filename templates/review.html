@@ -229,6 +229,21 @@
     </div>
     {% endif %}
 
+    {% if invoice._potential_duplicate %}
+    <div class="alert alert-warning alert-permanent" role="alert">
+        <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Potential Duplicate Invoice Detected</h5>
+        <p class="mb-2">An invoice with the same <strong>supplier name</strong> and <strong>invoice number</strong> already exists:</p>
+        <ul class="mb-2">
+            <li><strong>Invoice #:</strong> {{ invoice._duplicate_info.invoice_number }}</li>
+            <li><strong>Supplier:</strong> {{ invoice._duplicate_info.supplier_name }}</li>
+            <li><strong>Date:</strong> {{ invoice._duplicate_info.invoice_date }}</li>
+            <li><strong>Amount:</strong> {{ invoice._duplicate_info.amount }}</li>
+        </ul>
+        <hr>
+        <p class="mb-0">Please verify this is not a duplicate before saving. You can still proceed if this is a different invoice.</p>
+    </div>
+    {% endif %}
+
     <form id="invoice-form" action="{{ url_for('save_invoice') }}" method="POST" novalidate data-track-changes>
         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
         <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">

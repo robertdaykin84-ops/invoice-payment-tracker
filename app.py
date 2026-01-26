@@ -182,6 +182,7 @@ def index():
         manager = get_sheets_manager()
         stats = manager.get_invoice_stats()
         recent_invoices = manager.get_recent_invoices(limit=5)
+        payment_details = manager.get_all_payment_details()
     except Exception as e:
         logger.warning(f"Could not load dashboard data: {e}")
         stats = {
@@ -191,8 +192,9 @@ def index():
             'overdue': 0
         }
         recent_invoices = []
+        payment_details = []
 
-    return render_template('index.html', stats=stats, recent_invoices=recent_invoices)
+    return render_template('index.html', stats=stats, recent_invoices=recent_invoices, payment_details=payment_details)
 
 
 @app.route('/dashboard')
@@ -204,12 +206,14 @@ def dashboard():
         manager = get_sheets_manager()
         invoices = manager.get_all_invoices()
         stats = manager.get_invoice_stats()
+        payment_details = manager.get_all_payment_details()
     except Exception as e:
         logger.warning(f"Could not load dashboard data: {e}")
         invoices = []
         stats = {}
+        payment_details = []
 
-    return render_template('index.html', stats=stats, recent_invoices=invoices)
+    return render_template('index.html', stats=stats, recent_invoices=invoices, payment_details=payment_details)
 
 
 # ========== Upload Routes ==========
@@ -285,6 +289,30 @@ def upload():
                 flash(f"Warning: {extracted_data.get('error')}", 'warning')
 
             logger.info(f"Invoice processed successfully: {extracted_data.get('invoice_number', 'N/A')}")
+
+            # Check for duplicate invoice (same supplier + invoice number)
+            try:
+                manager = get_sheets_manager()
+                existing_invoices = manager.get_all_invoices()
+                new_invoice_num = extracted_data.get('invoice_number', '').strip().lower()
+                new_supplier = extracted_data.get('supplier_name', '').strip().lower()
+
+                for existing in existing_invoices:
+                    existing_num = str(existing.get('invoice_number', '')).strip().lower()
+                    existing_supplier = str(existing.get('supplier_name', '')).strip().lower()
+
+                    if new_invoice_num and new_supplier and new_invoice_num == existing_num and new_supplier == existing_supplier:
+                        extracted_data['_potential_duplicate'] = True
+                        extracted_data['_duplicate_info'] = {
+                            'invoice_number': existing.get('invoice_number'),
+                            'supplier_name': existing.get('supplier_name'),
+                            'invoice_date': existing.get('invoice_date'),
+                            'amount': existing.get('amount')
+                        }
+                        logger.warning(f"Potential duplicate invoice detected: {new_invoice_num} from {new_supplier}")
+                        break
+            except Exception as e:
+                logger.warning(f"Could not check for duplicates: {e}")
 
             # Save extracted data to JSON file (session cookie is too small)
             json_filename = filename.rsplit('.', 1)[0] + '_data.json'
@@ -1153,6 +1181,94 @@ def api_delete_invoice(invoice_number):
             }), 404
     except Exception as e:
         logger.error(f"API error deleting invoice: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ========== Approve/Reject Routes ==========
+
+@app.route('/api/invoices/approve-payments', methods=['POST'])
+@handle_errors
+@login_required
+def api_approve_payments():
+    """API: Approve selected invoices (change status to Approved)"""
+    try:
+        data = request.get_json() or {}
+        invoice_numbers = data.get('invoice_numbers', [])
+
+        if not invoice_numbers:
+            return jsonify({
+                'success': False,
+                'error': 'No invoices selected'
+            }), 400
+
+        manager = get_sheets_manager()
+        approved_count = 0
+
+        for invoice_number in invoice_numbers:
+            try:
+                result = manager.update_invoice_status(invoice_number, 'Approved')
+                if result.get('success'):
+                    approved_count += 1
+                    logger.info(f"Invoice approved: {invoice_number}")
+                else:
+                    logger.warning(f"Failed to approve invoice {invoice_number}: {result.get('message')}")
+            except Exception as e:
+                logger.warning(f"Failed to approve invoice {invoice_number}: {e}")
+
+        return jsonify({
+            'success': True,
+            'approved_count': approved_count,
+            'message': f'Successfully approved {approved_count} invoice(s)'
+        })
+
+    except Exception as e:
+        logger.error(f"Error approving invoices: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/invoices/reject', methods=['POST'])
+@handle_errors
+@login_required
+def api_reject_invoices():
+    """API: Reject selected invoices (change status to Rejected)"""
+    try:
+        data = request.get_json() or {}
+        invoice_numbers = data.get('invoice_numbers', [])
+
+        if not invoice_numbers:
+            return jsonify({
+                'success': False,
+                'error': 'No invoices selected'
+            }), 400
+
+        manager = get_sheets_manager()
+        rejected_count = 0
+
+        for invoice_number in invoice_numbers:
+            try:
+                result = manager.update_invoice_status(invoice_number, 'Rejected')
+                if result.get('success'):
+                    rejected_count += 1
+                    logger.info(f"Invoice rejected: {invoice_number}")
+                else:
+                    logger.warning(f"Failed to reject invoice {invoice_number}: {result.get('message')}")
+            except Exception as e:
+                logger.warning(f"Failed to reject invoice {invoice_number}: {e}")
+
+        return jsonify({
+            'success': True,
+            'rejected_count': rejected_count,
+            'message': f'Successfully rejected {rejected_count} invoice(s)'
+        })
+
+    except Exception as e:
+        logger.error(f"Error rejecting invoices: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

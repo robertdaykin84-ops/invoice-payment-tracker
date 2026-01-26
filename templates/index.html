@@ -333,8 +333,11 @@
                         <button class="btn btn-sm btn-danger-soft" id="rejectSelectedBtn">
                             <i class="bi bi-x-circle me-1"></i>Reject
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="downloadSelectedBtn">
-                            <i class="bi bi-file-earmark-excel me-1"></i>Download Excel
+                        <button class="btn btn-sm btn-danger" id="deleteSelectedBtn">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                        <button class="btn btn-sm" id="downloadSelectedBtn" style="background-color: #0ea5e9; border-color: #0ea5e9; color: white;">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Report
                         </button>
                     </div>
                 </div>
@@ -349,11 +352,81 @@
                                     <input type="checkbox" class="form-check-input" id="selectAll" title="Select all">
                                 </th>
                                 <th>Invoice #</th>
-                                <th>Supplier</th>
-                                <th>Invoice Date</th>
-                                <th>Due</th>
-                                <th>Amount</th>
-                                <th>Status</th>
+                                <th>
+                                    <div class="dropdown d-inline-block">
+                                        <span class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                            Supplier <i class="bi bi-funnel" id="supplierFilterIcon"></i>
+                                        </span>
+                                        <ul class="dropdown-menu" id="supplierFilter">
+                                            <li><a class="dropdown-item active" href="#" data-filter="all">All Suppliers</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            {% set suppliers = [] %}
+                                            {% for invoice in recent_invoices %}
+                                                {% if invoice.supplier_name and invoice.supplier_name not in suppliers %}
+                                                    {% set _ = suppliers.append(invoice.supplier_name) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% for supplier in suppliers|sort %}
+                                            <li><a class="dropdown-item" href="#" data-filter="{{ supplier }}">{{ supplier }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="dropdown d-inline-block">
+                                        <span class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                            Invoice Date <i class="bi bi-funnel" id="dateFilterIcon"></i>
+                                        </span>
+                                        <ul class="dropdown-menu" id="dateFilter">
+                                            <li><a class="dropdown-item active" href="#" data-sort="none">Default Order</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="date-asc">Earliest First</a></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="date-desc">Latest First</a></li>
+                                        </ul>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="dropdown d-inline-block">
+                                        <span class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                            Due <i class="bi bi-funnel" id="dueDateFilterIcon"></i>
+                                        </span>
+                                        <ul class="dropdown-menu" id="dueDateFilter">
+                                            <li><a class="dropdown-item active" href="#" data-sort="none">Default Order</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="due-asc">Earliest First</a></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="due-desc">Latest First</a></li>
+                                        </ul>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="dropdown d-inline-block">
+                                        <span class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                            Amount <i class="bi bi-funnel" id="amountFilterIcon"></i>
+                                        </span>
+                                        <ul class="dropdown-menu" id="amountFilter">
+                                            <li><a class="dropdown-item active" href="#" data-sort="none">Default Order</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="amount-asc">Lowest First</a></li>
+                                            <li><a class="dropdown-item" href="#" data-sort="amount-desc">Highest First</a></li>
+                                        </ul>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="dropdown d-inline-block">
+                                        <span class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
+                                            Status <i class="bi bi-funnel" id="statusFilterIcon"></i>
+                                        </span>
+                                        <ul class="dropdown-menu" id="statusFilter">
+                                            <li><a class="dropdown-item active" href="#" data-filter="all">All Statuses</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="pending">Pending</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="approved">Approved</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="paid">Paid</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="rejected">Rejected</a></li>
+                                            <li><a class="dropdown-item" href="#" data-filter="overdue">Overdue</a></li>
+                                        </ul>
+                                    </div>
+                                </th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -365,7 +438,7 @@
                                     {% set payment.data = p %}
                                 {% endif %}
                             {% endfor %}
-                            <tr class="main-row" data-invoice="{{ invoice.invoice_number }}" data-id="{{ loop.index }}">
+                            <tr class="main-row" data-invoice="{{ invoice.invoice_number }}" data-id="{{ loop.index }}" data-supplier="{{ invoice.supplier_name }}" data-status="{{ invoice.status|lower }}" data-date="{{ invoice.invoice_date }}" data-due="{{ invoice.due_date }}" data-amount="{{ invoice.amount|default(0) }}">
                                 <td>
                                     <input type="checkbox" class="form-check-input row-select"
                                            value="{{ invoice.invoice_number }}"
@@ -373,7 +446,7 @@
                                            data-amount="{{ invoice.amount }}"
                                            data-currency="{{ invoice.currency|default('GBP') }}">
                                 </td>
-                                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                                <td>{{ invoice.invoice_number }}</td>
                                 <td>{{ invoice.supplier_name }}</td>
                                 <td>{{ invoice.invoice_date }}</td>
                                 <td>{{ invoice.due_date }}</td>
@@ -525,9 +598,199 @@
     const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
     const approveSelectedBtn = document.getElementById('approveSelectedBtn');
     const rejectSelectedBtn = document.getElementById('rejectSelectedBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
     const clearSelectionBtn = document.getElementById('clearSelectionBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingText = document.getElementById('loadingText');
+
+    // Filter state
+    let activeSupplierFilter = 'all';
+    let activeStatusFilter = 'all';
+
+    // Apply filters to table rows
+    function applyFilters() {
+        const rows = document.querySelectorAll('.invoice-table tbody tr.main-row');
+        const expandedRows = document.querySelectorAll('.invoice-table tbody tr.expanded-details');
+
+        rows.forEach((row, index) => {
+            const supplier = row.dataset.supplier || '';
+            const status = row.dataset.status || '';
+
+            const supplierMatch = activeSupplierFilter === 'all' || supplier === activeSupplierFilter;
+            const statusMatch = activeStatusFilter === 'all' || status.includes(activeStatusFilter);
+
+            if (supplierMatch && statusMatch) {
+                row.style.display = '';
+                // Also show/hide corresponding expanded row
+                if (expandedRows[index]) {
+                    expandedRows[index].style.display = row.classList.contains('expanded') ? 'table-row' : 'none';
+                }
+            } else {
+                row.style.display = 'none';
+                if (expandedRows[index]) {
+                    expandedRows[index].style.display = 'none';
+                }
+            }
+        });
+
+        // Update filter icons to show active state
+        const supplierIcon = document.getElementById('supplierFilterIcon');
+        const statusIcon = document.getElementById('statusFilterIcon');
+        if (supplierIcon) {
+            supplierIcon.className = activeSupplierFilter === 'all' ? 'bi bi-funnel' : 'bi bi-funnel-fill text-primary';
+        }
+        if (statusIcon) {
+            statusIcon.className = activeStatusFilter === 'all' ? 'bi bi-funnel' : 'bi bi-funnel-fill text-primary';
+        }
+    }
+
+    // Supplier filter handler
+    document.querySelectorAll('#supplierFilter .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            activeSupplierFilter = this.dataset.filter;
+
+            // Update active state
+            document.querySelectorAll('#supplierFilter .dropdown-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+
+            applyFilters();
+        });
+    });
+
+    // Status filter handler
+    document.querySelectorAll('#statusFilter .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            activeStatusFilter = this.dataset.filter;
+
+            // Update active state
+            document.querySelectorAll('#statusFilter .dropdown-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+
+            applyFilters();
+        });
+    });
+
+    // Sort table rows helper function
+    function sortTableRows(sortFn, filterDropdownId, iconId) {
+        const tbody = document.querySelector('.invoice-table tbody');
+        if (!tbody) return;
+
+        // Get all main rows and their corresponding expanded detail rows
+        const mainRows = Array.from(tbody.querySelectorAll('tr.main-row'));
+        const rowPairs = mainRows.map(row => {
+            const id = row.dataset.id;
+            const expandedRow = tbody.querySelector(`tr.expanded-details[data-parent="${id}"]`);
+            return { main: row, expanded: expandedRow };
+        });
+
+        // Sort the pairs
+        rowPairs.sort((a, b) => sortFn(a.main, b.main));
+
+        // Clear tbody and re-add sorted rows
+        while (tbody.firstChild) {
+            tbody.removeChild(tbody.firstChild);
+        }
+
+        rowPairs.forEach(pair => {
+            tbody.appendChild(pair.main);
+            if (pair.expanded) {
+                tbody.appendChild(pair.expanded);
+            }
+        });
+
+        // Update active state in dropdown
+        document.querySelectorAll(`#${filterDropdownId} .dropdown-item`).forEach(i => i.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update filter icon
+        const icon = document.getElementById(iconId);
+        if (icon) {
+            const sortValue = event.target.dataset.sort;
+            icon.className = sortValue === 'none' ? 'bi bi-funnel' : 'bi bi-funnel-fill text-primary';
+        }
+    }
+
+    // Parse date string (handles various formats)
+    function parseDate(dateStr) {
+        if (!dateStr) return new Date(0);
+        // Try to parse as ISO or common formats
+        const parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) return parsed;
+        // Try DD/MM/YYYY format
+        const parts = dateStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+            // Assume DD/MM/YYYY
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        return new Date(0);
+    }
+
+    // Parse amount string (remove currency symbols and commas)
+    function parseAmount(amountStr) {
+        if (!amountStr) return 0;
+        const cleaned = String(amountStr).replace(/[^0-9.\-]/g, '');
+        return parseFloat(cleaned) || 0;
+    }
+
+    // Date filter handler
+    document.querySelectorAll('#dateFilter .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortType = this.dataset.sort;
+
+            if (sortType === 'none') {
+                // Reset to default order - reload page or reset
+                location.reload();
+                return;
+            }
+
+            sortTableRows((a, b) => {
+                const dateA = parseDate(a.dataset.date);
+                const dateB = parseDate(b.dataset.date);
+                return sortType === 'date-asc' ? dateA - dateB : dateB - dateA;
+            }, 'dateFilter', 'dateFilterIcon');
+        });
+    });
+
+    // Due date filter handler
+    document.querySelectorAll('#dueDateFilter .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortType = this.dataset.sort;
+
+            if (sortType === 'none') {
+                location.reload();
+                return;
+            }
+
+            sortTableRows((a, b) => {
+                const dateA = parseDate(a.dataset.due);
+                const dateB = parseDate(b.dataset.due);
+                return sortType === 'due-asc' ? dateA - dateB : dateB - dateA;
+            }, 'dueDateFilter', 'dueDateFilterIcon');
+        });
+    });
+
+    // Amount filter handler
+    document.querySelectorAll('#amountFilter .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortType = this.dataset.sort;
+
+            if (sortType === 'none') {
+                location.reload();
+                return;
+            }
+
+            sortTableRows((a, b) => {
+                const amountA = parseAmount(a.dataset.amount);
+                const amountB = parseAmount(b.dataset.amount);
+                return sortType === 'amount-asc' ? amountA - amountB : amountB - amountA;
+            }, 'amountFilter', 'amountFilterIcon');
+        });
+    });
 
     // Update selection UI
     function updateSelectionUI() {
@@ -605,6 +868,22 @@
             e.preventDefault();
             e.stopPropagation();
             const rowId = this.dataset.id;
+
+            // Close the dropdown first
+            const dropdownMenu = this.closest('.dropdown-menu');
+            if (dropdownMenu) {
+                dropdownMenu.classList.remove('show');
+                const dropdownParent = dropdownMenu.closest('.dropdown');
+                if (dropdownParent) {
+                    const toggleBtn = dropdownParent.querySelector('[data-bs-toggle="dropdown"]');
+                    if (toggleBtn) {
+                        toggleBtn.classList.remove('show');
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            }
+
+            // Toggle payment details row
             togglePaymentDetails(rowId);
         });
     });
@@ -745,6 +1024,61 @@
             .finally(() => {
                 loadingOverlay.classList.remove('active');
             });
+        });
+    }
+
+    // Delete selected invoices
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            const selectedInvoices = getSelectedInvoices();
+            if (selectedInvoices.length === 0) {
+                showToast('Please select one or more invoices using the checkboxes first', 'warning');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${selectedInvoices.length} invoice(s)? This action cannot be undone.`)) {
+                return;
+            }
+
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Deleting invoices...';
+
+            // Delete invoices one by one
+            let deletedCount = 0;
+            let errorCount = 0;
+            const deletePromises = selectedInvoices.map(invoiceNumber => {
+                return fetch('/api/invoices/' + encodeURIComponent(invoiceNumber), {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        deletedCount++;
+                    } else {
+                        errorCount++;
+                    }
+                })
+                .catch(() => {
+                    errorCount++;
+                });
+            });
+
+            Promise.all(deletePromises)
+                .then(() => {
+                    if (deletedCount > 0) {
+                        showToast(`Successfully deleted ${deletedCount} invoice(s)`, 'success');
+                    }
+                    if (errorCount > 0) {
+                        showToast(`Failed to delete ${errorCount} invoice(s)`, 'danger');
+                    }
+                    setTimeout(() => location.reload(), 1000);
+                })
+                .finally(() => {
+                    loadingOverlay.classList.remove('active');
+                });
         });
     }
 
