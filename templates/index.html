@@ -339,6 +339,9 @@
                         <button class="btn btn-sm" id="downloadSelectedBtn" style="background-color: #0ea5e9; border-color: #0ea5e9; color: white;">
                             <i class="bi bi-file-earmark-excel me-1"></i>Report
                         </button>
+                        <button class="btn btn-sm" id="downloadInvoiceFilesBtn" style="background-color: #fef08a; border-color: #fde047; color: #854d0e;">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i>Invoice/s
+                        </button>
                     </div>
                 </div>
             </div>
@@ -599,6 +602,7 @@
     const approveSelectedBtn = document.getElementById('approveSelectedBtn');
     const rejectSelectedBtn = document.getElementById('rejectSelectedBtn');
     const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const downloadInvoiceFilesBtn = document.getElementById('downloadInvoiceFilesBtn');
     const clearSelectionBtn = document.getElementById('clearSelectionBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingText = document.getElementById('loadingText');
@@ -1079,6 +1083,61 @@
                 .finally(() => {
                     loadingOverlay.classList.remove('active');
                 });
+        });
+    }
+
+    // Download invoice files
+    if (downloadInvoiceFilesBtn) {
+        downloadInvoiceFilesBtn.addEventListener('click', function() {
+            const selectedInvoices = getSelectedInvoices();
+            if (selectedInvoices.length === 0) {
+                showToast('Please select one or more invoices using the checkboxes first', 'warning');
+                return;
+            }
+
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Downloading invoice files...';
+
+            fetch('/api/invoices/download-files', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ invoice_numbers: selectedInvoices })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to download files');
+                    });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Determine filename based on content type
+                const contentType = blob.type;
+                if (contentType === 'application/zip') {
+                    a.download = 'Invoices_' + new Date().toISOString().split('T')[0] + '.zip';
+                } else if (contentType === 'application/pdf') {
+                    a.download = 'Invoice.pdf';
+                } else {
+                    a.download = 'Invoice' + (contentType.includes('png') ? '.png' : '.jpg');
+                }
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                showToast('Invoice file(s) downloaded successfully', 'success');
+            })
+            .catch(err => {
+                showToast(err.message, 'danger');
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active');
+            });
         });
     }
 

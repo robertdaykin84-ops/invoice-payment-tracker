@@ -7,6 +7,7 @@ import os
 import io
 import json
 import logging
+import zipfile
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
@@ -14,7 +15,7 @@ from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    redirect, url_for, flash, session, make_response
+    redirect, url_for, flash, session, make_response, send_file
 )
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -1269,6 +1270,93 @@ def api_reject_invoices():
 
     except Exception as e:
         logger.error(f"Error rejecting invoices: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/invoices/download-files', methods=['POST'])
+@handle_errors
+@login_required
+def api_download_invoice_files():
+    """API: Download original invoice files for selected invoices"""
+    try:
+        data = request.get_json() or {}
+        invoice_numbers = data.get('invoice_numbers', [])
+
+        if not invoice_numbers:
+            return jsonify({
+                'success': False,
+                'error': 'No invoices selected'
+            }), 400
+
+        # Search for matching files in uploads folder
+        uploads_folder = app.config['UPLOAD_FOLDER']
+        found_files = []
+
+        # Scan all JSON data files to find matching invoice numbers
+        for filename in os.listdir(uploads_folder):
+            if filename.endswith('_data.json'):
+                json_path = os.path.join(uploads_folder, filename)
+                try:
+                    with open(json_path, 'r') as f:
+                        file_data = json.load(f)
+                        if file_data.get('invoice_number') in invoice_numbers:
+                            # Find the corresponding invoice file
+                            base_name = filename.replace('_data.json', '')
+                            # Look for PDF, PNG, JPG, JPEG files with this base name
+                            for ext in ['.pdf', '.png', '.jpg', '.jpeg']:
+                                invoice_file = base_name + ext
+                                invoice_path = os.path.join(uploads_folder, invoice_file)
+                                if os.path.exists(invoice_path):
+                                    found_files.append({
+                                        'path': invoice_path,
+                                        'filename': invoice_file,
+                                        'invoice_number': file_data.get('invoice_number')
+                                    })
+                                    break
+                except Exception as e:
+                    logger.warning(f"Error reading {json_path}: {e}")
+                    continue
+
+        if not found_files:
+            return jsonify({
+                'success': False,
+                'error': 'No invoice files found for the selected invoices'
+            }), 404
+
+        # If only one file, send it directly
+        if len(found_files) == 1:
+            file_info = found_files[0]
+            return send_file(
+                file_info['path'],
+                as_attachment=True,
+                download_name=file_info['filename']
+            )
+
+        # Multiple files - create a zip
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for file_info in found_files:
+                # Use invoice number in filename for clarity
+                safe_inv_num = file_info['invoice_number'].replace('/', '-').replace('\\', '-')
+                ext = os.path.splitext(file_info['filename'])[1]
+                archive_name = f"{safe_inv_num}{ext}"
+                zip_file.write(file_info['path'], archive_name)
+
+        zip_buffer.seek(0)
+
+        today = datetime.now().strftime('%Y-%m-%d')
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'Invoices_{today}.zip'
+        )
+
+    except Exception as e:
+        logger.error(f"Error downloading invoice files: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
