@@ -315,6 +315,18 @@ def upload():
             except Exception as e:
                 logger.warning(f"Could not check for duplicates: {e}")
 
+            # Upload file to Google Drive for persistent storage
+            try:
+                manager = get_sheets_manager()
+                drive_result = manager.upload_file_to_drive(filepath, filename)
+                if drive_result.get('success'):
+                    extracted_data['file_id'] = drive_result.get('file_id')
+                    logger.info(f"File uploaded to Google Drive: {drive_result.get('file_id')}")
+                else:
+                    logger.warning(f"Failed to upload to Google Drive: {drive_result.get('message')}")
+            except Exception as e:
+                logger.warning(f"Could not upload to Google Drive: {e}")
+
             # Save extracted data to JSON file (session cookie is too small)
             json_filename = filename.rsplit('.', 1)[0] + '_data.json'
             json_filepath = os.path.join(app.config['UPLOAD_FOLDER'], json_filename)
@@ -504,7 +516,8 @@ def save_invoice():
         'currency': data.get('currency', 'GBP').upper(),
         'status': data.get('status', 'Pending Review'),
         'payment_date': data.get('payment_date', ''),
-        'notes': data.get('notes', '').strip()
+        'notes': data.get('notes', '').strip(),
+        'file_id': data.get('file_id', '')
     }
 
     # Extract payment details if present
@@ -1157,11 +1170,26 @@ def api_delete_invoice(invoice_number):
     try:
         manager = get_sheets_manager()
 
+        # Get invoice first to retrieve file_id before deletion
+        invoice = manager.get_invoice_by_number(invoice_number)
+        file_id = invoice.get('file_id') if invoice else None
+
         # Delete the invoice
         result = manager.delete_invoice(invoice_number)
 
         if result.get('success'):
             logger.info(f"Invoice deleted: {invoice_number}")
+
+            # Delete file from Google Drive if it exists
+            if file_id:
+                try:
+                    drive_result = manager.delete_file_from_drive(file_id)
+                    if drive_result.get('success'):
+                        logger.info(f"File deleted from Google Drive: {file_id}")
+                    else:
+                        logger.warning(f"Failed to delete file from Drive: {drive_result.get('message')}")
+                except Exception as e:
+                    logger.warning(f"Failed to delete file from Google Drive: {e}")
 
             # Also delete associated payment details by invoice number
             try:
@@ -1280,7 +1308,7 @@ def api_reject_invoices():
 @handle_errors
 @login_required
 def api_download_invoice_files():
-    """API: Download original invoice files for selected invoices"""
+    """API: Download original invoice files for selected invoices from Google Drive"""
     try:
         data = request.get_json() or {}
         invoice_numbers = data.get('invoice_numbers', [])
@@ -1291,59 +1319,59 @@ def api_download_invoice_files():
                 'error': 'No invoices selected'
             }), 400
 
-        # Search for matching files in uploads folder
-        uploads_folder = app.config['UPLOAD_FOLDER']
-        found_files = []
+        manager = get_sheets_manager()
+        all_invoices = manager.get_all_invoices()
 
-        # Scan all JSON data files to find matching invoice numbers
-        for filename in os.listdir(uploads_folder):
-            if filename.endswith('_data.json'):
-                json_path = os.path.join(uploads_folder, filename)
-                try:
-                    with open(json_path, 'r') as f:
-                        file_data = json.load(f)
-                        if file_data.get('invoice_number') in invoice_numbers:
-                            # Find the corresponding invoice file
-                            base_name = filename.replace('_data.json', '')
-                            # Look for PDF, PNG, JPG, JPEG files with this base name
-                            for ext in ['.pdf', '.png', '.jpg', '.jpeg']:
-                                invoice_file = base_name + ext
-                                invoice_path = os.path.join(uploads_folder, invoice_file)
-                                if os.path.exists(invoice_path):
-                                    found_files.append({
-                                        'path': invoice_path,
-                                        'filename': invoice_file,
-                                        'invoice_number': file_data.get('invoice_number')
-                                    })
-                                    break
-                except Exception as e:
-                    logger.warning(f"Error reading {json_path}: {e}")
-                    continue
+        # Find invoices with file_ids
+        found_files = []
+        for invoice in all_invoices:
+            if invoice.get('invoice_number') in invoice_numbers:
+                file_id = invoice.get('file_id')
+                if file_id:
+                    found_files.append({
+                        'file_id': file_id,
+                        'invoice_number': invoice.get('invoice_number')
+                    })
 
         if not found_files:
             return jsonify({
                 'success': False,
-                'error': 'No invoice files found for the selected invoices'
+                'error': 'No invoice files found for the selected invoices. Files may not have been uploaded to cloud storage.'
             }), 404
 
-        # If only one file, send it directly
+        # If only one file, download and send it directly
         if len(found_files) == 1:
             file_info = found_files[0]
+            result = manager.download_file_from_drive(file_info['file_id'])
+
+            if not result.get('success'):
+                return jsonify({
+                    'success': False,
+                    'error': result.get('message', 'Failed to download file')
+                }), 500
+
+            file_buffer = io.BytesIO(result['content'])
             return send_file(
-                file_info['path'],
+                file_buffer,
+                mimetype=result['mime_type'],
                 as_attachment=True,
-                download_name=file_info['filename']
+                download_name=result['filename']
             )
 
-        # Multiple files - create a zip
+        # Multiple files - download all and create a zip
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for file_info in found_files:
-                # Use invoice number in filename for clarity
-                safe_inv_num = file_info['invoice_number'].replace('/', '-').replace('\\', '-')
-                ext = os.path.splitext(file_info['filename'])[1]
-                archive_name = f"{safe_inv_num}{ext}"
-                zip_file.write(file_info['path'], archive_name)
+                result = manager.download_file_from_drive(file_info['file_id'])
+
+                if result.get('success'):
+                    # Use invoice number in filename for clarity
+                    safe_inv_num = file_info['invoice_number'].replace('/', '-').replace('\\', '-')
+                    ext = os.path.splitext(result['filename'])[1] if result['filename'] else '.pdf'
+                    archive_name = f"{safe_inv_num}{ext}"
+                    zip_file.writestr(archive_name, result['content'])
+                else:
+                    logger.warning(f"Failed to download file for invoice {file_info['invoice_number']}: {result.get('message')}")
 
         zip_buffer.seek(0)
 

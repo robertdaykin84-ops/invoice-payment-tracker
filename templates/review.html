@@ -249,6 +249,7 @@
         <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">
         <input type="hidden" name="is_editing" value="{{ 'true' if is_editing else 'false' }}">
         <input type="hidden" name="_row_id" value="{{ invoice._row_id|default('') }}">
+        <input type="hidden" name="file_id" value="{{ invoice.file_id|default('') }}">
         <input type="hidden" name="queue" value="{{ queue|join(',') if queue else '' }}">
         <input type="hidden" name="current_index" value="{{ current_index|default(0) }}">
 

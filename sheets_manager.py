@@ -12,6 +12,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+import io
 import pickle
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -22,14 +24,17 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Google Sheets API scopes
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+# Google API scopes (Sheets + Drive for file storage)
+SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file'
+]
 
 # Column definitions for each sheet
 INVOICE_COLUMNS = [
     'Invoice Number', 'Supplier Name', 'Contact Email', 'Contact Phone',
     'Invoice Date', 'Due Date', 'Amount', 'Currency', 'Status',
-    'Payment Date', 'Notes'
+    'Payment Date', 'Notes', 'File ID'
 ]
 
 PAYMENT_COLUMNS = [
@@ -110,10 +115,14 @@ class SheetsManager:
 
         self.creds = None
         self.service = None
+        self.drive_service = None
 
         # Sheet names (can be customized)
         self.invoice_sheet = 'Invoice Tracker'
         self.payment_sheet = 'Payment Details'
+
+        # Google Drive folder ID for storing invoices (optional)
+        self.drive_folder_id = os.getenv('GOOGLE_DRIVE_FOLDER_ID')
 
         # Authenticate on initialization
         self._authenticate()
@@ -185,9 +194,10 @@ class SheetsManager:
                         pickle.dump(self.creds, token)
                     logger.info("Saved new credentials to token file")
 
-            # Build the service
+            # Build the services
             self.service = build('sheets', 'v4', credentials=self.creds)
-            logger.info("Successfully authenticated with Google Sheets API")
+            self.drive_service = build('drive', 'v3', credentials=self.creds)
+            logger.info("Successfully authenticated with Google Sheets and Drive APIs")
 
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
@@ -244,7 +254,8 @@ class SheetsManager:
                 self._safe_get(invoice_data, 'currency', 'GBP'),
                 self._safe_get(invoice_data, 'status', 'Pending Review'),
                 self._safe_get(invoice_data, 'payment_date'),
-                self._safe_get(invoice_data, 'notes')
+                self._safe_get(invoice_data, 'notes'),
+                self._safe_get(invoice_data, 'file_id')
             ]
 
             # Append to sheet
@@ -286,7 +297,7 @@ class SheetsManager:
         self._ensure_authenticated()
 
         try:
-            range_name = f"'{self.invoice_sheet}'!A2:K"
+            range_name = f"'{self.invoice_sheet}'!A2:L"
             result = self.service.spreadsheets().values().get(
                 spreadsheetId=self.spreadsheet_id,
                 range=range_name
@@ -297,7 +308,7 @@ class SheetsManager:
 
             for idx, row in enumerate(rows):
                 # Pad row to ensure all columns exist
-                while len(row) < 11:
+                while len(row) < 12:
                     row.append('')
 
                 # Parse amount safely (handle comma-formatted numbers like "10,000.00")
@@ -319,7 +330,8 @@ class SheetsManager:
                     'currency': row[7] or 'GBP',
                     'status': row[8] or 'Pending Review',
                     'payment_date': excel_date_to_string(row[9]),
-                    'notes': row[10]
+                    'notes': row[10],
+                    'file_id': row[11]
                 }
                 invoices.append(invoice)
 
@@ -575,10 +587,11 @@ class SheetsManager:
                 self._safe_get(invoice_data, 'currency', 'GBP'),
                 self._safe_get(invoice_data, 'status', 'Pending Review'),
                 self._safe_get(invoice_data, 'payment_date'),
-                self._safe_get(invoice_data, 'notes')
+                self._safe_get(invoice_data, 'notes'),
+                self._safe_get(invoice_data, 'file_id')
             ]
 
-            range_name = f"'{self.invoice_sheet}'!A{row_number}:K{row_number}"
+            range_name = f"'{self.invoice_sheet}'!A{row_number}:L{row_number}"
             body = {'values': [row]}
 
             result = self.service.spreadsheets().values().update(
@@ -999,6 +1012,147 @@ class SheetsManager:
 
         except Exception as e:
             return {'success': False, 'message': f'Initialization failed: {e}'}
+
+    # ========== Google Drive Methods ==========
+
+    def upload_file_to_drive(self, file_path: str, filename: str = None) -> dict:
+        """
+        Upload a file to Google Drive
+
+        Args:
+            file_path: Local path to the file
+            filename: Optional custom filename for the uploaded file
+
+        Returns:
+            dict: Result with 'success', 'file_id', and 'message'
+        """
+        self._ensure_authenticated()
+
+        try:
+            if not os.path.exists(file_path):
+                return {'success': False, 'message': f'File not found: {file_path}'}
+
+            # Determine filename
+            if not filename:
+                filename = os.path.basename(file_path)
+
+            # Determine MIME type
+            ext = os.path.splitext(file_path)[1].lower()
+            mime_types = {
+                '.pdf': 'application/pdf',
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg'
+            }
+            mime_type = mime_types.get(ext, 'application/octet-stream')
+
+            # File metadata
+            file_metadata = {'name': filename}
+
+            # If a folder ID is specified, upload to that folder
+            if self.drive_folder_id:
+                file_metadata['parents'] = [self.drive_folder_id]
+
+            # Create media upload
+            media = MediaFileUpload(file_path, mimetype=mime_type, resumable=True)
+
+            # Upload file
+            file = self.drive_service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id, name, webViewLink'
+            ).execute()
+
+            logger.info(f"File uploaded to Google Drive: {file.get('name')} (ID: {file.get('id')})")
+
+            return {
+                'success': True,
+                'file_id': file.get('id'),
+                'filename': file.get('name'),
+                'web_link': file.get('webViewLink'),
+                'message': 'File uploaded successfully'
+            }
+
+        except HttpError as e:
+            logger.error(f"Google Drive upload error: {e}")
+            return {'success': False, 'message': f'Drive upload failed: {e}'}
+        except Exception as e:
+            logger.error(f"Error uploading to Drive: {e}")
+            return {'success': False, 'message': str(e)}
+
+    def download_file_from_drive(self, file_id: str) -> dict:
+        """
+        Download a file from Google Drive
+
+        Args:
+            file_id: Google Drive file ID
+
+        Returns:
+            dict: Result with 'success', 'content' (bytes), 'filename', 'mime_type'
+        """
+        self._ensure_authenticated()
+
+        try:
+            # Get file metadata first
+            file_metadata = self.drive_service.files().get(
+                fileId=file_id,
+                fields='name, mimeType'
+            ).execute()
+
+            filename = file_metadata.get('name', 'download')
+            mime_type = file_metadata.get('mimeType', 'application/octet-stream')
+
+            # Download file content
+            request = self.drive_service.files().get_media(fileId=file_id)
+            file_buffer = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_buffer, request)
+
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+
+            file_buffer.seek(0)
+            content = file_buffer.read()
+
+            logger.info(f"File downloaded from Google Drive: {filename}")
+
+            return {
+                'success': True,
+                'content': content,
+                'filename': filename,
+                'mime_type': mime_type
+            }
+
+        except HttpError as e:
+            logger.error(f"Google Drive download error: {e}")
+            return {'success': False, 'message': f'Drive download failed: {e}'}
+        except Exception as e:
+            logger.error(f"Error downloading from Drive: {e}")
+            return {'success': False, 'message': str(e)}
+
+    def delete_file_from_drive(self, file_id: str) -> dict:
+        """
+        Delete a file from Google Drive
+
+        Args:
+            file_id: Google Drive file ID
+
+        Returns:
+            dict: Result with 'success' and 'message'
+        """
+        self._ensure_authenticated()
+
+        try:
+            self.drive_service.files().delete(fileId=file_id).execute()
+            logger.info(f"File deleted from Google Drive: {file_id}")
+            return {'success': True, 'message': 'File deleted successfully'}
+
+        except HttpError as e:
+            logger.error(f"Google Drive delete error: {e}")
+            return {'success': False, 'message': f'Drive delete failed: {e}'}
+        except Exception as e:
+            logger.error(f"Error deleting from Drive: {e}")
+            return {'success': False, 'message': str(e)}
 
     def test_connection(self) -> dict:
         """
