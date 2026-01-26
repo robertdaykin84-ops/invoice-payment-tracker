@@ -1308,7 +1308,7 @@ def api_reject_invoices():
 @handle_errors
 @login_required
 def api_download_invoice_files():
-    """API: Download original invoice files for selected invoices from Google Drive"""
+    """API: Download original invoice files for selected invoices from Google Drive or local storage"""
     try:
         data = request.get_json() or {}
         invoice_numbers = data.get('invoice_numbers', [])
@@ -1322,16 +1322,45 @@ def api_download_invoice_files():
         manager = get_sheets_manager()
         all_invoices = manager.get_all_invoices()
 
-        # Find invoices with file_ids
+        # Find invoices with file_ids (Google Drive)
         found_files = []
+        missing_file_ids = []
         for invoice in all_invoices:
             if invoice.get('invoice_number') in invoice_numbers:
                 file_id = invoice.get('file_id')
                 if file_id:
                     found_files.append({
                         'file_id': file_id,
-                        'invoice_number': invoice.get('invoice_number')
+                        'invoice_number': invoice.get('invoice_number'),
+                        'source': 'drive'
                     })
+                else:
+                    missing_file_ids.append(invoice.get('invoice_number'))
+
+        # Fall back to local files for invoices without file_id
+        if missing_file_ids:
+            uploads_folder = app.config['UPLOAD_FOLDER']
+            for filename in os.listdir(uploads_folder):
+                if filename.endswith('_data.json'):
+                    json_path = os.path.join(uploads_folder, filename)
+                    try:
+                        with open(json_path, 'r') as f:
+                            file_data = json.load(f)
+                            if file_data.get('invoice_number') in missing_file_ids:
+                                base_name = filename.replace('_data.json', '')
+                                for ext in ['.pdf', '.png', '.jpg', '.jpeg']:
+                                    invoice_file = base_name + ext
+                                    invoice_path = os.path.join(uploads_folder, invoice_file)
+                                    if os.path.exists(invoice_path):
+                                        found_files.append({
+                                            'path': invoice_path,
+                                            'filename': invoice_file,
+                                            'invoice_number': file_data.get('invoice_number'),
+                                            'source': 'local'
+                                        })
+                                        break
+                    except Exception as e:
+                        logger.warning(f"Error reading {json_path}: {e}")
 
         if not found_files:
             return jsonify({
@@ -1342,36 +1371,48 @@ def api_download_invoice_files():
         # If only one file, download and send it directly
         if len(found_files) == 1:
             file_info = found_files[0]
-            result = manager.download_file_from_drive(file_info['file_id'])
 
-            if not result.get('success'):
-                return jsonify({
-                    'success': False,
-                    'error': result.get('message', 'Failed to download file')
-                }), 500
-
-            file_buffer = io.BytesIO(result['content'])
-            return send_file(
-                file_buffer,
-                mimetype=result['mime_type'],
-                as_attachment=True,
-                download_name=result['filename']
-            )
+            if file_info['source'] == 'drive':
+                result = manager.download_file_from_drive(file_info['file_id'])
+                if not result.get('success'):
+                    return jsonify({
+                        'success': False,
+                        'error': result.get('message', 'Failed to download file')
+                    }), 500
+                file_buffer = io.BytesIO(result['content'])
+                return send_file(
+                    file_buffer,
+                    mimetype=result['mime_type'],
+                    as_attachment=True,
+                    download_name=result['filename']
+                )
+            else:
+                # Local file
+                return send_file(
+                    file_info['path'],
+                    as_attachment=True,
+                    download_name=file_info['filename']
+                )
 
         # Multiple files - download all and create a zip
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for file_info in found_files:
-                result = manager.download_file_from_drive(file_info['file_id'])
+                safe_inv_num = file_info['invoice_number'].replace('/', '-').replace('\\', '-')
 
-                if result.get('success'):
-                    # Use invoice number in filename for clarity
-                    safe_inv_num = file_info['invoice_number'].replace('/', '-').replace('\\', '-')
-                    ext = os.path.splitext(result['filename'])[1] if result['filename'] else '.pdf'
-                    archive_name = f"{safe_inv_num}{ext}"
-                    zip_file.writestr(archive_name, result['content'])
+                if file_info['source'] == 'drive':
+                    result = manager.download_file_from_drive(file_info['file_id'])
+                    if result.get('success'):
+                        ext = os.path.splitext(result['filename'])[1] if result['filename'] else '.pdf'
+                        archive_name = f"{safe_inv_num}{ext}"
+                        zip_file.writestr(archive_name, result['content'])
+                    else:
+                        logger.warning(f"Failed to download file for invoice {file_info['invoice_number']}: {result.get('message')}")
                 else:
-                    logger.warning(f"Failed to download file for invoice {file_info['invoice_number']}: {result.get('message')}")
+                    # Local file
+                    ext = os.path.splitext(file_info['filename'])[1]
+                    archive_name = f"{safe_inv_num}{ext}"
+                    zip_file.write(file_info['path'], archive_name)
 
         zip_buffer.seek(0)
 
