@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import zipfile
+import gc
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
@@ -336,6 +337,9 @@ def upload():
 
             # Store only the filename in session (small enough for cookie)
             session['invoice_filename'] = filename
+
+            # Free up memory after processing
+            gc.collect()
 
             # Always redirect to review page for verification
             if is_ajax:
