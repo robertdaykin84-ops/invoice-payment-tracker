@@ -338,7 +338,7 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                             <input type="email" class="form-control" id="contact_email" name="contact_email"
-                                   value="{{ invoice.contact_email|default('') }}" placeholder="supplier@example.com">
+                                   value="{{ invoice.contact_email|default('')|sanitize }}" placeholder="supplier@example.com">
                         </div>
                         <div class="invalid-feedback">Please enter a valid email address.</div>
                     </div>
@@ -348,7 +348,7 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                             <input type="tel" class="form-control" id="contact_phone" name="contact_phone"
-                                   value="{{ invoice.contact_phone|default('') }}" placeholder="+1 (555) 123-4567">
+                                   value="{{ invoice.contact_phone|default('')|sanitize }}" placeholder="+1 (555) 123-4567">
                         </div>
                     </div>
                 </div>
@@ -403,7 +403,7 @@
                     <div class="col-md-6">
                         <label for="beneficiary_account_name" class="form-label">Beneficiary Account Name</label>
                         <input type="text" class="form-control" id="beneficiary_account_name" name="beneficiary_account_name"
-                               value="{{ invoice.payment_details.beneficiary_account_name|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.beneficiary_account_name|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="Account holder name">
                         {% if invoice.confidence and invoice.confidence.payment_details %}
                         <div class="confidence-indicator confidence-{{ invoice.confidence.payment_details }}">
@@ -416,7 +416,7 @@
                     <div class="col-md-6">
                         <label for="bank_name" class="form-label">Bank Name</label>
                         <input type="text" class="form-control" id="bank_name" name="bank_name"
-                               value="{{ invoice.payment_details.bank_name|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.bank_name|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="e.g., Barclays, HSBC">
                     </div>
                 </div>
@@ -425,14 +425,14 @@
                     <div class="col-md-6">
                         <label for="account_number" class="form-label">Account Number</label>
                         <input type="text" class="form-control" id="account_number" name="account_number"
-                               value="{{ invoice.payment_details.account_number|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.account_number|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="e.g., 12345678">
                     </div>
 
                     <div class="col-md-6">
                         <label for="sort_code" class="form-label">Sort Code</label>
                         <input type="text" class="form-control" id="sort_code" name="sort_code"
-                               value="{{ invoice.payment_details.sort_code|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.sort_code|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="e.g., 12-34-56">
                     </div>
                 </div>
@@ -441,14 +441,14 @@
                     <div class="col-md-6">
                         <label for="iban" class="form-label">IBAN</label>
                         <input type="text" class="form-control" id="iban" name="iban"
-                               value="{{ invoice.payment_details.iban|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.iban|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="e.g., GB82 WEST 1234 5698 7654 32">
                     </div>
 
                     <div class="col-md-6">
                         <label for="swift_code" class="form-label">SWIFT/BIC Code</label>
                         <input type="text" class="form-control" id="swift_code" name="swift_code"
-                               value="{{ invoice.payment_details.swift_code|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.swift_code|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="e.g., BUKBGB22">
                     </div>
                 </div>
@@ -457,14 +457,14 @@
                     <div class="col-md-6">
                         <label for="payment_reference" class="form-label">Payment Reference</label>
                         <input type="text" class="form-control" id="payment_reference" name="payment_reference"
-                               value="{{ invoice.payment_details.payment_reference|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.payment_reference|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="Reference to use when paying">
                     </div>
 
                     <div class="col-md-6">
                         <label for="bank_address" class="form-label">Bank Address</label>
                         <input type="text" class="form-control" id="bank_address" name="bank_address"
-                               value="{{ invoice.payment_details.bank_address|default('') if invoice.payment_details else '' }}"
+                               value="{{ (invoice.payment_details.bank_address|default('') if invoice.payment_details else '')|sanitize }}"
                                placeholder="Bank branch address">
                     </div>
                 </div>

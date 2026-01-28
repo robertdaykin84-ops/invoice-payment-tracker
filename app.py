@@ -65,6 +65,42 @@ def inject_demo_mode():
     return {'demo_mode': DEMO_MODE}
 
 
+# ========== Custom Jinja2 Filters ==========
+
+def sanitize_error_value(value, default=''):
+    """
+    Filter to sanitize AI extraction error values like #ERROR!, N/A, etc.
+    Returns the default value if the input contains error indicators.
+    """
+    if value is None:
+        return default
+
+    value_str = str(value).strip()
+
+    # List of error indicators that should be replaced
+    error_indicators = [
+        '#ERROR!', '#error!', '#ERROR', '#error',
+        '#N/A', '#n/a', '#NA', '#na',
+        '#VALUE!', '#value!',
+        '#REF!', '#ref!',
+        '#DIV/0!', '#div/0!',
+        '#NULL!', '#null!',
+        '#NAME?', '#name?',
+        'N/A', 'n/a', 'NA', 'na',
+        'undefined', 'null', 'None',
+        'ERROR', 'Error', 'error'
+    ]
+
+    # Check if value matches any error indicator
+    if value_str in error_indicators or value_str.startswith('#'):
+        return default
+
+    return value_str
+
+# Register the filter with Jinja2
+app.jinja_env.filters['sanitize'] = sanitize_error_value
+
+
 # ========== Authentication ==========
 
 def login_required(f):

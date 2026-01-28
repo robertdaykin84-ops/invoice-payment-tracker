@@ -198,6 +198,88 @@
         margin-bottom: 0.5rem;
         display: block;
     }
+
+    /* Mobile Responsive Table Styles */
+    @media (max-width: 768px) {
+        /* Enable horizontal scroll for table */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Hide less important columns on mobile */
+        .invoice-table th:nth-child(4),
+        .invoice-table td:nth-child(4),
+        .invoice-table th:nth-child(5),
+        .invoice-table td:nth-child(5) {
+            display: none;
+        }
+
+        /* Make table cells more compact */
+        .invoice-table th,
+        .invoice-table td {
+            padding: 0.5rem 0.4rem;
+            font-size: 0.8125rem;
+            white-space: nowrap;
+        }
+
+        /* Smaller badges */
+        .invoice-table .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Stack action buttons */
+        .card-header .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+        }
+
+        .card-header .d-flex.align-items-center.gap-2 {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .card-header .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.6rem;
+        }
+
+        /* Adjust stat items for mobile */
+        .stat-value {
+            font-size: 1.25rem;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .stat-icon i {
+            font-size: 1rem;
+        }
+
+        /* Expanded details on mobile */
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        /* Even smaller screens - hide more columns */
+        .invoice-table th:nth-child(6),
+        .invoice-table td:nth-child(6) {
+            display: none;
+        }
+
+        /* Show only essential info */
+        .invoice-table th,
+        .invoice-table td {
+            padding: 0.4rem 0.3rem;
+            font-size: 0.75rem;
+        }
+    }
 </style>
 {% endblock %}
 
