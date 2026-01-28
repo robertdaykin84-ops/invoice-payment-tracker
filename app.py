@@ -54,16 +54,35 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'png', 'jpg', 'jpeg'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+# ========== Demo Mode Configuration ==========
+
+# Set DEMO_MODE=true in environment to disable password protection
+DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
+
+@app.context_processor
+def inject_demo_mode():
+    """Inject demo_mode flag into all templates"""
+    return {'demo_mode': DEMO_MODE}
+
+
 # ========== Authentication ==========
 
 def login_required(f):
     """Decorator to require login for routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('authenticated'):
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
+        if DEMO_MODE:
+            # Auto-authenticate for POC demo - no password required
+            if not session.get('authenticated'):
+                session['authenticated'] = True
+                session.permanent = True
+            return f(*args, **kwargs)
+        else:
+            # Normal authentication required
+            if not session.get('authenticated'):
+                flash('Please log in to access this page.', 'warning')
+                return redirect(url_for('login', next=request.url))
+            return f(*args, **kwargs)
     return decorated_function
 
 
@@ -141,6 +160,14 @@ def get_sheets_manager():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page"""
+    # Demo mode: auto-authenticate and redirect
+    if DEMO_MODE:
+        session['authenticated'] = True
+        session.permanent = True
+        next_url = request.args.get('next')
+        return redirect(next_url or url_for('index'))
+
+    # Normal mode: require password
     if session.get('authenticated'):
         return redirect(url_for('index'))
 
