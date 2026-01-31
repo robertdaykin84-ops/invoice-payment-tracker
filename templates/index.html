@@ -285,110 +285,116 @@
 
 {% block content %}
 <!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-overlay" id="loadingOverlay" role="dialog" aria-modal="true" aria-label="Processing">
     <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
         <span class="visually-hidden">Loading...</span>
     </div>
-    <p class="mt-3 text-muted fw-medium" id="loadingText">Processing...</p>
+    <p class="mt-3 text-muted fw-medium" id="loadingText" aria-live="polite">Processing...</p>
 </div>
 
 <!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
-<!-- Welcome Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card bg-primary text-white">
-            <div class="card-body py-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h1 class="h3 mb-2">Welcome to Invoice Tracker</h1>
-                        <p class="mb-0 opacity-75">Upload, process, and manage your invoices with AI-powered extraction. Track payments and sync with Google Sheets effortlessly.</p>
-                    </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <a href="{{ url_for('upload') }}" class="btn btn-light btn-lg">
-                            <i class="bi bi-cloud-upload me-2"></i>Upload Invoice
-                        </a>
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Welcome Section - CoreWorker Branded -->
+<section aria-labelledby="dashboard-heading" class="mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(84, 166, 237, 0.2);">
+                <div class="card-body py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge" style="background: linear-gradient(135deg, #54A6ED 0%, #3B8FD9 100%); font-size: 0.7rem; padding: 0.35rem 0.75rem;">
+                                    <i class="bi bi-stars me-1" aria-hidden="true"></i>AI-POWERED
+                                </span>
+                            </div>
+                            <h1 id="dashboard-heading" class="h3 mb-2" style="font-family: 'Outfit', sans-serif; font-weight: 700;">Invoice Dashboard</h1>
+                            <p class="mb-0" style="opacity: 0.8;">Upload, process, and manage invoices with intelligent extraction. Track payments and sync with Google Sheets effortlessly.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="{{ url_for('upload') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); border: none; color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+                                <i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>Upload Invoice
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Quick Stats Section -->
-<div class="card mb-4">
-    <div class="card-body py-3">
-        <div class="row g-3">
-            <!-- Total -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon bg-primary bg-opacity-10">
-                        <i class="bi bi-receipt text-primary"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.total_invoices|default(0) }}</div>
-                        <div class="stat-label">Total</div>
-                    </div>
+<!-- Quick Stats Section - CoreWorker Dark Theme -->
+<div class="quick-stats-bar mb-4" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 0.75rem; padding: 1rem 1.25rem; border: 1px solid rgba(84, 166, 237, 0.15);">
+    <div class="row g-2 w-100">
+        <!-- Total -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(84, 166, 237, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(84, 166, 237, 0.2);">
+                    <i class="bi bi-receipt" style="color: #54A6ED; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1;">{{ stats.total_invoices|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Total</div>
                 </div>
             </div>
-            <!-- Paid -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon bg-success bg-opacity-10">
-                        <i class="bi bi-check-circle text-success"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value text-success">{{ stats.paid|default(0) }}</div>
-                        <div class="stat-label">Paid</div>
-                    </div>
+        </div>
+        <!-- Paid -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(16, 185, 129, 0.2);">
+                    <i class="bi bi-check-circle" style="color: #10B981; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #10B981; line-height: 1;">{{ stats.paid|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Paid</div>
                 </div>
             </div>
-            <!-- Approved -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon bg-info bg-opacity-10">
-                        <i class="bi bi-check2-square text-info"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value text-info">{{ stats.approved|default(0) }}</div>
-                        <div class="stat-label">Approved</div>
-                    </div>
+        </div>
+        <!-- Approved -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(84, 166, 237, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(84, 166, 237, 0.2);">
+                    <i class="bi bi-check2-square" style="color: #54A6ED; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #54A6ED; line-height: 1;">{{ stats.approved|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Approved</div>
                 </div>
             </div>
-            <!-- Pending -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon bg-warning bg-opacity-10">
-                        <i class="bi bi-clock text-warning"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value text-warning">{{ stats.pending|default(0) }}</div>
-                        <div class="stat-label">Pending</div>
-                    </div>
+        </div>
+        <!-- Pending -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(245, 158, 11, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.2);">
+                    <i class="bi bi-clock" style="color: #f59e0b; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #f59e0b; line-height: 1;">{{ stats.pending|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Pending</div>
                 </div>
             </div>
-            <!-- Overdue -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon bg-danger bg-opacity-10">
-                        <i class="bi bi-exclamation-circle text-danger"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value text-danger">{{ stats.overdue|default(0) }}</div>
-                        <div class="stat-label">Overdue</div>
-                    </div>
+        </div>
+        <!-- Overdue -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(239, 68, 68, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.2);">
+                    <i class="bi bi-exclamation-circle" style="color: #ef4444; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #ef4444; line-height: 1;">{{ stats.overdue|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Overdue</div>
                 </div>
             </div>
-            <!-- Rejected -->
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="stat-item">
-                    <div class="stat-icon" style="background-color: rgba(244, 63, 94, 0.1);">
-                        <i class="bi bi-x-circle" style="color: #f43f5e;"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" style="color: #f43f5e;">{{ stats.rejected|default(0) }}</div>
-                        <div class="stat-label">Rejected</div>
-                    </div>
+        </div>
+        <!-- Rejected -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="quick-stat" style="background: rgba(244, 63, 94, 0.1); border-radius: 0.5rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                <div class="quick-stat-icon" style="width: 40px; height: 40px; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; background: rgba(244, 63, 94, 0.2);">
+                    <i class="bi bi-x-circle" style="color: #f43f5e; font-size: 1.125rem;"></i>
+                </div>
+                <div>
+                    <div class="quick-stat-value" style="font-size: 1.5rem; font-weight: 700; color: #f43f5e; line-height: 1;">{{ stats.rejected|default(0) }}</div>
+                    <div class="quick-stat-label" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.05em;">Rejected</div>
                 </div>
             </div>
         </div>
@@ -396,12 +402,13 @@
 </div>
 
 <!-- Recent Invoices Section -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span><i class="bi bi-clock-history me-2"></i>Recent Invoices</span>
+<section aria-labelledby="recent-invoices-heading">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h2 id="recent-invoices-heading" class="h6 mb-0"><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Recent Invoices</h2>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <!-- Selection indicator - only shows when items selected -->
                         <span class="badge bg-primary selection-badge" id="selectionBadge" style="display: none;">
@@ -670,7 +677,7 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block extra_js %}

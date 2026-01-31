@@ -49,22 +49,28 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: var(--gray-500);
+        color: #3B8FD9;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--gray-200);
+        border-bottom: 2px solid #EBF5FF;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .section-title i {
+        color: #54A6ED;
     }
 
     .ai-badge {
         display: inline-flex;
         align-items: center;
-        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        background: linear-gradient(135deg, #54A6ED 0%, #3B8FD9 100%);
         color: #fff;
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.25rem 0.625rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.3rem 0.75rem;
         border-radius: 1rem;
         margin-left: 0.5rem;
+        box-shadow: 0 2px 8px rgba(84, 166, 237, 0.3);
     }
 
     .ai-badge i {
@@ -93,6 +99,7 @@
         align-items: center;
         margin-top: 0.375rem;
         font-size: 0.75rem;
+        font-weight: 500;
     }
 
     .confidence-indicator .dot {
@@ -102,13 +109,23 @@
         margin-right: 0.375rem;
     }
 
-    .confidence-high .dot { background-color: #10b981; }
+    .confidence-high .dot { background-color: #10B981; }
     .confidence-medium .dot { background-color: #f59e0b; }
     .confidence-low .dot { background-color: #ef4444; }
 
-    .confidence-high { color: #10b981; }
+    .confidence-high { color: #10B981; }
     .confidence-medium { color: #f59e0b; }
     .confidence-low { color: #ef4444; }
+
+    /* Pulsing animation for AI-extracted fields */
+    .confidence-high .dot {
+        animation: confidencePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes confidencePulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        50% { box-shadow: 0 0 0 4px transparent; }
+    }
 
     /* Preview panel */
     .preview-panel {
@@ -127,7 +144,7 @@
         resize: vertical;
     }
 
-    /* Loading overlay */
+    /* Loading overlay - CoreWorker Dark Theme */
     .loading-overlay {
         display: none;
         position: fixed;
@@ -135,7 +152,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.9);
+        background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(22, 33, 62, 0.98) 100%);
         z-index: 9999;
         justify-content: center;
         align-items: center;
@@ -149,13 +166,28 @@
     .loading-overlay .spinner-border {
         width: 3rem;
         height: 3rem;
-        color: var(--primary-blue);
+        color: #54A6ED;
+        border-width: 0.2rem;
     }
 
     .loading-overlay p {
         margin-top: 1rem;
-        color: var(--gray-600);
-        font-weight: 500;
+        color: #fff;
+        font-weight: 600;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Primary save button styling */
+    .btn-save {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        border: none;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-save:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+        transform: translateY(-1px);
     }
 </style>
 {% endblock %}
@@ -174,16 +206,16 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             {% if is_editing %}
-            <h2 class="mb-1">Update Invoice Details</h2>
+            <h1 class="h2 mb-1" style="font-family: 'Outfit', sans-serif; font-weight: 700;">Update Invoice Details</h1>
             <p class="text-muted mb-0">
                 Edit the invoice information below and save changes
-                <span class="badge bg-secondary ms-2"><i class="bi bi-pencil me-1"></i>Editing</span>
+                <span class="badge ms-2" style="background: #374151;"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editing</span>
             </p>
             {% else %}
-            <h2 class="mb-1">Review Invoice</h2>
+            <h1 class="h2 mb-1" style="font-family: 'Outfit', sans-serif; font-weight: 700;">Review Invoice</h1>
             <p class="text-muted mb-0">
-                Verify the extracted information before saving
-                <span class="ai-badge"><i class="bi bi-stars"></i>AI Extracted</span>
+                Verify the AI-extracted information before saving
+                <span class="ai-badge"><i class="bi bi-stars" aria-hidden="true"></i>AI Extracted</span>
             </p>
             {% endif %}
         </div>
@@ -244,7 +276,7 @@
     </div>
     {% endif %}
 
-    <form id="invoice-form" action="{{ url_for('save_invoice') }}" method="POST" novalidate data-track-changes>
+    <form id="invoice-form" action="{{ url_for('save_invoice') }}" method="POST" novalidate data-track-changes aria-label="Invoice review form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
         <input type="hidden" name="file_path" value="{{ invoice.file_path|default('') }}">
         <input type="hidden" name="is_editing" value="{{ 'true' if is_editing else 'false' }}">
@@ -256,16 +288,18 @@
         <div class="card mb-4">
             <div class="card-body">
                 <!-- Invoice Details Section -->
-                <h6 class="section-title"><i class="bi bi-receipt me-2"></i>Invoice Details</h6>
+                <h2 class="section-title"><i class="bi bi-receipt me-2"></i>Invoice Details</h6>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <label for="invoice_number" class="form-label">
-                            Invoice Number<span class="required">*</span>
+                        <label for="invoice_number" class="form-label" id="invoice-number-label">
+                            Invoice Number<span class="required" aria-hidden="true">*</span>
                         </label>
                         <input type="text" class="form-control" id="invoice_number" name="invoice_number"
-                               value="{{ invoice.invoice_number|default('') }}" required>
-                        <div class="invalid-feedback">Please enter the invoice number.</div>
+                               value="{{ invoice.invoice_number|default('') }}" required
+                               aria-required="true" aria-labelledby="invoice-number-label"
+                               aria-describedby="invoice-number-error">
+                        <div class="invalid-feedback" id="invoice-number-error" role="alert">Please enter the invoice number.</div>
                         {% if invoice.confidence and invoice.confidence.invoice_number %}
                         <div class="confidence-indicator confidence-{{ invoice.confidence.invoice_number }}">
                             <span class="dot"></span>
@@ -275,10 +309,11 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label for="status" class="form-label">
-                            Status<span class="required">*</span>
+                        <label for="status" class="form-label" id="status-label">
+                            Status<span class="required" aria-hidden="true">*</span>
                         </label>
-                        <select class="form-select" id="status" name="status" required>
+                        <select class="form-select" id="status" name="status" required
+                                aria-required="true" aria-labelledby="status-label">
                             <option value="">Select status...</option>
                             <option value="Pending Review" {% if 'pending review' in invoice.status|lower or (not invoice.status and not is_editing) %}selected{% endif %}>Pending Review</option>
                             <option value="Pending" {% if invoice.status|lower == 'pending' %}selected{% endif %}>Pending</option>
@@ -313,16 +348,17 @@
                 </div>
 
                 <!-- Supplier Information Section -->
-                <h6 class="section-title"><i class="bi bi-building me-2"></i>Supplier Information</h6>
+                <h2 class="section-title"><i class="bi bi-building me-2"></i>Supplier Information</h6>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-12">
-                        <label for="supplier_name" class="form-label">
-                            Supplier Name<span class="required">*</span>
+                        <label for="supplier_name" class="form-label" id="supplier-name-label">
+                            Supplier Name<span class="required" aria-hidden="true">*</span>
                         </label>
                         <input type="text" class="form-control" id="supplier_name" name="supplier_name"
-                               value="{{ invoice.supplier_name|default('') }}" required>
-                        <div class="invalid-feedback">Please enter the supplier name.</div>
+                               value="{{ invoice.supplier_name|default('') }}" required
+                               aria-required="true" aria-labelledby="supplier-name-label">
+                        <div class="invalid-feedback" role="alert">Please enter the supplier name.</div>
                         {% if invoice.confidence and invoice.confidence.supplier_name %}
                         <div class="confidence-indicator confidence-{{ invoice.confidence.supplier_name }}">
                             <span class="dot"></span>
@@ -354,20 +390,21 @@
                 </div>
 
                 <!-- Payment Information Section -->
-                <h6 class="section-title"><i class="bi bi-credit-card me-2"></i>Payment Information</h6>
+                <h2 class="section-title"><i class="bi bi-credit-card me-2"></i>Payment Information</h6>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <label for="amount" class="form-label">
-                            Amount<span class="required">*</span>
+                        <label for="amount" class="form-label" id="amount-label">
+                            Amount<span class="required" aria-hidden="true">*</span>
                         </label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <span class="input-group-text" aria-hidden="true"><i class="bi bi-currency-dollar"></i></span>
                             <input type="number" class="form-control" id="amount" name="amount"
                                    value="{{ invoice.amount|default('') }}" step="0.01" min="0" required
-                                   placeholder="0.00">
+                                   placeholder="0.00"
+                                   aria-required="true" aria-labelledby="amount-label">
                         </div>
-                        <div class="invalid-feedback">Please enter a valid amount.</div>
+                        <div class="invalid-feedback" role="alert">Please enter a valid amount.</div>
                         {% if invoice.confidence and invoice.confidence.amount %}
                         <div class="confidence-indicator confidence-{{ invoice.confidence.amount }}">
                             <span class="dot"></span>
@@ -397,7 +434,7 @@
                 </div>
 
                 <!-- Banking Details Section -->
-                <h6 class="section-title"><i class="bi bi-bank me-2"></i>Banking Details (Auto-populates Payment Tab)</h6>
+                <h2 class="section-title"><i class="bi bi-bank me-2"></i>Banking Details (Auto-populates Payment Tab)</h6>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
@@ -470,7 +507,7 @@
                 </div>
 
                 <!-- Notes Section -->
-                <h6 class="section-title"><i class="bi bi-sticky me-2"></i>Additional Notes</h6>
+                <h2 class="section-title"><i class="bi bi-sticky me-2"></i>Additional Notes</h6>
 
                 <div class="row g-3">
                     <div class="col-12">
