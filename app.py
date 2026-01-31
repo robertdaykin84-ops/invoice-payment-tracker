@@ -90,8 +90,17 @@ DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
 
 @app.context_processor
 def inject_demo_mode():
-    """Inject demo_mode flag into all templates"""
-    return {'demo_mode': DEMO_MODE}
+    """Inject demo_mode flag and configuration status into all templates"""
+    # Check configuration status for graceful error handling
+    config_status = {
+        'google_sheets_configured': bool(os.environ.get('GOOGLE_SHEET_ID')),
+        'anthropic_configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
+        'google_credentials_configured': bool(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') or os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON'))
+    }
+    return {
+        'demo_mode': DEMO_MODE,
+        'config_status': config_status
+    }
 
 
 # ========== Custom Jinja2 Filters ==========

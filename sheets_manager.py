@@ -232,6 +232,27 @@ class SheetsManager:
         value = data.get(key, default)
         return value if value is not None else default
 
+    def _escape_formula(self, value: str) -> str:
+        """
+        Escape values that Google Sheets might interpret as formulas.
+        Prefixes with a single quote to force text interpretation.
+
+        Args:
+            value: The value to escape
+
+        Returns:
+            Escaped value safe for Google Sheets
+        """
+        if value is None:
+            return ''
+        value_str = str(value).strip()
+        if not value_str:
+            return ''
+        # Characters that trigger formula interpretation in Google Sheets
+        if value_str[0] in ('+', '-', '=', '@'):
+            return f"'{value_str}"
+        return value_str
+
     # ========== Invoice Operations ==========
 
     def add_invoice(self, invoice_data: dict) -> dict:
@@ -266,7 +287,7 @@ class SheetsManager:
                 self._safe_get(invoice_data, 'invoice_number'),
                 self._safe_get(invoice_data, 'supplier_name'),
                 self._safe_get(invoice_data, 'contact_email'),
-                self._safe_get(invoice_data, 'contact_phone'),
+                self._escape_formula(self._safe_get(invoice_data, 'contact_phone')),
                 self._safe_get(invoice_data, 'invoice_date'),
                 self._safe_get(invoice_data, 'due_date'),
                 self._safe_get(invoice_data, 'amount', 0),
@@ -599,7 +620,7 @@ class SheetsManager:
                 self._safe_get(invoice_data, 'invoice_number'),
                 self._safe_get(invoice_data, 'supplier_name'),
                 self._safe_get(invoice_data, 'contact_email'),
-                self._safe_get(invoice_data, 'contact_phone'),
+                self._escape_formula(self._safe_get(invoice_data, 'contact_phone')),
                 self._safe_get(invoice_data, 'invoice_date'),
                 self._safe_get(invoice_data, 'due_date'),
                 self._safe_get(invoice_data, 'amount', 0),
