@@ -13,6 +13,7 @@ from flask import (
 )
 from flask_cors import CORS
 from dotenv import load_dotenv
+from services.sheets_db import get_client as get_sheets_client
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +37,9 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Demo mode for POC
 DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
+
+# Initialize Google Sheets database
+sheets_db = get_sheets_client()
 
 # User roles
 ROLES = {
@@ -168,6 +172,7 @@ def inject_globals():
     user = get_current_user()
     return {
         'demo_mode': DEMO_MODE,
+        'sheets_demo_mode': sheets_db.demo_mode,
         'current_user': user,
         'current_role': ROLES.get(user['role']) if user else None,
         'roles': ROLES,
@@ -261,84 +266,103 @@ def dashboard():
     """Main dashboard - role-specific view"""
     user = get_current_user()
 
-    # Mock data for POC - will be replaced with Google Sheets data
-    mock_onboardings = [
-        {
-            'id': 'S-12',
-            'sponsor_name': 'Granite Capital Partners LLP',
-            'fund_name': 'Granite Capital Fund III LP',
-            'phase': 4,
-            'phase_name': 'Screening & Risk',
-            'status': 'in_progress',
-            'risk_level': 'low',
-            'assigned_to': 'James Smith',
-            'is_existing_sponsor': False,
-            'created_at': '2026-01-15',
-            'updated_at': '2026-02-01'
-        },
-        {
-            'id': 'S-11',
-            'sponsor_name': 'Ashford Capital Advisors Ltd',
-            'fund_name': 'Ashford Growth Fund I LP',
-            'phase': 6,
-            'phase_name': 'Approval',
-            'status': 'pending_mlro',
-            'risk_level': 'medium',
-            'assigned_to': 'James Smith',
-            'is_existing_sponsor': False,
-            'created_at': '2026-01-10',
-            'updated_at': '2026-02-02'
-        },
-        {
-            'id': 'S-10',
-            'sponsor_name': 'Bluewater Asset Management',
-            'fund_name': 'Bluewater Real Estate Fund LP',
-            'phase': 7,
-            'phase_name': 'Commercial',
-            'status': 'approved',
-            'risk_level': 'medium',
-            'assigned_to': 'Sarah Johnson',
-            'is_existing_sponsor': False,
-            'created_at': '2026-01-05',
-            'updated_at': '2026-02-02'
-        },
-        {
-            'id': 'S-09',
-            'sponsor_name': 'Granite Capital Partners LLP',
-            'fund_name': 'Granite Capital Fund IV LP',
-            'phase': 2,
-            'phase_name': 'Sponsor Review',
-            'status': 'in_progress',
-            'risk_level': 'low',
-            'assigned_to': 'James Smith',
-            'is_existing_sponsor': True,
-            'created_at': '2026-01-28',
-            'updated_at': '2026-02-01'
-        }
-    ]
+    # Get onboardings from Sheets
+    onboardings = sheets_db.get_onboardings()
+
+    # Fallback to mock data if Sheets is empty/demo mode
+    if not onboardings:
+        onboardings = [
+            {
+                'onboarding_id': 'ONB-001',
+                'sponsor_name': 'Granite Capital Partners LLP',
+                'fund_name': 'Granite Capital Fund III LP',
+                'current_phase': 4,
+                'status': 'in_progress',
+                'risk_level': 'low',
+                'assigned_to': 'James Smith',
+                'is_existing_sponsor': False,
+                'created_at': '2026-01-15',
+                'updated_at': '2026-02-01'
+            },
+            {
+                'onboarding_id': 'ONB-002',
+                'sponsor_name': 'Ashford Capital Advisors Ltd',
+                'fund_name': 'Ashford Growth Fund I LP',
+                'current_phase': 6,
+                'status': 'pending_mlro',
+                'risk_level': 'medium',
+                'assigned_to': 'James Smith',
+                'is_existing_sponsor': False,
+                'created_at': '2026-01-10',
+                'updated_at': '2026-02-02'
+            },
+            {
+                'onboarding_id': 'ONB-003',
+                'sponsor_name': 'Bluewater Asset Management',
+                'fund_name': 'Bluewater Real Estate Fund LP',
+                'current_phase': 7,
+                'status': 'approved',
+                'risk_level': 'medium',
+                'assigned_to': 'Sarah Johnson',
+                'is_existing_sponsor': False,
+                'created_at': '2026-01-05',
+                'updated_at': '2026-02-02'
+            },
+            {
+                'onboarding_id': 'ONB-004',
+                'sponsor_name': 'Granite Capital Partners LLP',
+                'fund_name': 'Granite Capital Fund IV LP',
+                'current_phase': 2,
+                'status': 'in_progress',
+                'risk_level': 'low',
+                'assigned_to': 'James Smith',
+                'is_existing_sponsor': True,
+                'created_at': '2026-01-28',
+                'updated_at': '2026-02-01'
+            }
+        ]
+    else:
+        # Enrich onboardings with sponsor names if not present
+        for onb in onboardings:
+            if not onb.get('sponsor_name') and onb.get('sponsor_id'):
+                sponsor = sheets_db.get_sponsor(onb['sponsor_id'])
+                if sponsor:
+                    onb['sponsor_name'] = sponsor.get('legal_name', 'Unknown')
+            # Convert string booleans
+            if isinstance(onb.get('is_existing_sponsor'), str):
+                onb['is_existing_sponsor'] = onb['is_existing_sponsor'].lower() == 'true'
+            # Ensure phase is int
+            if isinstance(onb.get('current_phase'), str):
+                onb['current_phase'] = int(onb['current_phase'])
 
     # Calculate stats
     stats = {
-        'in_progress': sum(1 for o in mock_onboardings if o['status'] == 'in_progress'),
-        'pending_approval': sum(1 for o in mock_onboardings if o['status'] == 'pending_mlro'),
-        'approved_this_month': sum(1 for o in mock_onboardings if o['status'] == 'approved'),
+        'in_progress': sum(1 for o in onboardings if o.get('status') == 'in_progress'),
+        'pending_approval': sum(1 for o in onboardings if o.get('status') == 'pending_mlro'),
+        'approved_this_month': sum(1 for o in onboardings if o.get('status') == 'approved'),
         'on_hold': 0
     }
 
     # Filter by role
     if user['role'] == 'bd':
-        # BD sees their own cases
-        onboardings = [o for o in mock_onboardings if o['assigned_to'] == user['name'] or o['phase'] <= 2]
+        onboardings = [o for o in onboardings if o.get('assigned_to') == user['name'] or o.get('current_phase', 0) <= 2]
     elif user['role'] == 'mlro':
-        # MLRO sees approval queue prominently
-        onboardings = sorted(mock_onboardings, key=lambda x: (x['status'] != 'pending_mlro', x['updated_at']))
-    else:
-        onboardings = mock_onboardings
+        onboardings = sorted(onboardings, key=lambda x: (x.get('status') != 'pending_mlro', x.get('updated_at', '')))
+
+    # Add phase_name for display
+    phases = get_phases()
+    for onb in onboardings:
+        phase_num = onb.get('current_phase', 1)
+        if 1 <= phase_num <= len(phases):
+            onb['phase_name'] = phases[phase_num - 1]['name']
+            onb['phase'] = phase_num
+        if 'id' not in onb:
+            onb['id'] = onb.get('onboarding_id', '')
 
     return render_template('dashboard.html',
                          onboardings=onboardings,
                          stats=stats,
-                         phases=get_phases())
+                         phases=phases)
 
 
 @app.route('/onboarding/new', methods=['GET', 'POST'])
@@ -524,9 +548,10 @@ def enquiry_submitted():
 @login_required
 def pending_enquiries():
     """View pending enquiries (internal staff)"""
-    enquiries = list(MOCK_ENQUIRIES.values())
-    # Sort by submission date, newest first
-    enquiries.sort(key=lambda x: x['submitted_at'], reverse=True)
+    enquiries = sheets_db.get_enquiries()
+    if not enquiries:
+        enquiries = list(MOCK_ENQUIRIES.values())
+    enquiries.sort(key=lambda x: x.get('submitted_at', x.get('created_at', '')), reverse=True)
     return render_template('enquiries.html', enquiries=enquiries)
 
 
@@ -534,7 +559,9 @@ def pending_enquiries():
 @login_required
 def view_enquiry(enquiry_id):
     """View details of a submitted enquiry"""
-    enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+    enquiry = sheets_db.get_enquiry(enquiry_id)
+    if not enquiry:
+        enquiry = MOCK_ENQUIRIES.get(enquiry_id)
     if not enquiry:
         flash('Enquiry not found.', 'danger')
         return redirect(url_for('pending_enquiries'))
@@ -545,13 +572,13 @@ def view_enquiry(enquiry_id):
 @login_required
 def start_onboarding_from_enquiry(enquiry_id):
     """Start onboarding process from a submitted enquiry"""
-    enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+    enquiry = sheets_db.get_enquiry(enquiry_id)
+    if not enquiry:
+        enquiry = MOCK_ENQUIRIES.get(enquiry_id)
     if not enquiry:
         flash('Enquiry not found.', 'danger')
         return redirect(url_for('pending_enquiries'))
-
-    # Redirect to Phase 1 with enquiry data
-    flash(f'Starting onboarding for {enquiry["sponsor_name"]}. Form pre-populated from enquiry.', 'success')
+    flash(f'Starting onboarding for {enquiry.get("sponsor_name")}. Form pre-populated from enquiry.', 'success')
     return redirect(url_for('onboarding_phase', onboarding_id='NEW', phase=1, enquiry_id=enquiry_id))
 
 
@@ -765,6 +792,17 @@ def api_audit_status():
     })
 
 
+@app.route('/api/sheets/status')
+@login_required
+def api_sheets_status():
+    """API: Get Google Sheets database status"""
+    return jsonify({
+        'status': 'ok',
+        'demo_mode': sheets_db.demo_mode,
+        'message': 'Sheets running in demo mode - data not persisted' if sheets_db.demo_mode else 'Sheets connected'
+    })
+
+
 @app.route('/api/audit/save', methods=['POST'])
 @login_required
 def api_audit_save():
@@ -819,15 +857,21 @@ def api_audit_create_folder():
 @login_required
 def api_onboardings():
     """API: Get onboardings list"""
-    # Will integrate with Google Sheets
-    return jsonify({'onboardings': [], 'status': 'ok'})
+    onboardings = sheets_db.get_onboardings()
+    return jsonify({'onboardings': onboardings, 'status': 'ok', 'demo_mode': sheets_db.demo_mode})
 
 
 @app.route('/api/onboarding/<onboarding_id>')
 @login_required
 def api_onboarding_detail(onboarding_id):
     """API: Get onboarding details"""
-    return jsonify({'onboarding': {}, 'status': 'ok'})
+    onboarding = sheets_db.get_onboarding(onboarding_id)
+    if onboarding and onboarding.get('sponsor_id'):
+        onboarding['sponsor'] = sheets_db.get_sponsor(onboarding['sponsor_id'])
+        onboarding['persons'] = sheets_db.get_persons_for_onboarding(onboarding_id)
+        onboarding['screenings'] = sheets_db.get_screenings(onboarding_id)
+        onboarding['risk_assessment'] = sheets_db.get_risk_assessment(onboarding_id)
+    return jsonify({'onboarding': onboarding or {}, 'status': 'ok'})
 
 
 @app.route('/api/onboarding/<onboarding_id>/approve', methods=['POST'])
@@ -871,6 +915,18 @@ def not_found(e):
 def server_error(e):
     logger.error(f'Server error: {e}')
     return render_template('errors/500.html'), 500
+
+
+# ========== Startup ==========
+
+def init_app():
+    """Initialize application - ensure schema and seed data."""
+    sheets_db.ensure_schema()
+    sheets_db.seed_initial_data()
+    logger.info(f"App initialized - Sheets demo_mode: {sheets_db.demo_mode}")
+
+# Run initialization
+init_app()
 
 
 # ========== Main ==========
