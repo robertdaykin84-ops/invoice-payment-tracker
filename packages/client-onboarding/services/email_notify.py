@@ -418,3 +418,211 @@ def _render_template(template_name: str, **kwargs) -> tuple:
     html_body = BASE_TEMPLATE.format(content=content)
 
     return subject, html_body
+
+
+# =============================================================================
+# NOTIFICATION FUNCTIONS
+# =============================================================================
+
+def notify_edd_triggered(
+    onboarding: Dict[str, Any],
+    risk_assessment: Dict[str, Any],
+    additional_recipients: List[str] = None
+) -> Dict[str, Any]:
+    """
+    Send notification when EDD is triggered.
+
+    Args:
+        onboarding: Onboarding record dict
+        risk_assessment: Risk assessment result dict
+        additional_recipients: Extra email addresses to notify
+    """
+    recipients = [MLRO_EMAIL]
+    if additional_recipients:
+        recipients.extend(additional_recipients)
+
+    # Build risk factors list
+    factors = risk_assessment.get('factors', {})
+    risk_factors_html = ''
+    for key, factor in factors.items():
+        if factor.get('score', 0) > 0:
+            risk_factors_html += f"<li>{key.replace('_', ' ').title()}: {factor.get('reason', 'N/A')}</li>"
+
+    if not risk_factors_html:
+        risk_factors_html = '<li>See full assessment in system</li>'
+
+    subject, html_body = _render_template(
+        'edd_triggered',
+        sponsor_name=onboarding.get('sponsor_name', 'Unknown'),
+        fund_name=onboarding.get('fund_name', 'Unknown'),
+        onboarding_id=onboarding.get('onboarding_id', 'N/A'),
+        risk_score=round(risk_assessment.get('score', 0)),
+        risk_rating=risk_assessment.get('rating', 'unknown').upper(),
+        approval_level=risk_assessment.get('approval_level', 'N/A').upper(),
+        risk_factors=risk_factors_html
+    )
+
+    return _send_smtp(recipients, subject, html_body)
+
+
+def notify_approval_required(
+    onboarding: Dict[str, Any],
+    risk_assessment: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Send notification when approval is required.
+
+    Args:
+        onboarding: Onboarding record dict
+        risk_assessment: Risk assessment result dict
+    """
+    approval_level = risk_assessment.get('approval_level', 'compliance')
+
+    recipients = []
+    if approval_level in ['mlro', 'board']:
+        recipients.append(MLRO_EMAIL)
+    if approval_level == 'board':
+        recipients.append(BOARD_EMAIL)
+
+    if not recipients:
+        return {'status': 'skipped', 'message': 'No approval notification needed for compliance level'}
+
+    subject, html_body = _render_template(
+        'approval_required',
+        sponsor_name=onboarding.get('sponsor_name', 'Unknown'),
+        fund_name=onboarding.get('fund_name', 'Unknown'),
+        onboarding_id=onboarding.get('onboarding_id', 'N/A'),
+        risk_rating=risk_assessment.get('rating', 'unknown').upper(),
+        edd_required='Yes' if risk_assessment.get('edd_required') else 'No',
+        approval_level=approval_level.upper()
+    )
+
+    return _send_smtp(recipients, subject, html_body)
+
+
+def notify_screening_complete(
+    onboarding: Dict[str, Any],
+    screening_results: List[Dict],
+    risk_assessment: Dict[str, Any],
+    analyst_email: str = None
+) -> Dict[str, Any]:
+    """
+    Send notification when screening is complete.
+
+    Args:
+        onboarding: Onboarding record dict
+        screening_results: List of screening result dicts
+        risk_assessment: Risk assessment result dict
+        analyst_email: Email of assigned analyst
+    """
+    recipients = [analyst_email] if analyst_email else [COMPLIANCE_EMAIL]
+
+    # Calculate counts
+    clear_count = sum(1 for r in screening_results if r.get('risk_level') == 'clear')
+    review_count = sum(1 for r in screening_results if r.get('risk_level') in ['review', 'medium'])
+    hits_count = sum(1 for r in screening_results if r.get('risk_level') in ['high', 'critical'])
+
+    subject, html_body = _render_template(
+        'screening_complete',
+        sponsor_name=onboarding.get('sponsor_name', 'Unknown'),
+        fund_name=onboarding.get('fund_name', 'Unknown'),
+        onboarding_id=onboarding.get('onboarding_id', 'N/A'),
+        screened_count=len(screening_results),
+        risk_score=round(risk_assessment.get('score', 0)),
+        risk_rating=risk_assessment.get('rating', 'unknown').upper(),
+        clear_count=clear_count,
+        review_count=review_count,
+        hits_count=hits_count
+    )
+
+    return _send_smtp(recipients, subject, html_body)
+
+
+def notify_phase_completed(
+    onboarding: Dict[str, Any],
+    phase_num: int,
+    phase_name: str,
+    next_phase_num: int = None,
+    next_phase_name: str = None,
+    analyst_email: str = None
+) -> Dict[str, Any]:
+    """
+    Send notification when a phase is completed.
+
+    Args:
+        onboarding: Onboarding record dict
+        phase_num: Completed phase number
+        phase_name: Completed phase name
+        next_phase_num: Next phase number
+        next_phase_name: Next phase name
+        analyst_email: Email of assigned analyst
+    """
+    recipients = [analyst_email] if analyst_email else [COMPLIANCE_EMAIL]
+
+    # Default next phase info
+    if next_phase_num is None:
+        next_phase_num = phase_num + 1
+    if next_phase_name is None:
+        phase_names = {
+            1: 'Enquiry', 2: 'Sponsor', 3: 'Fund', 4: 'Screening',
+            5: 'EDD', 6: 'Approval', 7: 'Commercial', 8: 'Complete'
+        }
+        next_phase_name = phase_names.get(next_phase_num, 'Next Step')
+
+    subject, html_body = _render_template(
+        'phase_completed',
+        sponsor_name=onboarding.get('sponsor_name', 'Unknown'),
+        fund_name=onboarding.get('fund_name', 'Unknown'),
+        onboarding_id=onboarding.get('onboarding_id', 'N/A'),
+        phase_num=phase_num,
+        phase_name=phase_name,
+        next_phase_num=next_phase_num,
+        next_phase_name=next_phase_name
+    )
+
+    return _send_smtp(recipients, subject, html_body)
+
+
+def notify_onboarding_decision(
+    onboarding: Dict[str, Any],
+    approved: bool,
+    decided_by: str = 'System',
+    reason: str = None,
+    notify_sponsor: bool = False,
+    sponsor_email: str = None
+) -> Dict[str, Any]:
+    """
+    Send notification when onboarding is approved or rejected.
+
+    Args:
+        onboarding: Onboarding record dict
+        approved: True if approved, False if rejected
+        decided_by: Name of person who made the decision
+        reason: Rejection reason (if rejected)
+        notify_sponsor: Whether to notify the sponsor
+        sponsor_email: Sponsor's email address
+    """
+    recipients = [COMPLIANCE_EMAIL, MLRO_EMAIL]
+    if notify_sponsor and sponsor_email:
+        recipients.append(sponsor_email)
+
+    template_name = 'onboarding_approved' if approved else 'onboarding_rejected'
+    decision_date = datetime.now().strftime('%d %B %Y at %H:%M')
+
+    kwargs = {
+        'sponsor_name': onboarding.get('sponsor_name', 'Unknown'),
+        'fund_name': onboarding.get('fund_name', 'Unknown'),
+        'onboarding_id': onboarding.get('onboarding_id', 'N/A'),
+    }
+
+    if approved:
+        kwargs['approved_by'] = decided_by
+        kwargs['approval_date'] = decision_date
+    else:
+        kwargs['rejected_by'] = decided_by
+        kwargs['rejection_date'] = decision_date
+        kwargs['rejection_reason'] = reason or 'No reason provided'
+
+    subject, html_body = _render_template(template_name, **kwargs)
+
+    return _send_smtp(recipients, subject, html_body)
