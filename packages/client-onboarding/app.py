@@ -15,6 +15,11 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from services.sheets_db import get_client as get_sheets_client
 from services.pdf_report import generate_report, REPORT_TYPES
+from services import (
+    notify_edd_triggered,
+    notify_approval_required,
+    notify_screening_complete
+)
 
 # Load environment variables
 load_dotenv()
@@ -737,6 +742,24 @@ def api_run_screening():
         sponsor_name=sponsor_name,
         fund_name=fund_name
     )
+
+    # Send email notifications
+    onboarding_data = {
+        'onboarding_id': onboarding_id,
+        'sponsor_name': sponsor_name,
+        'fund_name': fund_name
+    }
+
+    # Notify screening complete
+    notify_screening_complete(onboarding_data, screening_results, risk_assessment)
+
+    # Notify if EDD required
+    if risk_assessment.get('edd_required'):
+        notify_edd_triggered(onboarding_data, risk_assessment)
+
+    # Notify if approval required (above compliance level)
+    if risk_assessment.get('approval_level') != 'compliance':
+        notify_approval_required(onboarding_data, risk_assessment)
 
     return jsonify({
         'status': 'ok',
