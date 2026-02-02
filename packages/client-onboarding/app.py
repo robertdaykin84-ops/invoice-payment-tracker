@@ -581,6 +581,138 @@ def view_enquiry(enquiry_id):
     return render_template('enquiry_detail.html', enquiry=enquiry)
 
 
+@app.route('/enquiry/<enquiry_id>/export-pdf')
+@login_required
+def export_enquiry_pdf(enquiry_id):
+    """Export enquiry as PDF for review"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.units import inch
+    import io
+
+    # Get enquiry data
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+    if not enquiry:
+        flash('Enquiry not found', 'danger')
+        return redirect(url_for('pending_enquiries'))
+
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    styles = getSampleStyleSheet()
+
+    # Custom styles
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, spaceAfter=20)
+    section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#0d6efd'), spaceBefore=15, spaceAfter=10)
+    label_style = ParagraphStyle('Label', parent=styles['Normal'], fontSize=9, textColor=colors.grey)
+    value_style = ParagraphStyle('Value', parent=styles['Normal'], fontSize=10, spaceBefore=2, spaceAfter=8)
+
+    elements = []
+
+    # Title
+    elements.append(Paragraph(f"Enquiry Review: {enquiry_id}", title_style))
+    elements.append(Paragraph(f"Generated: {datetime.now().strftime('%d %B %Y at %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+
+    # Sponsor Information
+    elements.append(Paragraph("1. Sponsor Entity Details", section_style))
+    sponsor_data = [
+        ['Legal Name:', enquiry.get('sponsor_name', '-')],
+        ['Entity Type:', enquiry.get('entity_type', '-').upper()],
+        ['Jurisdiction:', enquiry.get('jurisdiction', '-')],
+        ['Registration No:', enquiry.get('registration_number', '-')],
+        ['Regulatory Status:', enquiry.get('regulatory_status', '-')],
+        ['Date of Incorporation:', enquiry.get('date_of_incorporation', '-')],
+        ['Website:', enquiry.get('website', '-')],
+        ['LEI:', enquiry.get('lei', '-')],
+        ['Tax ID:', enquiry.get('tax_id', '-')],
+    ]
+    if enquiry.get('ultimate_parent'):
+        sponsor_data.append(['Ultimate Parent:', enquiry.get('ultimate_parent', '-')])
+        sponsor_data.append(['Parent Jurisdiction:', enquiry.get('parent_jurisdiction', '-')])
+
+    t = Table(sponsor_data, colWidths=[1.8*inch, 4.5*inch])
+    t.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(t)
+
+    # Fund Information
+    elements.append(Paragraph("2. Proposed Fund", section_style))
+    fund_data = [
+        ['Fund Name:', enquiry.get('fund_name', '-')],
+        ['Fund Type:', enquiry.get('fund_type', '-').upper() if enquiry.get('fund_type') else '-'],
+        ['Legal Structure:', enquiry.get('legal_structure', '-')],
+        ['Target Size:', f"${enquiry.get('target_size', '-')}"],
+        ['Investment Strategy:', enquiry.get('investment_strategy', '-')[:200] + '...' if len(enquiry.get('investment_strategy', '')) > 200 else enquiry.get('investment_strategy', '-')],
+    ]
+    t2 = Table(fund_data, colWidths=[1.8*inch, 4.5*inch])
+    t2.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(t2)
+
+    # Principals
+    if enquiry.get('principals'):
+        elements.append(Paragraph("3. Key Principals", section_style))
+        principal_data = [['Name', 'Role', 'Nationality', 'Ownership']]
+        for p in enquiry.get('principals', []):
+            principal_data.append([p.get('name', '-'), p.get('role', '-'), p.get('nationality', '-'), p.get('ownership', '-')])
+        t3 = Table(principal_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
+        t3.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(t3)
+
+    # Contact
+    elements.append(Paragraph("4. Primary Contact", section_style))
+    contact_data = [
+        ['Name:', enquiry.get('contact_name', '-')],
+        ['Email:', enquiry.get('contact_email', '-')],
+        ['Phone:', enquiry.get('contact_phone', '-')],
+    ]
+    t4 = Table(contact_data, colWidths=[1.8*inch, 4.5*inch])
+    t4.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.grey),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(t4)
+
+    # Footer
+    elements.append(Spacer(1, 30))
+    elements.append(Paragraph("-" * 80, styles['Normal']))
+    elements.append(Paragraph("CONFIDENTIAL - For internal compliance review only",
+                             ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)))
+
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"Enquiry-{enquiry_id}-{datetime.now().strftime('%Y%m%d')}.pdf"
+    return Response(
+        buffer.getvalue(),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
+
+
 @app.route('/enquiry/<enquiry_id>/start-onboarding')
 @login_required
 def start_onboarding_from_enquiry(enquiry_id):

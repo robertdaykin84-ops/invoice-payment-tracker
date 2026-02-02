@@ -69,6 +69,36 @@
                         <div>{{ enquiry.fca_frn }}</div>
                     </div>
                     {% endif %}
+                    {% if enquiry.date_of_incorporation %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Date of Incorporation</label>
+                        <div>{{ enquiry.date_of_incorporation }}</div>
+                    </div>
+                    {% endif %}
+                    {% if enquiry.website %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Website</label>
+                        <div><a href="{{ enquiry.website }}" target="_blank">{{ enquiry.website }}</a></div>
+                    </div>
+                    {% endif %}
+                    {% if enquiry.lei %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">LEI</label>
+                        <div><code>{{ enquiry.lei }}</code></div>
+                    </div>
+                    {% endif %}
+                    {% if enquiry.tax_id %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Tax ID</label>
+                        <div>{{ enquiry.tax_id }}</div>
+                    </div>
+                    {% endif %}
+                    {% if enquiry.ultimate_parent %}
+                    <div class="col-12">
+                        <label class="form-label small text-muted">Ultimate Parent Company</label>
+                        <div>{{ enquiry.ultimate_parent }}{% if enquiry.parent_jurisdiction %} ({{ enquiry.parent_jurisdiction }}){% endif %}{% if enquiry.parent_ownership %} - {{ enquiry.parent_ownership }}{% endif %}</div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -247,9 +277,9 @@
                 <a href="{{ url_for('start_onboarding_from_enquiry', enquiry_id=enquiry.id) }}" class="btn btn-primary">
                     <i class="bi bi-play-fill me-1"></i> Start Onboarding
                 </a>
-                <button class="btn btn-outline-secondary" disabled>
-                    <i class="bi bi-printer me-1"></i> Print Enquiry
-                </button>
+                <a href="{{ url_for('export_enquiry_pdf', enquiry_id=enquiry.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-pdf me-1"></i> Export PDF
+                </a>
                 <button class="btn btn-outline-danger" disabled>
                     <i class="bi bi-trash me-1"></i> Decline Enquiry
                 </button>
