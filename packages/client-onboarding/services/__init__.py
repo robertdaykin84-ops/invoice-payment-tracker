@@ -50,6 +50,15 @@ from .email_notify import (
     DEMO_MODE as EMAIL_DEMO_MODE
 )
 
+from .documents import (
+    upload_document as upload_kyc_document,
+    get_documents,
+    get_document,
+    delete_document,
+    DOCUMENT_TYPES,
+    ALLOWED_EXTENSIONS
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -87,4 +96,11 @@ __all__ = [
     'notify_onboarding_decision',
     'get_demo_sent_emails',
     'EMAIL_DEMO_MODE',
+    # Documents
+    'upload_kyc_document',
+    'get_documents',
+    'get_document',
+    'delete_document',
+    'DOCUMENT_TYPES',
+    'ALLOWED_EXTENSIONS',
 ]

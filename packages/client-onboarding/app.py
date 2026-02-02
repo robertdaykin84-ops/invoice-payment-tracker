@@ -1090,6 +1090,56 @@ def api_reports_data():
     })
 
 
+# ========== Document Upload API Routes ==========
+
+@app.route('/api/documents/upload', methods=['POST'])
+@login_required
+def api_upload_document():
+    """Upload a document for an onboarding"""
+    from services.documents import upload_document
+
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No file provided'}), 400
+
+    file = request.files['file']
+    onboarding_id = request.form.get('onboarding_id')
+    document_type = request.form.get('document_type', 'other')
+
+    if not onboarding_id:
+        return jsonify({'status': 'error', 'message': 'onboarding_id required'}), 400
+
+    user = get_current_user()
+    result = upload_document(file, onboarding_id, document_type, uploaded_by=user['name'])
+
+    status_code = 200 if result['status'] == 'success' else 400
+    return jsonify(result), status_code
+
+
+@app.route('/api/documents/<onboarding_id>')
+@login_required
+def api_get_documents(onboarding_id):
+    """Get all documents for an onboarding"""
+    from services.documents import get_documents, DOCUMENT_TYPES
+
+    documents = get_documents(onboarding_id)
+    return jsonify({
+        'onboarding_id': onboarding_id,
+        'documents': documents,
+        'document_types': DOCUMENT_TYPES
+    })
+
+
+@app.route('/api/documents/delete/<document_id>', methods=['DELETE'])
+@login_required
+def api_delete_document(document_id):
+    """Delete a document"""
+    from services.documents import delete_document
+
+    result = delete_document(document_id)
+    status_code = 200 if result['status'] == 'success' else 404
+    return jsonify(result), status_code
+
+
 # ========== Helper Functions ==========
 
 def get_phases():
