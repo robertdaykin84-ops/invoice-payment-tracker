@@ -197,32 +197,37 @@
                 Risk Assessment
             </div>
             <div class="card-body">
-                <div class="row g-4 mb-4">
-                    <div class="col-md-4">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Screening Risk</div>
-                            <div class="display-6 fw-bold" id="screening-risk-score">-</div>
-                            <span class="badge" id="screening-risk-badge">-</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Jurisdiction Risk</div>
-                            <div class="display-6 fw-bold text-success">15</div>
-                            <span class="badge badge-risk-low">Low</span>
-                        </div>
-                    </div>
+                <!-- Summary Row -->
+                <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <div class="text-center p-3 border rounded bg-light">
-                            <div class="small text-muted mb-1">Overall Risk</div>
-                            <div class="display-6 fw-bold" id="overall-risk-score">-</div>
-                            <span class="badge" id="overall-risk-badge">-</span>
+                            <div class="small text-muted mb-1">Overall Score</div>
+                            <div class="display-5 fw-bold" id="overall-risk-score">-</div>
+                            <span class="badge fs-6" id="overall-risk-badge">-</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="small text-muted mb-1">EDD Required</div>
+                            <div class="h4 mb-0" id="edd-status">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="small text-muted mb-1">Approval Level</div>
+                            <div class="h4 mb-0" id="approval-level">-</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Factor Breakdown -->
+                <h6 class="small text-uppercase text-muted mb-3">Factor Breakdown</h6>
+                <div id="factor-breakdown">
+                    <!-- Factors will be populated by JavaScript -->
+                </div>
+
                 <!-- AI Risk Analysis -->
-                <div class="border rounded p-3 bg-light">
+                <div class="border rounded p-3 bg-light mt-4">
                     <div class="d-flex align-items-start gap-2">
                         <i class="bi bi-robot text-primary fs-5"></i>
                         <div>
@@ -370,7 +375,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     entities,
                     sponsor_name: sponsorName,
-                    fund_name: fundName
+                    fund_name: fundName,
+                    jurisdiction: 'GB',
+                    entity_type: 'lp',
+                    onboarding_id: '{{ onboarding_id }}'
                 })
             });
 
@@ -382,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.textContent = 'Screening complete!';
 
             setTimeout(() => {
-                displayResults(data.results, data.demo_mode, data.audit_trail);
+                displayResults(data);
                 progressDiv.classList.add('d-none');
                 runBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Re-run Screening';
                 runBtn.disabled = false;
@@ -397,7 +405,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function displayResults(results, demoMode, auditTrail) {
+    function displayResults(data) {
+        const results = data.results;
+        const demoMode = data.demo_mode;
+        const auditTrail = data.audit_trail;
+
         // Show demo mode banner if applicable
         const demoBanner = document.getElementById('demo-mode-banner');
         if (demoMode) {
@@ -498,56 +510,91 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }).join('');
 
-        // Update risk scores
-        let overallRisk = 20;  // Base jurisdiction risk
-        if (hits > 0) overallRisk = 85;
-        else if (review > 0) overallRisk = 55;
-        else overallRisk = 25;
+        // Display risk assessment from API response
+        if (data.risk_assessment) {
+            const risk = data.risk_assessment;
 
-        const screeningRisk = hits > 0 ? 90 : (review > 0 ? 50 : 10);
-        document.getElementById('screening-risk-score').textContent = screeningRisk;
-        document.getElementById('overall-risk-score').textContent = overallRisk;
+            // Update summary
+            document.getElementById('overall-risk-score').textContent = Math.round(risk.score);
 
-        // Set risk badges
-        const screeningBadge = document.getElementById('screening-risk-badge');
-        const overallBadge = document.getElementById('overall-risk-badge');
+            const overallBadge = document.getElementById('overall-risk-badge');
+            if (risk.rating === 'low') {
+                overallBadge.className = 'badge fs-6 bg-success';
+                overallBadge.textContent = 'LOW RISK';
+            } else if (risk.rating === 'medium') {
+                overallBadge.className = 'badge fs-6 bg-warning text-dark';
+                overallBadge.textContent = 'MEDIUM RISK';
+            } else {
+                overallBadge.className = 'badge fs-6 bg-danger';
+                overallBadge.textContent = 'HIGH RISK';
+            }
 
-        if (screeningRisk < 30) {
-            screeningBadge.className = 'badge badge-risk-low';
-            screeningBadge.textContent = 'Low';
-        } else if (screeningRisk < 60) {
-            screeningBadge.className = 'badge badge-risk-medium';
-            screeningBadge.textContent = 'Medium';
-        } else {
-            screeningBadge.className = 'badge badge-risk-high';
-            screeningBadge.textContent = 'High';
+            // EDD and Approval
+            const eddStatus = document.getElementById('edd-status');
+            eddStatus.innerHTML = risk.edd_required
+                ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Yes</span>'
+                : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>No</span>';
+
+            const approvalLevel = document.getElementById('approval-level');
+            const approvalMap = {
+                'compliance': '<span class="text-success">Compliance</span>',
+                'mlro': '<span class="text-warning">MLRO</span>',
+                'board': '<span class="text-danger">MLRO + Board</span>'
+            };
+            approvalLevel.innerHTML = approvalMap[risk.approval_level] || risk.approval_level;
+
+            // Factor breakdown
+            const factorDiv = document.getElementById('factor-breakdown');
+            const factorOrder = ['jurisdiction', 'pep_status', 'sanctions', 'adverse_media', 'entity_structure'];
+            const factorLabels = {
+                'jurisdiction': 'Jurisdiction',
+                'pep_status': 'PEP Status',
+                'sanctions': 'Sanctions',
+                'adverse_media': 'Adverse Media',
+                'entity_structure': 'Entity Structure'
+            };
+
+            factorDiv.innerHTML = factorOrder.map(key => {
+                const f = risk.factors[key];
+                const barWidth = f.score;
+                let barColor = 'bg-success';
+                if (f.score >= 70) barColor = 'bg-danger';
+                else if (f.score >= 40) barColor = 'bg-warning';
+
+                return `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small fw-medium">${factorLabels[key]} (${f.weight}%)</span>
+                            <span class="small text-muted">${f.score} → ${f.contribution}pts</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar ${barColor}" style="width: ${barWidth}%"></div>
+                        </div>
+                        <div class="small text-muted mt-1">${f.reason}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Show EDD trigger card if needed
+            if (risk.edd_required) {
+                document.getElementById('edd-trigger-card').style.display = 'block';
+                document.getElementById('edd-reason').textContent =
+                    risk.rating === 'high'
+                        ? 'High risk score detected. Enhanced Due Diligence required before approval.'
+                        : 'Elevated risk factors detected. EDD recommended.';
+            }
+
+            // AI Analysis
+            let analysis = '';
+            if (risk.rating === 'high') {
+                analysis = `<strong class="text-danger">High Risk Alert:</strong> Overall risk score of ${Math.round(risk.score)} exceeds threshold. Enhanced Due Diligence is required. Approval required from: ${risk.approval_level.toUpperCase()}.`;
+            } else if (risk.rating === 'medium') {
+                analysis = `<strong class="text-warning">Medium Risk:</strong> Risk score of ${Math.round(risk.score)} indicates elevated risk factors. EDD recommended. MLRO approval required before proceeding.`;
+            } else {
+                analysis = `<strong class="text-success">Low Risk Profile:</strong> Risk score of ${Math.round(risk.score)} is within acceptable range. Standard onboarding pathway recommended. Compliance approval sufficient.`;
+            }
+            document.getElementById('ai-analysis').innerHTML = analysis;
         }
-
-        if (overallRisk < 40) {
-            overallBadge.className = 'badge badge-risk-low';
-            overallBadge.textContent = 'Low';
-        } else if (overallRisk < 70) {
-            overallBadge.className = 'badge badge-risk-medium';
-            overallBadge.textContent = 'Medium';
-        } else {
-            overallBadge.className = 'badge badge-risk-high';
-            overallBadge.textContent = 'High';
-        }
-
-        // Generate AI analysis
-        let analysis = '';
-        if (hits > 0) {
-            analysis = `<strong class="text-danger">High Risk Alert:</strong> ${hits} entity/entities have potential sanctions or critical matches. Enhanced Due Diligence is required. Manual review and escalation to MLRO recommended before proceeding.`;
-            document.getElementById('edd-trigger-card').style.display = 'block';
-            document.getElementById('edd-reason').textContent = 'Sanctions or high-risk matches detected. EDD must be completed before approval.';
-        } else if (review > 0) {
-            analysis = `<strong class="text-warning">Review Required:</strong> ${review} entity/entities have potential matches that require manual review. These may be false positives but should be verified before proceeding. Consider enhanced monitoring.`;
-            document.getElementById('edd-trigger-card').style.display = 'block';
-            document.getElementById('edd-reason').textContent = 'Potential PEP connections or matches detected. Review required.';
-        } else {
-            analysis = `<strong class="text-success">Low Risk Profile:</strong> All ${results.length} entities screened clear against sanctions lists, PEP databases, and adverse media sources. No EDD triggers identified. Standard onboarding pathway recommended.`;
-        }
-        document.getElementById('ai-analysis').innerHTML = analysis;
 
         // Update checklist
         document.querySelector('#check-screening i').className = 'bi bi-check-circle text-success';

@@ -25,6 +25,15 @@ from .sheets_db import (
     get_client as get_sheets_client
 )
 
+from .risk_scoring import (
+    calculate_risk,
+    get_jurisdiction_score,
+    JURISDICTION_PROHIBITED,
+    JURISDICTION_HIGH,
+    THRESHOLD_LOW,
+    THRESHOLD_MEDIUM
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -43,4 +52,11 @@ __all__ = [
     # Google Sheets DB
     'SheetsDB',
     'get_sheets_client',
+    # Risk Scoring
+    'calculate_risk',
+    'get_jurisdiction_score',
+    'JURISDICTION_PROHIBITED',
+    'JURISDICTION_HIGH',
+    'THRESHOLD_LOW',
+    'THRESHOLD_MEDIUM',
 ]

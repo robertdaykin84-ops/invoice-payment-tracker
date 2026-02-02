@@ -670,6 +670,7 @@ def api_run_screening():
     """API: Run sanctions/PEP screening via OpenSanctions"""
     from services.opensanctions import batch_screen, get_client
     from services.gdrive_audit import save_screening_results, get_client as get_gdrive_client
+    from services.risk_scoring import calculate_risk
 
     data = request.get_json()
     entities = data.get('entities', [])
@@ -700,6 +701,29 @@ def api_run_screening():
             'matches': result.get('matches', [])[:5]  # Limit to top 5 matches
         })
 
+    # Calculate risk assessment
+    jurisdiction = data.get('jurisdiction', 'GB')  # Default to UK
+    entity_type = data.get('entity_type', 'company')
+    onboarding_id = data.get('onboarding_id')
+
+    risk_assessment = calculate_risk(
+        screening_results=screening_results,
+        jurisdiction=jurisdiction,
+        entity_type=entity_type,
+        onboarding_id=onboarding_id
+    )
+
+    # Save risk assessment to Sheets if we have an onboarding_id
+    if onboarding_id and onboarding_id != 'NEW':
+        assessment_id = sheets_db.save_risk_assessment({
+            'onboarding_id': onboarding_id,
+            'risk_score': risk_assessment['score'],
+            'risk_rating': risk_assessment['rating'],
+            'risk_factors': risk_assessment['factors'],
+            'edd_triggered': risk_assessment['edd_required']
+        })
+        risk_assessment['assessment_id'] = assessment_id
+
     # Save screening results to Google Drive audit trail
     gdrive_client = get_gdrive_client()
     audit_result = save_screening_results(
@@ -718,6 +742,7 @@ def api_run_screening():
         'demo_mode': demo_mode,
         'results': screening_results,
         'screened_count': len(screening_results),
+        'risk_assessment': risk_assessment,
         'audit_trail': {
             'saved': audit_result.get('status') != 'error',
             'gdrive_demo_mode': gdrive_client.demo_mode
