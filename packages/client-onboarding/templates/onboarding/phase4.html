@@ -238,6 +238,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Generate Reports -->
+                <div id="report-generation" class="border rounded p-3 mt-4" style="display: none;">
+                    <h6 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Generate Reports</h6>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100 report-btn" data-type="compliance">
+                                <i class="bi bi-file-text me-1"></i>
+                                Compliance Report
+                                <div class="small text-muted">Full detail for MLRO</div>
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100 report-btn" data-type="board">
+                                <i class="bi bi-clipboard-data me-1"></i>
+                                Board Summary
+                                <div class="small text-muted">Executive overview</div>
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100 report-btn" data-type="audit">
+                                <i class="bi bi-folder2-open me-1"></i>
+                                Audit Pack
+                                <div class="small text-muted">Complete record</div>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="report-status" class="small text-muted mt-2" style="display: none;"></div>
+                </div>
             </div>
         </div>
 
@@ -453,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show results card
         resultsCard.style.display = 'block';
         riskCard.style.display = 'block';
+        document.getElementById('report-generation').style.display = 'block';
 
         // Calculate summary
         let clear = 0, review = 0, hits = 0;
@@ -604,6 +634,65 @@ document.addEventListener('DOMContentLoaded', function() {
         // Enable continue button
         continueBtn.disabled = false;
     }
+
+    // Report generation
+    document.querySelectorAll('.report-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const reportType = this.dataset.type;
+            const statusDiv = document.getElementById('report-status');
+            const originalText = this.innerHTML;
+
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = `Generating ${reportType} report...`;
+
+            try {
+                const response = await fetch(`/api/report/generate/{{ onboarding_id }}?type=${reportType}`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate report');
+                }
+
+                // Get filename from header
+                const disposition = response.headers.get('Content-Disposition');
+                const filename = disposition ? disposition.split('filename=')[1].replace(/"/g, '') : `report-${reportType}.pdf`;
+
+                // Download the PDF
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                // Show success message
+                const driveStatus = response.headers.get('X-Drive-Status');
+                const demoMode = response.headers.get('X-Demo-Mode') === 'true';
+
+                if (driveStatus === 'success') {
+                    statusDiv.innerHTML = '<i class="bi bi-cloud-check text-success me-1"></i>Report saved to Google Drive';
+                } else if (driveStatus === 'demo') {
+                    statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Demo mode - report not saved to Drive';
+                } else if (demoMode) {
+                    statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Report generated (demo mode)';
+                } else {
+                    statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Report downloaded';
+                }
+
+            } catch (error) {
+                statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle text-danger me-1"></i>Failed to generate report';
+                console.error('Report generation error:', error);
+            } finally {
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
