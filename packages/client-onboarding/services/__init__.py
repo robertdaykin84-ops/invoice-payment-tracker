@@ -20,6 +20,11 @@ from .gdrive_audit import (
     ensure_folder_structure
 )
 
+from .sheets_db import (
+    SheetsDB,
+    get_client as get_sheets_client
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -34,5 +39,8 @@ __all__ = [
     'save_form_data',
     'upload_document',
     'save_api_response',
-    'ensure_folder_structure'
+    'ensure_folder_structure',
+    # Google Sheets DB
+    'SheetsDB',
+    'get_sheets_client',
 ]
