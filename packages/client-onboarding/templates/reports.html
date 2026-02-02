@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Reports & Analytics</h1>
+                <p class="text-muted mb-0">Pipeline analytics and data exports</p>
+            </div>
+            <button id="exportCsv" class="btn btn-outline-primary">
+                <i class="bi bi-download me-1"></i> Export CSV
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4" id="summaryCards">
+    <div class="col-md-2 col-sm-4">
+        <div class="stat-card stat-in-progress">
+            <div class="stat-value" id="statTotal">-</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <div class="stat-card" style="border-left-color: #17a2b8;">
+            <div class="stat-value" id="statInProgress">-</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <div class="stat-card stat-pending">
+            <div class="stat-value" id="statPending">-</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <div class="stat-card stat-approved">
+            <div class="stat-value" id="statApproved">-</div>
+            <div class="stat-label">Approved</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="stat-value" id="statRejected">-</div>
+            <div class="stat-label">Rejected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart me-2"></i>Pipeline by Phase
+            </div>
+            <div class="card-body">
+                <canvas id="reportPipelineChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart me-2"></i>Risk Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="reportRiskChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label class="col-form-label">Filter:</label>
+            </div>
+            <div class="col-auto">
+                <select id="filterStatus" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="pending_mlro">Pending MLRO</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select id="filterRisk" class="form-select form-select-sm">
+                    <option value="">All Risk Levels</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button id="applyFilters" class="btn btn-sm btn-primary">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table me-2"></i>Onboarding Data
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="reportTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sponsor</th>
+                        <th>Fund</th>
+                        <th>Phase</th>
+                        <th>Status</th>
+                        <th>Risk</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <tr><td colspan="7" class="text-center py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let pipelineChart, riskChart;
+
+function loadReportData(status = '', risk = '') {
+    let url = '/api/reports/data?';
+    if (status) url += `status=${status}&`;
+    if (risk) url += `risk_level=${risk}`;
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            // Update summary stats
+            document.getElementById('statTotal').textContent = data.summary.total;
+            document.getElementById('statInProgress').textContent = data.summary.in_progress;
+            document.getElementById('statPending').textContent = data.summary.pending_approval;
+            document.getElementById('statApproved').textContent = data.summary.approved;
+            document.getElementById('statRejected').textContent = data.summary.rejected;
+
+            // Update pipeline chart
+            const pipelineCtx = document.getElementById('reportPipelineChart');
+            if (pipelineChart) pipelineChart.destroy();
+            pipelineChart = new Chart(pipelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.by_phase.map(p => p.name),
+                    datasets: [{
+                        label: 'Onboardings',
+                        data: data.by_phase.map(p => p.count),
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // Update risk chart
+            const riskCtx = document.getElementById('reportRiskChart');
+            if (riskChart) riskChart.destroy();
+            riskChart = new Chart(riskCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Low', 'Medium', 'High'],
+                    datasets: [{
+                        data: [
+                            data.by_risk.find(r => r.rating === 'low')?.count || 0,
+                            data.by_risk.find(r => r.rating === 'medium')?.count || 0,
+                            data.by_risk.find(r => r.rating === 'high')?.count || 0
+                        ],
+                        backgroundColor: ['#198754', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Update table
+            const tbody = document.getElementById('reportTableBody');
+            if (data.onboardings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No data found</td></tr>';
+            } else {
+                tbody.innerHTML = data.onboardings.map(o => `
+                    <tr>
+                        <td><a href="/onboarding/${o.onboarding_id}/phase/${o.current_phase}">${o.onboarding_id}</a></td>
+                        <td>${o.sponsor_name}</td>
+                        <td>${o.fund_name}</td>
+                        <td>${o.current_phase}</td>
+                        <td><span class="badge bg-secondary">${o.status}</span></td>
+                        <td><span class="badge badge-risk-${o.risk_level}">${o.risk_level}</span></td>
+                        <td>${o.created_at || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        })
+        .catch(err => console.error('Error loading report data:', err));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadReportData();
+
+    document.getElementById('applyFilters').addEventListener('click', function() {
+        const status = document.getElementById('filterStatus').value;
+        const risk = document.getElementById('filterRisk').value;
+        loadReportData(status, risk);
+    });
+
+    document.getElementById('exportCsv').addEventListener('click', function() {
+        const status = document.getElementById('filterStatus').value;
+        const risk = document.getElementById('filterRisk').value;
+        let url = '/api/reports/data?format=csv';
+        if (status) url += `&status=${status}`;
+        if (risk) url += `&risk_level=${risk}`;
+        window.location.href = url;
+    });
+});
+</script>
+{% endblock %}

@@ -55,6 +55,30 @@
     </div>
 </div>
 
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-funnel me-2"></i>Pipeline by Phase
+            </div>
+            <div class="card-body">
+                <canvas id="pipelineChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart me-2"></i>Risk Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="riskChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Onboardings Table -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -187,4 +211,63 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch report data for charts
+    fetch('/api/reports/data')
+        .then(res => res.json())
+        .then(data => {
+            // Pipeline Chart
+            const pipelineCtx = document.getElementById('pipelineChart');
+            if (pipelineCtx) {
+                new Chart(pipelineCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.by_phase.map(p => p.name),
+                        datasets: [{
+                            label: 'Onboardings',
+                            data: data.by_phase.map(p => p.count),
+                            backgroundColor: [
+                                '#6c757d', '#17a2b8', '#28a745', '#ffc107',
+                                '#dc3545', '#007bff', '#6610f2', '#198754'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            }
+
+            // Risk Distribution Chart
+            const riskCtx = document.getElementById('riskChart');
+            if (riskCtx) {
+                new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Low', 'Medium', 'High'],
+                        datasets: [{
+                            data: [
+                                data.by_risk.find(r => r.rating === 'low')?.count || 0,
+                                data.by_risk.find(r => r.rating === 'medium')?.count || 0,
+                                data.by_risk.find(r => r.rating === 'high')?.count || 0
+                            ],
+                            backgroundColor: ['#198754', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Chart data error:', err));
+});
+</script>
 {% endblock %}

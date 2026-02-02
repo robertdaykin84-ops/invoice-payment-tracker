@@ -485,6 +485,13 @@ def trigger_review(onboarding_id):
                          onboarding_id=onboarding_id)
 
 
+@app.route('/reports')
+@login_required
+def reports():
+    """Reports and analytics page"""
+    return render_template('reports.html')
+
+
 @app.route('/approvals')
 @login_required
 @role_required('mlro', 'compliance')
