@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <svg class="mb-3" width="60" height="60" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 24 C6 12 14 6 24 6" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path d="M42 24 C42 36 34 42 24 42" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <circle cx="24" cy="6" r="3" fill="#10B981"/>
+                        <circle cx="24" cy="42" r="3" fill="#10B981"/>
+                        <circle cx="24" cy="24" r="5" fill="#10B981"/>
+                    </svg>
+                    <h4 class="mb-1">Client Onboarding</h4>
+                    <p class="text-muted small">Sign in to continue</p>
+                </div>
+
+                {% if demo_mode %}
+                <div class="alert alert-info small mb-4">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Demo Mode:</strong> Select a user role to explore the system.
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-4">
+                        <label class="form-label">Select User Role</label>
+                        <div class="d-grid gap-2">
+                            {% for user_id, user in users.items() %}
+                            <button type="submit" name="user_id" value="{{ user_id }}" class="btn btn-outline-primary text-start d-flex align-items-center gap-3 py-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                    {% if user.role == 'bd' %}
+                                    <i class="bi bi-briefcase text-primary"></i>
+                                    {% elif user.role == 'compliance' %}
+                                    <i class="bi bi-shield-check text-primary"></i>
+                                    {% elif user.role == 'mlro' %}
+                                    <i class="bi bi-person-badge text-primary"></i>
+                                    {% elif user.role == 'admin' %}
+                                    <i class="bi bi-gear text-primary"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ user.name }}</div>
+                                    <small class="text-muted">
+                                        {% if user.role == 'bd' %}
+                                        Business Development
+                                        {% elif user.role == 'compliance' %}
+                                        Compliance Analyst
+                                        {% elif user.role == 'mlro' %}
+                                        MLRO
+                                        {% elif user.role == 'admin' %}
+                                        Administrator
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="bi bi-shield-lock me-1"></i>
+                JFSC Compliant Client Onboarding System
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

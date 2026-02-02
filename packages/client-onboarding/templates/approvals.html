@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Approvals{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 mb-1">Pending Approvals</h1>
+        <p class="text-muted">Review and approve client onboarding requests</p>
+    </div>
+</div>
+
+{% if pending %}
+<div class="row">
+    <div class="col-lg-8">
+        {% for item in pending %}
+        <div class="card approval-card {% if item.waiting_days >= 3 %}high-priority{% endif %} mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1">{{ item.sponsor_name }}</h5>
+                        <p class="text-muted mb-0">{{ item.fund_name }}</p>
+                    </div>
+                    <span class="waiting-badge">
+                        <i class="bi bi-clock me-1"></i>
+                        Waiting {{ item.waiting_days }} day{% if item.waiting_days != 1 %}s{% endif %}
+                    </span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-auto">
+                        <span class="text-muted small">Risk Level:</span>
+                        {% if item.risk_level == 'low' %}
+                        <span class="badge badge-risk-low">Low ({{ item.risk_score }})</span>
+                        {% elif item.risk_level == 'medium' %}
+                        <span class="badge badge-risk-medium">Medium ({{ item.risk_score }})</span>
+                        {% elif item.risk_level == 'high' %}
+                        <span class="badge badge-risk-high">High ({{ item.risk_score }})</span>
+                        {% endif %}
+                    </div>
+                    {% if item.pep_status %}
+                    <div class="col-auto">
+                        <span class="text-muted small">PEP:</span>
+                        <span class="badge bg-warning text-dark">{{ item.pep_status }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="col-auto">
+                        <span class="text-muted small">Reviewer:</span>
+                        <span>{{ item.reviewer }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-text me-1"></i> View Memo
+                    </a>
+                    <a href="{{ url_for('onboarding_phase', onboarding_id=item.id, phase=6) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-folder me-1"></i> View Full Case
+                    </a>
+                    <div class="ms-auto">
+                        <button class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#requestInfoModal">
+                            <i class="bi bi-question-circle me-1"></i> Request Info
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm me-1" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="bi bi-x-circle me-1"></i> Reject
+                        </button>
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal">
+                            <i class="bi bi-check-circle me-1"></i> Approve
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>
+                Approval Guidelines
+            </div>
+            <div class="card-body">
+                <h6 class="small fw-bold">Before Approving, Verify:</h6>
+                <ul class="small text-muted mb-3">
+                    <li>All CDD documents collected and verified</li>
+                    <li>Screening results reviewed and cleared/documented</li>
+                    <li>Risk assessment complete with rationale</li>
+                    <li>EDD completed (if triggered)</li>
+                    <li>Source of Wealth evidence adequate</li>
+                </ul>
+
+                <h6 class="small fw-bold">Approval Authority:</h6>
+                <ul class="small text-muted mb-0">
+                    <li><strong>Low Risk:</strong> Compliance Analyst</li>
+                    <li><strong>Medium Risk:</strong> MLRO</li>
+                    <li><strong>High Risk:</strong> MLRO + Board</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle fs-1 text-success mb-3"></i>
+        <h5>No Pending Approvals</h5>
+        <p class="text-muted">All caught up! Check back later for new approval requests.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-check-circle text-success me-2"></i>Confirm Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to approve this client onboarding?</p>
+                <div class="mb-3">
+                    <label class="form-label">Approval Comments (optional)</label>
+                    <textarea class="form-control" rows="3" placeholder="Add any comments for the record..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success">
+                    <i class="bi bi-check-circle me-1"></i> Confirm Approval
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Reject Onboarding</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please provide a reason for rejection:</p>
+                <div class="mb-3">
+                    <label class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                    <select class="form-select mb-2">
+                        <option value="">Select reason...</option>
+                        <option value="insufficient_cdd">Insufficient CDD documentation</option>
+                        <option value="unresolved_screening">Unresolved screening matches</option>
+                        <option value="high_risk">Risk level unacceptable</option>
+                        <option value="sanctions">Sanctions concerns</option>
+                        <option value="other">Other (specify below)</option>
+                    </select>
+                    <textarea class="form-control" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger">
+                    <i class="bi bi-x-circle me-1"></i> Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Info Modal -->
+<div class="modal fade" id="requestInfoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-question-circle text-warning me-2"></i>Request Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Request additional information before making a decision:</p>
+                <div class="mb-3">
+                    <label class="form-label">What information is needed? <span class="text-danger">*</span></label>
+                    <textarea class="form-control" rows="4" placeholder="Describe the information required..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Send notification to</label>
+                    <select class="form-select">
+                        <option value="reviewer">Case Reviewer</option>
+                        <option value="bd">Business Development</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning">
+                    <i class="bi bi-send me-1"></i> Send Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

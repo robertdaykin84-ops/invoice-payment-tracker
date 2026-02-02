@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Onboarding Dashboard</h1>
+                <p class="text-muted mb-0">
+                    {% if current_user.role == 'bd' %}
+                    Your active client onboardings and pipeline
+                    {% elif current_user.role == 'mlro' %}
+                    Pending approvals and compliance oversight
+                    {% elif current_user.role == 'compliance' %}
+                    Cases assigned to you and verification queue
+                    {% else %}
+                    System overview and administration
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{{ url_for('new_onboarding') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> New Client
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-in-progress">
+            <div class="stat-value">{{ stats.in_progress }}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-pending">
+            <div class="stat-value">{{ stats.pending_approval }}</div>
+            <div class="stat-label">Pending Approval</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-approved">
+            <div class="stat-value">{{ stats.approved_this_month }}</div>
+            <div class="stat-label">Approved This Month</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-on-hold">
+            <div class="stat-value">{{ stats.on_hold }}</div>
+            <div class="stat-label">On Hold</div>
+        </div>
+    </div>
+</div>
+
+<!-- Onboardings Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul me-2"></i>Active Onboardings</span>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm" style="width: auto;">
+                <option value="">All Statuses</option>
+                <option value="in_progress">In Progress</option>
+                <option value="pending_mlro">Pending MLRO</option>
+                <option value="approved">Approved</option>
+                <option value="on_hold">On Hold</option>
+            </select>
+            <input type="search" class="form-control form-control-sm" placeholder="Search..." style="width: 200px;">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table onboarding-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sponsor</th>
+                        <th>Fund</th>
+                        <th>Phase</th>
+                        <th>Status</th>
+                        <th>Risk</th>
+                        <th>Assigned</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for onboarding in onboardings %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding.id, phase=onboarding.phase) }}" class="fw-medium text-decoration-none">
+                                {{ onboarding.id }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span>{{ onboarding.sponsor_name }}</span>
+                                {% if onboarding.is_existing_sponsor %}
+                                <span class="badge badge-existing-sponsor">
+                                    <i class="bi bi-arrow-repeat"></i> Existing
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ onboarding.fund_name }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="phase-progress">
+                                    {% for i in range(1, 9) %}
+                                    <div class="phase-dot {% if i < onboarding.phase %}completed{% elif i == onboarding.phase %}current{% endif %}"></div>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">{{ onboarding.phase_name }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if onboarding.status == 'in_progress' %}
+                            <span class="badge badge-status-pending">
+                                <i class="bi bi-clock"></i> In Progress
+                            </span>
+                            {% elif onboarding.status == 'pending_mlro' %}
+                            <span class="badge badge-status-pending">
+                                <i class="bi bi-hourglass-split"></i> Pending MLRO
+                            </span>
+                            {% elif onboarding.status == 'approved' %}
+                            <span class="badge badge-status-approved">
+                                <i class="bi bi-check-circle"></i> Approved
+                            </span>
+                            {% else %}
+                            <span class="badge badge-status-draft">
+                                {{ onboarding.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if onboarding.risk_level == 'low' %}
+                            <span class="badge badge-risk-low">Low</span>
+                            {% elif onboarding.risk_level == 'medium' %}
+                            <span class="badge badge-risk-medium">Medium</span>
+                            {% elif onboarding.risk_level == 'high' %}
+                            <span class="badge badge-risk-high">High</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ onboarding.assigned_to }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding.id, phase=onboarding.phase) }}" class="btn btn-outline-primary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if current_user.role in ['mlro', 'compliance'] and onboarding.status == 'pending_mlro' %}
+                                <a href="{{ url_for('approvals') }}" class="btn btn-outline-success" title="Review">
+                                    <i class="bi bi-check-lg"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No onboardings found.
+                            <a href="{{ url_for('new_onboarding') }}">Start a new client onboarding</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if current_user.role == 'mlro' and stats.pending_approval > 0 %}
+<!-- MLRO: Pending Approvals Alert -->
+<div class="card mt-4 border-warning">
+    <div class="card-header bg-warning bg-opacity-10">
+        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+        <span class="fw-semibold">Pending Approvals Requiring Your Attention</span>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">You have {{ stats.pending_approval }} onboarding(s) waiting for MLRO approval.</p>
+        <a href="{{ url_for('approvals') }}" class="btn btn-warning">
+            <i class="bi bi-check-square me-1"></i> Review Approvals
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

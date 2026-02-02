@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Trigger Event Review{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('new_onboarding') }}">New Client</a></li>
+                <li class="breadcrumb-item active">Trigger Review</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-arrow-repeat me-2" style="color: #8b5cf6;"></i>
+            Trigger Event Review
+        </h1>
+        <p class="text-muted">Review existing sponsor before adding new fund</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Sponsor Summary Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-building me-2"></i>
+                Existing Sponsor Details
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Sponsor:</strong> Granite Capital Partners LLP</p>
+                        <p class="mb-2"><strong>Jurisdiction:</strong> United Kingdom</p>
+                        <p class="mb-2"><strong>Registration:</strong> OC123456</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Last Approved:</strong> 15 June 2025</p>
+                        <p class="mb-2"><strong>Next Review Due:</strong> 15 June 2026</p>
+                        <p class="mb-2"><strong>Current Risk Rating:</strong> <span class="badge badge-risk-low">Low</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trigger Review Checklist -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check me-2"></i>
+                Trigger Review Checklist
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <p class="text-muted mb-4">
+                        Complete this checklist to verify the existing sponsor's status before proceeding
+                        with the new fund onboarding.
+                    </p>
+
+                    <!-- Material Changes -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="check_material" name="check_material">
+                            <label class="form-check-label fw-medium" for="check_material">
+                                Material Changes Check
+                            </label>
+                            <p class="small text-muted mb-0 ms-4">
+                                Confirm there have been no material changes to ownership, control, or structure
+                            </p>
+                        </div>
+                        <div class="ms-4">
+                            <label class="form-label small">Any changes identified?</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="material_changes" id="material_no" value="no" checked>
+                                <label class="form-check-label" for="material_no">No changes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="material_changes" id="material_yes" value="yes">
+                                <label class="form-check-label" for="material_yes">Changes identified</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Principal Refresh -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="check_principals" name="check_principals">
+                            <label class="form-check-label fw-medium" for="check_principals">
+                                Principal Screening Refresh
+                            </label>
+                            <p class="small text-muted mb-0 ms-4">
+                                Re-screen all existing sponsor principals (PEP/Sanctions/Adverse Media)
+                            </p>
+                        </div>
+                        <div class="ms-4">
+                            <table class="table table-sm small">
+                                <thead>
+                                    <tr>
+                                        <th>Principal</th>
+                                        <th>Role</th>
+                                        <th>Last Screened</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>John Smith</td>
+                                        <td>Partner</td>
+                                        <td>15 Jun 2025</td>
+                                        <td><span class="badge bg-success">Clear</span></td>
+                                        <td><button type="button" class="btn btn-outline-primary btn-sm">Re-screen</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sarah Johnson</td>
+                                        <td>Partner</td>
+                                        <td>15 Jun 2025</td>
+                                        <td><span class="badge bg-success">Clear</span></td>
+                                        <td><button type="button" class="btn btn-outline-primary btn-sm">Re-screen</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Michael Brown</td>
+                                        <td>Partner</td>
+                                        <td>15 Jun 2025</td>
+                                        <td><span class="badge bg-success">Clear</span></td>
+                                        <td><button type="button" class="btn btn-outline-primary btn-sm">Re-screen</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- New Principals -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="check_new_principals" name="check_new_principals">
+                            <label class="form-check-label fw-medium" for="check_new_principals">
+                                New Principals Check
+                            </label>
+                            <p class="small text-muted mb-0 ms-4">
+                                Identify any new directors, partners, or UBOs since last approval
+                            </p>
+                        </div>
+                        <div class="ms-4">
+                            <label class="form-label small">Any new principals?</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="new_principals" id="new_no" value="no" checked>
+                                <label class="form-check-label" for="new_no">No new principals</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="new_principals" id="new_yes" value="yes">
+                                <label class="form-check-label" for="new_yes">New principals to add</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Adverse Events -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="check_adverse" name="check_adverse">
+                            <label class="form-check-label fw-medium" for="check_adverse">
+                                Adverse Events Check
+                            </label>
+                            <p class="small text-muted mb-0 ms-4">
+                                Check for any regulatory actions, litigation, or adverse media since last review
+                            </p>
+                        </div>
+                        <div class="ms-4">
+                            <label class="form-label small">Any adverse events identified?</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="adverse_events" id="adverse_no" value="no" checked>
+                                <label class="form-check-label" for="adverse_no">None identified</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="adverse_events" id="adverse_yes" value="yes">
+                                <label class="form-check-label" for="adverse_yes">Events identified</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Periodic Review -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="check_periodic" name="check_periodic">
+                            <label class="form-check-label fw-medium" for="check_periodic">
+                                Periodic Review Status
+                            </label>
+                            <p class="small text-muted mb-0 ms-4">
+                                Check if periodic review is due (within 90 days)
+                            </p>
+                        </div>
+                        <div class="ms-4">
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Next periodic review due: <strong>15 June 2026</strong> (more than 90 days away)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Notes -->
+                    <div class="mb-4">
+                        <label class="form-label">Review Notes</label>
+                        <textarea class="form-control" name="review_notes" rows="3"
+                                  placeholder="Document any observations or actions required..."></textarea>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a href="{{ url_for('new_onboarding') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Back
+                        </a>
+                        <div>
+                            <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-save me-1"></i> Save Review
+                            </button>
+                            <button type="submit" name="action" value="proceed" class="btn btn-primary">
+                                Proceed to Fund Setup <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4 border-purple" style="border-color: rgba(139, 92, 246, 0.3) !important;">
+            <div class="card-header" style="background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                <i class="bi bi-lightning me-2"></i>
+                Streamlined Process
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Because this sponsor is already approved, you can skip full CDD and proceed
+                    directly to fund setup after completing this trigger review.
+                </p>
+                <h6 class="small fw-bold">Next Steps:</h6>
+                <ol class="small text-muted mb-0">
+                    <li>Complete trigger review checklist</li>
+                    <li>Setup new fund structure</li>
+                    <li>Screen new fund principals</li>
+                    <li>Combined risk assessment</li>
+                    <li>MLRO approval</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>
+                Sponsor History
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                        <span>Initial Approval</span>
+                        <span class="text-muted">15 Jun 2025</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                        <span>Fund III LP Setup</span>
+                        <span class="text-muted">20 Jun 2025</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span>Last Screening</span>
+                        <span class="text-muted">15 Jun 2025</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,628 @@
+/* ============================================
+   Client Onboarding System - Main Stylesheet
+   CoreWorker AI Brand Design System
+   ============================================ */
+
+:root {
+    /* CoreWorker AI Brand Colors */
+    --primary-blue: #54A6ED;
+    --primary-blue-dark: #3B8FD9;
+    --secondary-blue: #7BBAF2;
+    --light-blue: #EBF5FF;
+    --accent-green: #10B981;
+    --accent-green-light: #34D399;
+    --dark-900: #1a1a2e;
+    --dark-800: #16213e;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+
+    /* Risk Level Colors */
+    --risk-low: #10B981;
+    --risk-medium: #F59E0B;
+    --risk-high: #EF4444;
+
+    /* Status Colors */
+    --status-pending: #F59E0B;
+    --status-approved: #10B981;
+    --status-rejected: #EF4444;
+    --status-draft: #6B7280;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+}
+
+main {
+    flex: 1;
+}
+
+/* ============================================
+   Navbar Styles
+   ============================================ */
+
+.navbar {
+    background: linear-gradient(135deg, var(--dark-900) 0%, var(--dark-800) 100%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(84, 166, 237, 0.15);
+    padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #fff !important;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.navbar-brand .logo-icon {
+    width: 40px;
+    height: 40px;
+    animation: logoRotate 8s linear infinite;
+}
+
+@keyframes logoRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.navbar-brand .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.navbar-brand .brand-main {
+    font-size: 1rem;
+}
+
+.navbar-brand .brand-sub {
+    font-size: 0.65rem;
+    color: var(--secondary-blue);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    color: #fff !important;
+    background-color: rgba(84, 166, 237, 0.15);
+}
+
+.nav-link.active {
+    color: #fff !important;
+    background-color: rgba(84, 166, 237, 0.25);
+}
+
+.nav-link i {
+    margin-right: 0.375rem;
+}
+
+/* ============================================
+   Footer Styles
+   ============================================ */
+
+footer {
+    background: linear-gradient(135deg, var(--dark-900) 0%, var(--dark-800) 100%);
+    color: var(--gray-400);
+    padding: 1.5rem 0;
+    margin-top: auto;
+    border-top: 1px solid rgba(84, 166, 237, 0.15);
+}
+
+.compliance-badges {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.badge-separator {
+    color: #4b5563;
+}
+
+.footer-divider {
+    border-color: rgba(84, 166, 237, 0.15);
+    margin: 0 0 1rem 0;
+}
+
+.footer-brand {
+    color: #fff;
+    font-weight: 500;
+}
+
+.footer-link {
+    color: #7BBAF2;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-link:hover {
+    color: #fff;
+}
+
+.footer-copyright {
+    color: #6b7280;
+}
+
+/* ============================================
+   Card Styles
+   ============================================ */
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    font-weight: 600;
+    color: var(--gray-800);
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* ============================================
+   Button Styles
+   ============================================ */
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    border-color: var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-blue-dark) 0%, #2D7AC4 100%);
+    border-color: var(--primary-blue-dark);
+    box-shadow: 0 4px 14px rgba(84, 166, 237, 0.35);
+}
+
+.btn-outline-primary {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+    border-color: var(--accent-green);
+}
+
+/* ============================================
+   Dashboard Stats
+   ============================================ */
+
+.stat-card {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.stat-card.stat-in-progress .stat-value { color: var(--primary-blue); }
+.stat-card.stat-pending .stat-value { color: var(--status-pending); }
+.stat-card.stat-approved .stat-value { color: var(--status-approved); }
+.stat-card.stat-on-hold .stat-value { color: var(--gray-500); }
+
+/* ============================================
+   Onboarding Table
+   ============================================ */
+
+.onboarding-table {
+    margin-bottom: 0;
+}
+
+.onboarding-table th {
+    font-weight: 600;
+    color: var(--gray-700);
+    border-bottom-width: 2px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.onboarding-table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.onboarding-table tbody tr {
+    transition: background-color 0.15s;
+}
+
+.onboarding-table tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+/* ============================================
+   Progress Bar (Phase Indicator)
+   ============================================ */
+
+.phase-progress {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.phase-progress .phase-dot {
+    width: 24px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--gray-200);
+    transition: background-color 0.2s;
+}
+
+.phase-progress .phase-dot.completed {
+    background-color: var(--accent-green);
+}
+
+.phase-progress .phase-dot.current {
+    background-color: var(--primary-blue);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ============================================
+   Risk Level Badges
+   ============================================ */
+
+.badge-risk-low {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--risk-low);
+}
+
+.badge-risk-medium {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--risk-medium);
+}
+
+.badge-risk-high {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--risk-high);
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+
+.badge-status-pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--status-pending);
+}
+
+.badge-status-approved {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--status-approved);
+}
+
+.badge-status-rejected {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--status-rejected);
+}
+
+.badge-status-draft {
+    background-color: rgba(107, 114, 128, 0.1);
+    color: var(--status-draft);
+}
+
+/* ============================================
+   Wizard Stepper
+   ============================================ */
+
+.wizard-stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 0;
+    list-style: none;
+    position: relative;
+}
+
+.wizard-stepper::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background-color: var(--gray-200);
+    z-index: 0;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.wizard-step .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s;
+}
+
+.wizard-step.completed .step-icon {
+    background-color: var(--accent-green);
+    color: #fff;
+}
+
+.wizard-step.current .step-icon {
+    background-color: var(--primary-blue);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(84, 166, 237, 0.2);
+}
+
+.wizard-step .step-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    text-align: center;
+}
+
+.wizard-step.completed .step-label,
+.wizard-step.current .step-label {
+    color: var(--gray-700);
+}
+
+/* ============================================
+   Form Styles
+   ============================================ */
+
+.form-label {
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.375rem;
+}
+
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    border-color: var(--gray-300);
+    padding: 0.625rem 0.875rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(84, 166, 237, 0.15);
+}
+
+.form-text {
+    color: var(--gray-500);
+    font-size: 0.8125rem;
+}
+
+/* ============================================
+   Existing Sponsor Badge
+   ============================================ */
+
+.badge-existing-sponsor {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* ============================================
+   Approval Card
+   ============================================ */
+
+.approval-card {
+    border-left: 4px solid var(--status-pending);
+    margin-bottom: 1rem;
+}
+
+.approval-card.high-priority {
+    border-left-color: var(--risk-high);
+}
+
+.approval-card .waiting-badge {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+/* ============================================
+   Skip Link Styles
+   ============================================ */
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-blue);
+    color: #fff;
+    padding: 8px 16px;
+    z-index: 9999;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0 !important;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+    }
+
+    .form-control, .form-select {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar-brand .logo-icon {
+        animation-duration: 12s;
+    }
+
+    .stat-card .stat-value {
+        font-size: 2rem;
+    }
+
+    .wizard-stepper {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .wizard-stepper::before {
+        display: none;
+    }
+
+    .wizard-step {
+        flex: 0 0 calc(25% - 0.75rem);
+    }
+}
+
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
+/* ============================================
+   Alert Styles
+   ============================================ */
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* ============================================
+   Table Styles
+   ============================================ */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    color: var(--gray-700);
+    border-bottom-width: 2px;
+}
+
+/* ============================================
+   Dropdown Styles
+   ============================================ */
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.dropdown-item:hover {
+    background-color: var(--gray-100);
+}
+
+.dropdown-item.active {
+    background-color: var(--primary-blue);
+}
