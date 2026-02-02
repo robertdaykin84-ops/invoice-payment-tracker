@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Completed Enquiry Form - Evergreen Capital Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; padding: 40px; max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #333; }
+        .logo { font-size: 24pt; font-weight: bold; color: #54A6ED; }
+        .logo-sub { font-size: 10pt; color: #666; letter-spacing: 2px; }
+        h1 { font-size: 16pt; margin-top: 15px; }
+        .section { margin-bottom: 25px; }
+        .section-title { background: #f5f5f5; padding: 8px 12px; font-weight: bold; margin-bottom: 15px; border-left: 4px solid #54A6ED; }
+        .field { margin-bottom: 12px; }
+        .field-label { font-size: 9pt; color: #666; margin-bottom: 2px; }
+        .field-value { padding: 8px; border: 1px solid #ddd; background: #fafafa; min-height: 20px; }
+        .field-value.filled { background: #fff; }
+        .row { display: flex; gap: 20px; }
+        .row .field { flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
+        th { background: #f5f5f5; }
+        .declaration { background: #f9f9f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd; }
+        .signature-line { border-bottom: 1px solid #333; width: 250px; margin-top: 30px; padding-bottom: 5px; }
+        .signature-label { font-size: 9pt; color: #666; }
+        .checkbox { display: inline-block; width: 14px; height: 14px; border: 1px solid #333; margin-right: 8px; text-align: center; line-height: 12px; }
+        .checkbox.checked::after { content: "X"; font-weight: bold; }
+        .stamp { position: absolute; top: 100px; right: 60px; border: 3px solid #10B981; color: #10B981; padding: 10px 20px; transform: rotate(-15deg); font-weight: bold; opacity: 0.7; }
+        @media print { body { padding: 20px; } .stamp { position: fixed; } }
+    </style>
+</head>
+<body>
+    <div class="stamp">SAMPLE</div>
+
+    <div class="header">
+        <div class="logo">CoreWorker</div>
+        <div class="logo-sub">FUND ADMINISTRATION</div>
+        <h1>CLIENT ENQUIRY FORM</h1>
+    </div>
+
+    <div class="section">
+        <div class="section-title">1. SPONSOR INFORMATION</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Sponsor Legal Name *</div>
+                <div class="field-value filled">Evergreen Capital Management Ltd</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Entity Type *</div>
+                <div class="field-value filled">Private Company (Ltd)</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Jurisdiction of Incorporation *</div>
+                <div class="field-value filled">United Kingdom</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Registration Number</div>
+                <div class="field-value filled">12345678</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Regulatory Status</div>
+                <div class="field-value filled">FCA Regulated</div>
+            </div>
+            <div class="field">
+                <div class="field-label">FCA FRN (if applicable)</div>
+                <div class="field-value filled">654321</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">2. PROPOSED FUND</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Fund Name *</div>
+                <div class="field-value filled">Evergreen Sustainable Growth Fund LP</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Fund Type *</div>
+                <div class="field-value filled">Jersey Private Fund (JPF)</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Legal Structure</div>
+                <div class="field-value filled">Limited Partnership</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Target Fund Size (USD)</div>
+                <div class="field-value filled">$250,000,000</div>
+            </div>
+        </div>
+        <div class="field">
+            <div class="field-label">Investment Strategy</div>
+            <div class="field-value filled">ESG-focused growth equity investments in renewable energy infrastructure and sustainable technology across Europe.</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">3. KEY PRINCIPALS</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Role/Position</th>
+                    <th>Nationality</th>
+                    <th>Ownership %</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Elizabeth Chen</td>
+                    <td>CEO</td>
+                    <td>British</td>
+                    <td>40%</td>
+                </tr>
+                <tr>
+                    <td>David Kumar</td>
+                    <td>CIO</td>
+                    <td>British</td>
+                    <td>30%</td>
+                </tr>
+                <tr>
+                    <td>Anna Schmidt</td>
+                    <td>CFO</td>
+                    <td>German</td>
+                    <td>30%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">4. PRIMARY CONTACT</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Contact Name *</div>
+                <div class="field-value filled">Elizabeth Chen</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Position</div>
+                <div class="field-value filled">CEO</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Email *</div>
+                <div class="field-value filled">e.chen@evergreencap.com</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value filled">+44 20 7987 6543</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">5. SOURCE OF ENQUIRY</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">How did you hear about us?</div>
+                <div class="field-value filled">Website</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Referrer Name (if applicable)</div>
+                <div class="field-value filled">N/A</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="declaration">
+        <p style="margin-bottom: 15px;"><strong>DECLARATION</strong></p>
+        <p style="font-size: 10pt; margin-bottom: 15px;">
+            <span class="checkbox checked"></span>
+            I confirm that the information provided in this form is true and accurate to the best of my knowledge.
+            I understand that CoreWorker will conduct due diligence checks as part of the onboarding process.
+        </p>
+        <div class="row" style="margin-top: 30px;">
+            <div class="field">
+                <div class="signature-line">Elizabeth Chen</div>
+                <div class="signature-label">Signature</div>
+            </div>
+            <div class="field">
+                <div class="signature-line">02 February 2026</div>
+                <div class="signature-label">Date</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

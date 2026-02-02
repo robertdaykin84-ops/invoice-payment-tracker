@@ -16,80 +16,147 @@
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- New Sponsor Card -->
+<!-- New Sponsor Section -->
+<h5 class="mb-3"><i class="bi bi-person-plus me-2"></i>New Sponsor</h5>
+
+<div class="row g-4 mb-5">
+    <!-- Upload Enquiry Form - Recommended -->
     <div class="col-md-6">
-        <div class="card h-100">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-star-fill me-1"></i> Recommended
+            </div>
             <div class="card-body p-4">
                 <div class="d-flex align-items-start gap-3 mb-4">
                     <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                        <i class="bi bi-person-plus fs-4 text-primary"></i>
+                        <i class="bi bi-upload fs-4 text-primary"></i>
                     </div>
                     <div>
-                        <h5 class="mb-1">New Sponsor</h5>
-                        <p class="text-muted small mb-0">Onboard a new PE House / Fund Manager</p>
+                        <h5 class="mb-1">Upload Enquiry Form</h5>
+                        <p class="text-muted small mb-0">Upload a completed client enquiry form</p>
                     </div>
                 </div>
 
                 <ul class="list-unstyled mb-4">
                     <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Full sponsor entity capture</span>
+                        <i class="bi bi-robot text-primary"></i>
+                        <span>AI extracts data automatically</span>
                     </li>
                     <li class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-check-circle text-success"></i>
-                        <span>Principal identification & CDD</span>
+                        <span>Review & verify before proceeding</span>
                     </li>
                     <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Fund structure setup</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Full screening & risk assessment</span>
+                        <i class="bi bi-lightning text-warning"></i>
+                        <span>Faster, fewer manual errors</span>
                     </li>
                 </ul>
 
+                <form method="POST" action="{{ url_for('upload_enquiry') }}" enctype="multipart/form-data" id="upload-form">
+                    <div class="mb-3">
+                        <label class="form-label">Select Enquiry Form</label>
+                        <input type="file" class="form-control" name="enquiry_file" id="enquiry-file"
+                               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" required>
+                        <div class="form-text">Accepted formats: PDF, Word, or scanned image</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-upload me-1"></i> Upload & Extract Data
+                    </button>
+                </form>
+
+                <div class="mt-3 pt-3 border-top">
+                    <p class="small text-muted mb-2">Need a form to test with?</p>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('sample_enquiries') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-download me-1"></i> Sample Forms
+                        </a>
+                        <a href="{{ url_for('enquiry_form') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-file-earmark-text me-1"></i> Blank Form
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Entry - Not Recommended -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-light text-muted">
+                <i class="bi bi-exclamation-circle me-1"></i> Not Recommended
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                        <i class="bi bi-keyboard fs-4 text-secondary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Manual Entry</h5>
+                        <p class="text-muted small mb-0">Enter client details manually</p>
+                    </div>
+                </div>
+
+                <ul class="list-unstyled mb-4">
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-x-circle text-danger"></i>
+                        <span class="text-muted">More prone to data entry errors</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-x-circle text-danger"></i>
+                        <span class="text-muted">Takes longer to complete</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-x-circle text-danger"></i>
+                        <span class="text-muted">No source document on file</span>
+                    </li>
+                </ul>
+
+                <div class="alert alert-warning small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Only use manual entry if you do not have a completed enquiry form from the client.
+                </div>
+
                 <form method="POST" action="{{ url_for('new_onboarding') }}">
                     <input type="hidden" name="sponsor_type" value="new">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-arrow-right me-1"></i> Start New Sponsor Onboarding
+                    <input type="hidden" name="entry_method" value="manual">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-pencil me-1"></i> Enter Manually
                     </button>
                 </form>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Existing Sponsor Card -->
+<!-- Existing Sponsor Section -->
+<h5 class="mb-3"><i class="bi bi-arrow-repeat me-2"></i>Existing Sponsor - New Fund</h5>
+
+<div class="row g-4">
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-start gap-3 mb-4">
-                    <div class="rounded-circle bg-purple bg-opacity-10 p-3" style="background-color: rgba(139, 92, 246, 0.1);">
-                        <i class="bi bi-arrow-repeat fs-4" style="color: #8b5cf6;"></i>
+                    <div class="rounded-circle p-3" style="background-color: rgba(139, 92, 246, 0.1);">
+                        <i class="bi bi-building fs-4" style="color: #8b5cf6;"></i>
                     </div>
                     <div>
-                        <h5 class="mb-1">Existing Sponsor - New Fund</h5>
-                        <p class="text-muted small mb-0">Add a new fund for an approved sponsor</p>
+                        <h5 class="mb-1">Add Fund for Approved Sponsor</h5>
+                        <p class="text-muted small mb-0">Streamlined onboarding with trigger event review</p>
                     </div>
                 </div>
 
                 <ul class="list-unstyled mb-4">
                     <li class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-lightning text-warning"></i>
-                        <span>Trigger event review (streamlined)</span>
+                        <span>Trigger event review (not full CDD)</span>
                     </li>
                     <li class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-check-circle text-success"></i>
-                        <span>New fund structure setup</span>
+                        <span>Sponsor data already on file</span>
                     </li>
                     <li class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-check-circle text-success"></i>
                         <span>Screen new fund principals only</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Combined risk assessment</span>
                     </li>
                 </ul>
 
@@ -113,32 +180,25 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Information Box -->
-<div class="card mt-4 bg-light border-0">
-    <div class="card-body">
-        <div class="d-flex align-items-start gap-3">
-            <i class="bi bi-info-circle fs-4 text-primary"></i>
-            <div>
-                <h6 class="mb-1">About the Onboarding Process</h6>
-                <p class="text-muted small mb-2">
+    <!-- Info Card -->
+    <div class="col-md-6">
+        <div class="card h-100 bg-light border-0">
+            <div class="card-body p-4">
+                <h6 class="mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>About the Onboarding Process</h6>
+                <p class="text-muted small mb-3">
                     Our JFSC-compliant onboarding process ensures thorough due diligence while streamlining
-                    the client experience. The wizard guides you through each phase:
+                    the client experience.
                 </p>
-                <div class="row g-2 small">
-                    <div class="col-md-6">
-                        <span class="badge bg-secondary me-1">1</span> Initial Enquiry & Conflict Check<br>
-                        <span class="badge bg-secondary me-1">2</span> Sponsor Entity & Principals<br>
-                        <span class="badge bg-secondary me-1">3</span> Fund Structure Setup<br>
-                        <span class="badge bg-secondary me-1">4</span> Screening & Risk Assessment
-                    </div>
-                    <div class="col-md-6">
-                        <span class="badge bg-secondary me-1">5</span> Enhanced Due Diligence (if required)<br>
-                        <span class="badge bg-secondary me-1">6</span> MLRO/Board Approval<br>
-                        <span class="badge bg-secondary me-1">7</span> Commercial Agreement<br>
-                        <span class="badge bg-secondary me-1">8</span> Onboarding Completion
-                    </div>
+                <div class="small">
+                    <div class="mb-2"><span class="badge bg-secondary me-1">1</span> Initial Enquiry & Conflict Check</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">2</span> Sponsor Entity & Principals</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">3</span> Fund Structure Setup</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">4</span> Screening & Risk Assessment</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">5</span> Enhanced Due Diligence (if required)</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">6</span> MLRO/Board Approval</div>
+                    <div class="mb-2"><span class="badge bg-secondary me-1">7</span> Commercial Agreement</div>
+                    <div><span class="badge bg-secondary me-1">8</span> Onboarding Completion</div>
                 </div>
             </div>
         </div>

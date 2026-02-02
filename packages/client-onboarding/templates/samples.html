@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Sample Enquiry Forms{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('new_onboarding') }}">New Client or Fund</a></li>
+                <li class="breadcrumb-item active">Sample Forms</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">Sample Enquiry Forms</h1>
+        <p class="text-muted">Download these completed sample forms to test the upload and extraction feature</p>
+    </div>
+</div>
+
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-start gap-3">
+        <i class="bi bi-info-circle fs-4"></i>
+        <div>
+            <h6 class="mb-1">How to Use These Samples</h6>
+            <ol class="small mb-0 ps-3">
+                <li>Click "View" to open a sample form in your browser</li>
+                <li>Print to PDF (Ctrl/Cmd + P > Save as PDF) or take a screenshot</li>
+                <li>Go to <a href="{{ url_for('new_onboarding') }}">New Client or Fund</a> and upload the file</li>
+                <li>The AI will extract the data and show it for verification</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for sample in samples %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                        <i class="bi bi-file-earmark-text fs-5 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">{{ sample.name }}</h6>
+                        <small class="text-muted">{{ sample.fund }}</small>
+                    </div>
+                </div>
+
+                <div class="small mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Target Size:</span>
+                        <span>{{ sample.size }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Jurisdiction:</span>
+                        <span>{{ sample.jurisdiction }}</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('static', filename='samples/' + sample.file) }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i> View Form
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card mt-4 bg-light border-0">
+    <div class="card-body">
+        <div class="d-flex align-items-start gap-3">
+            <i class="bi bi-lightbulb fs-4 text-warning"></i>
+            <div>
+                <h6 class="mb-1">Tip: Quick Test</h6>
+                <p class="text-muted small mb-0">
+                    For the fastest test, simply right-click on any "View Form" button, select "Save Link As...",
+                    save as an HTML file, then upload that file on the New Client or Fund page.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('new_onboarding') }}" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Upload
+    </a>
+</div>
+{% endblock %}

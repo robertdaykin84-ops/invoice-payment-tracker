@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Client Enquiry - CoreWorker AI</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-blue: #54A6ED;
+            --primary-blue-dark: #3B8FD9;
+            --accent-green: #10B981;
+            --dark-900: #1a1a2e;
+            --gray-50: #f9fafb;
+            --gray-700: #374151;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-50);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark-900) 0%, #16213e 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .form-section h5 {
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--primary-blue);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            border-color: var(--primary-blue);
+        }
+
+        .required-note {
+            color: #dc3545;
+            font-size: 0.875rem;
+        }
+
+        .form-label .text-danger {
+            margin-left: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3">
+                <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 24 C6 12 14 6 24 6" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M42 24 C42 36 34 42 24 42" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <circle cx="24" cy="6" r="3" fill="#10B981"/>
+                    <circle cx="24" cy="42" r="3" fill="#10B981"/>
+                    <circle cx="24" cy="24" r="5" fill="#10B981"/>
+                </svg>
+                <div>
+                    <h1 class="h4 mb-0">New Client Enquiry Form</h1>
+                    <small class="opacity-75">Fund Administration Services</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Please complete this form to initiate the client onboarding process. Fields marked with <span class="text-danger">*</span> are required.
+                </div>
+
+                <form method="POST" action="{{ url_for('submit_enquiry') }}" id="enquiryForm">
+                    <!-- Section 1: Sponsor Information -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-building me-2"></i>1. Sponsor / Fund Manager Information</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Legal Name of Sponsor Entity <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="sponsor_name" required
+                                       placeholder="e.g., Granite Capital Partners LLP">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Entity Type <span class="text-danger">*</span></label>
+                                <select class="form-select" name="entity_type" required>
+                                    <option value="">Select...</option>
+                                    <option value="company">Private Company (Ltd/Inc)</option>
+                                    <option value="llp">Limited Liability Partnership (LLP)</option>
+                                    <option value="lp">Limited Partnership (LP)</option>
+                                    <option value="trust">Trust</option>
+                                    <option value="foundation">Foundation</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Jurisdiction of Incorporation <span class="text-danger">*</span></label>
+                                <select class="form-select" name="jurisdiction" required>
+                                    <option value="">Select...</option>
+                                    <option value="UK">United Kingdom</option>
+                                    <option value="Jersey">Jersey</option>
+                                    <option value="Guernsey">Guernsey</option>
+                                    <option value="Cayman">Cayman Islands</option>
+                                    <option value="Luxembourg">Luxembourg</option>
+                                    <option value="Ireland">Ireland</option>
+                                    <option value="US-Delaware">United States (Delaware)</option>
+                                    <option value="other">Other (specify in notes)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Registration/Company Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="registration_number" required
+                                       placeholder="e.g., OC123456">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Registered Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="registered_address" rows="2" required></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Regulatory Status</label>
+                                <select class="form-select" name="regulatory_status">
+                                    <option value="regulated">Regulated</option>
+                                    <option value="not_regulated">Not Regulated</option>
+                                    <option value="exempt">Exempt</option>
+                                    <option value="pending">Pending Registration</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Regulator (if applicable)</label>
+                                <input type="text" class="form-control" name="regulator"
+                                       placeholder="e.g., FCA, JFSC, SEC">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Proposed Fund -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-diagram-3 me-2"></i>2. Proposed Fund Structure</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Proposed Fund Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="fund_name" required
+                                       placeholder="e.g., Granite Capital Fund III LP">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Fund Type <span class="text-danger">*</span></label>
+                                <select class="form-select" name="fund_type" required>
+                                    <option value="">Select...</option>
+                                    <option value="jpf">Jersey Private Fund (JPF)</option>
+                                    <option value="expert">Expert Fund</option>
+                                    <option value="listed">Listed Fund</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Legal Structure <span class="text-danger">*</span></label>
+                                <select class="form-select" name="legal_structure" required>
+                                    <option value="">Select...</option>
+                                    <option value="lp">Limited Partnership</option>
+                                    <option value="unit_trust">Unit Trust</option>
+                                    <option value="icc">Incorporated Cell Company (ICC)</option>
+                                    <option value="pcc">Protected Cell Company (PCC)</option>
+                                    <option value="company">Company</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Target Fund Size</label>
+                                <div class="input-group">
+                                    <select class="form-select" name="currency" style="max-width: 80px;">
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                    <input type="text" class="form-control" name="target_size"
+                                           placeholder="e.g., 500,000,000">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Investment Strategy <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="investment_strategy" rows="3" required
+                                          placeholder="Please describe the fund's investment focus, target sectors, and geographic regions..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Target Investment Jurisdictions</label>
+                                <input type="text" class="form-control" name="target_jurisdictions"
+                                       placeholder="e.g., UK, EU, North America">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expected Number of Investors</label>
+                                <select class="form-select" name="investor_count">
+                                    <option value="">Select...</option>
+                                    <option value="1-10">1-10</option>
+                                    <option value="11-25">11-25</option>
+                                    <option value="26-50">26-50</option>
+                                    <option value="50+">More than 50</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Key Principals -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-people me-2"></i>3. Key Principals</h5>
+                        <p class="text-muted small mb-3">Please list the key principals (directors, partners, significant shareholders) of the sponsor entity.</p>
+
+                        <div id="principalsContainer">
+                            <!-- Principal 1 -->
+                            <div class="border rounded p-3 mb-3 principal-entry">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="principal_name_1" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Role <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="principal_role_1" required>
+                                            <option value="">Select...</option>
+                                            <option value="director">Director</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="shareholder">Shareholder</option>
+                                            <option value="ubo">UBO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Ownership %</label>
+                                        <input type="text" class="form-control" name="principal_ownership_1"
+                                               placeholder="e.g., 33%">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nationality</label>
+                                        <input type="text" class="form-control" name="principal_nationality_1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Country of Residence</label>
+                                        <input type="text" class="form-control" name="principal_residence_1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="principal_email_1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Principal 2 -->
+                            <div class="border rounded p-3 mb-3 principal-entry">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" name="principal_name_2">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Role</label>
+                                        <select class="form-select" name="principal_role_2">
+                                            <option value="">Select...</option>
+                                            <option value="director">Director</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="shareholder">Shareholder</option>
+                                            <option value="ubo">UBO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Ownership %</label>
+                                        <input type="text" class="form-control" name="principal_ownership_2">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nationality</label>
+                                        <input type="text" class="form-control" name="principal_nationality_2">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Country of Residence</label>
+                                        <input type="text" class="form-control" name="principal_residence_2">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="principal_email_2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Principal 3 -->
+                            <div class="border rounded p-3 mb-3 principal-entry">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" name="principal_name_3">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Role</label>
+                                        <select class="form-select" name="principal_role_3">
+                                            <option value="">Select...</option>
+                                            <option value="director">Director</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="shareholder">Shareholder</option>
+                                            <option value="ubo">UBO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Ownership %</label>
+                                        <input type="text" class="form-control" name="principal_ownership_3">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nationality</label>
+                                        <input type="text" class="form-control" name="principal_nationality_3">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Country of Residence</label>
+                                        <input type="text" class="form-control" name="principal_residence_3">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="principal_email_3">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-muted small"><i class="bi bi-info-circle me-1"></i>Add additional principals in the notes section if needed.</p>
+                    </div>
+
+                    <!-- Section 4: Contact Information -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-person-lines-fill me-2"></i>4. Primary Contact for Onboarding</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="contact_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Position/Title</label>
+                                <input type="text" class="form-control" name="contact_title"
+                                       placeholder="e.g., COO, CFO, Investor Relations">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="contact_email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="contact_phone"
+                                       placeholder="+44 20 1234 5678">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Source of Enquiry -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-chat-dots me-2"></i>5. Source of Enquiry</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">How did you hear about us?</label>
+                                <select class="form-select" name="enquiry_source">
+                                    <option value="">Select...</option>
+                                    <option value="referral">Referral</option>
+                                    <option value="existing">Existing Client</option>
+                                    <option value="website">Website</option>
+                                    <option value="event">Industry Event</option>
+                                    <option value="legal_advisor">Legal/Tax Advisor</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Referrer Name (if applicable)</label>
+                                <input type="text" class="form-control" name="referrer_name">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Additional Notes or Questions</label>
+                                <textarea class="form-control" name="notes" rows="3"
+                                          placeholder="Any additional information or specific requirements..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Declaration -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-shield-check me-2"></i>Declaration</h5>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
+                            <label class="form-check-label" for="declaration">
+                                I confirm that the information provided is true and accurate to the best of my knowledge.
+                                I understand that this enquiry form is the first step in a regulatory onboarding process
+                                and that further due diligence documentation will be required. <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('enquiry_form_download') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-download me-1"></i> Download Blank Form
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send me-1"></i> Submit Enquiry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-4 mt-5" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #9ca3af;">
+        <div class="container text-center">
+            <small>&copy; 2026 CoreWorker AI. All rights reserved. | JFSC Compliant Client Onboarding</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

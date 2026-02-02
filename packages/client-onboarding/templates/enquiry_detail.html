@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Enquiry {{ enquiry.id }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('pending_enquiries') }}">Pending Enquiries</a></li>
+                <li class="breadcrumb-item active">{{ enquiry.id }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Enquiry Details</h1>
+                <p class="text-muted">Submitted {{ enquiry.submitted_at }}</p>
+            </div>
+            <div>
+                <a href="{{ url_for('start_onboarding_from_enquiry', enquiry_id=enquiry.id) }}" class="btn btn-primary">
+                    <i class="bi bi-play-fill me-1"></i> Start Onboarding
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Sponsor Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-building me-2"></i>
+                Sponsor Information
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Sponsor Legal Name</label>
+                        <div class="fw-medium">{{ enquiry.sponsor_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Entity Type</label>
+                        <div>
+                            {% if enquiry.entity_type == 'llp' %}Limited Liability Partnership (LLP)
+                            {% elif enquiry.entity_type == 'company' %}Private Company
+                            {% elif enquiry.entity_type == 'lp' %}Limited Partnership
+                            {% else %}{{ enquiry.entity_type }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Jurisdiction</label>
+                        <div>{{ enquiry.jurisdiction }}{% if enquiry.jurisdiction_other %} ({{ enquiry.jurisdiction_other }}){% endif %}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Registration Number</label>
+                        <div>{{ enquiry.registration_number or '-' }}</div>
+                    </div>
+                    {% if enquiry.regulatory_status %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Regulatory Status</label>
+                        <div>{{ enquiry.regulatory_status }}</div>
+                    </div>
+                    {% endif %}
+                    {% if enquiry.fca_frn %}
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">FCA FRN</label>
+                        <div>{{ enquiry.fca_frn }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposed Fund -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-briefcase me-2"></i>
+                Proposed Fund
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Fund Name</label>
+                        <div class="fw-medium">{{ enquiry.fund_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Fund Type</label>
+                        <div>
+                            {% if enquiry.fund_type == 'jpf' %}Jersey Private Fund (JPF)
+                            {% elif enquiry.fund_type == 'expert' %}Expert Fund
+                            {% elif enquiry.fund_type == 'listed' %}Listed Fund
+                            {% else %}{{ enquiry.fund_type }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Legal Structure</label>
+                        <div>
+                            {% if enquiry.legal_structure == 'lp' %}Limited Partnership
+                            {% elif enquiry.legal_structure == 'unit_trust' %}Unit Trust
+                            {% elif enquiry.legal_structure == 'icc' %}Incorporated Cell Company
+                            {% elif enquiry.legal_structure == 'pcc' %}Protected Cell Company
+                            {% else %}{{ enquiry.legal_structure or '-' }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Target Fund Size</label>
+                        <div>${{ enquiry.target_size }}</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted">Investment Strategy</label>
+                        <div class="p-3 bg-light rounded">{{ enquiry.investment_strategy }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Principals -->
+        {% if enquiry.principals %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-people me-2"></i>
+                Key Principals
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Nationality</th>
+                            <th>Ownership</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for principal in enquiry.principals %}
+                        <tr>
+                            <td class="fw-medium">{{ principal.name }}</td>
+                            <td>{{ principal.role }}</td>
+                            <td>{{ principal.nationality }}</td>
+                            <td>{{ principal.ownership }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Contact Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-person-lines-fill me-2"></i>
+                Contact Information
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Contact Name</label>
+                        <div class="fw-medium">{{ enquiry.contact_name }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Email</label>
+                        <div><a href="mailto:{{ enquiry.contact_email }}">{{ enquiry.contact_email }}</a></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Phone</label>
+                        <div>{{ enquiry.contact_phone or '-' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>
+                Enquiry Status
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Status</span>
+                    {% if enquiry.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending Review</span>
+                    {% elif enquiry.status == 'processing' %}
+                    <span class="badge bg-info">Processing</span>
+                    {% elif enquiry.status == 'converted' %}
+                    <span class="badge bg-success">Converted</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Enquiry ID</span>
+                    <code>{{ enquiry.id }}</code>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Submitted</span>
+                    <span>{{ enquiry.submitted_at }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Declaration</span>
+                    {% if enquiry.declaration_accepted %}
+                    <span class="text-success"><i class="bi bi-check-circle"></i> Accepted</span>
+                    {% else %}
+                    <span class="text-danger"><i class="bi bi-x-circle"></i> Not Accepted</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Source Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-signpost-2 me-2"></i>
+                Enquiry Source
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <span class="text-muted small">Source:</span>
+                    <div>
+                        {% if enquiry.enquiry_source == 'referral' %}Referral
+                        {% elif enquiry.enquiry_source == 'website' %}Website
+                        {% elif enquiry.enquiry_source == 'event' %}Industry Event
+                        {% elif enquiry.enquiry_source == 'existing' %}Existing Client
+                        {% else %}{{ enquiry.enquiry_source or '-' }}{% endif %}
+                    </div>
+                </div>
+                {% if enquiry.referrer_name %}
+                <div>
+                    <span class="text-muted small">Referrer:</span>
+                    <div>{{ enquiry.referrer_name }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-lightning me-2"></i>
+                Actions
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('start_onboarding_from_enquiry', enquiry_id=enquiry.id) }}" class="btn btn-primary">
+                    <i class="bi bi-play-fill me-1"></i> Start Onboarding
+                </a>
+                <button class="btn btn-outline-secondary" disabled>
+                    <i class="bi bi-printer me-1"></i> Print Enquiry
+                </button>
+                <button class="btn btn-outline-danger" disabled>
+                    <i class="bi bi-trash me-1"></i> Decline Enquiry
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

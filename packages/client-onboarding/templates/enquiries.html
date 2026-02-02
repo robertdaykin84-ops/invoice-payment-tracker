@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Enquiries{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Pending Enquiries</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Pending Enquiries</h1>
+                <p class="text-muted">Client-submitted enquiry forms awaiting processing</p>
+            </div>
+            <div>
+                <a href="{{ url_for('enquiry_form') }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-link-45deg me-1"></i> View Public Form
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if enquiries %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-inbox me-2"></i>Submitted Enquiries ({{ enquiries|length }})</span>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary active">All</button>
+            <button class="btn btn-outline-secondary">Pending</button>
+            <button class="btn btn-outline-secondary">Processing</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Sponsor</th>
+                    <th>Proposed Fund</th>
+                    <th>Contact</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enquiry in enquiries %}
+                <tr>
+                    <td>
+                        <code class="text-primary">{{ enquiry.id }}</code>
+                    </td>
+                    <td>
+                        <div class="fw-medium">{{ enquiry.sponsor_name }}</div>
+                        <small class="text-muted">{{ enquiry.jurisdiction }}</small>
+                    </td>
+                    <td>
+                        <div>{{ enquiry.fund_name }}</div>
+                        <small class="text-muted">{{ enquiry.fund_type|upper }} - ${{ enquiry.target_size }}</small>
+                    </td>
+                    <td>
+                        <div>{{ enquiry.contact_name }}</div>
+                        <small class="text-muted">{{ enquiry.contact_email }}</small>
+                    </td>
+                    <td>
+                        <small>{{ enquiry.submitted_at }}</small>
+                    </td>
+                    <td>
+                        {% if enquiry.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif enquiry.status == 'processing' %}
+                        <span class="badge bg-info">Processing</span>
+                        {% elif enquiry.status == 'converted' %}
+                        <span class="badge bg-success">Converted</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('view_enquiry', enquiry_id=enquiry.id) }}" class="btn btn-outline-secondary" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('start_onboarding_from_enquiry', enquiry_id=enquiry.id) }}" class="btn btn-primary" title="Start Onboarding">
+                                <i class="bi bi-play-fill"></i> Start
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+        <h5 class="mt-3 text-muted">No Pending Enquiries</h5>
+        <p class="text-muted mb-4">
+            When clients submit enquiry forms, they will appear here for processing.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="{{ url_for('enquiry_form') }}" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-link-45deg me-1"></i> View Public Form
+            </a>
+            <a href="{{ url_for('new_onboarding') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Manual Entry
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Info Card -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-info-circle me-2"></i>
+                How It Works
+            </div>
+            <div class="card-body small">
+                <ol class="mb-0">
+                    <li class="mb-2">Share the public enquiry form with prospective clients</li>
+                    <li class="mb-2">Clients complete the form with their details</li>
+                    <li class="mb-2">Submissions appear here for review</li>
+                    <li class="mb-2">Click "Start" to begin onboarding with pre-filled data</li>
+                    <li>Review and complete additional CDD as needed</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-link-45deg me-2"></i>
+                Share Enquiry Form
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">Copy this link to share with clients:</p>
+                <div class="input-group">
+                    <input type="text" class="form-control" readonly
+                           value="{{ url_for('enquiry_form', _external=True) }}" id="enquiry-url">
+                    <button class="btn btn-outline-primary" type="button" onclick="copyUrl()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyUrl() {
+    const urlInput = document.getElementById('enquiry-url');
+    urlInput.select();
+    document.execCommand('copy');
+
+    const btn = urlInput.nextElementSibling;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i> Copied';
+    setTimeout(() => btn.innerHTML = originalHtml, 1500);
+}
+</script>
+{% endblock %}
