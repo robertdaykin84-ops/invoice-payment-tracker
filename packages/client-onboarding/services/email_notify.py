@@ -11,6 +11,7 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+from html import escape
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -369,9 +370,18 @@ TEMPLATES = {
 }
 
 
+def _format_risk_factors(factors: list) -> str:
+    """Safely format risk factors as HTML list items."""
+    if not factors:
+        return '<li>See full assessment in system</li>'
+    return ''.join(f'<li>{escape(str(factor))}</li>' for factor in factors)
+
+
 def _render_template(template_name: str, **kwargs) -> tuple:
     """
     Render an email template with the given variables.
+
+    All string values are HTML-escaped to prevent XSS attacks.
 
     Returns:
         Tuple of (subject, html_body)
@@ -381,22 +391,30 @@ def _render_template(template_name: str, **kwargs) -> tuple:
 
     template = TEMPLATES[template_name]
 
+    # HTML-escape all string values to prevent XSS
+    escaped_kwargs = {}
+    for key, value in kwargs.items():
+        if isinstance(value, str):
+            escaped_kwargs[key] = escape(value)
+        else:
+            escaped_kwargs[key] = value
+
     # Add default values
-    kwargs.setdefault('app_url', os.environ.get('APP_URL', 'http://localhost:5000'))
-    kwargs.setdefault('risk_color', '#212529')
+    escaped_kwargs.setdefault('app_url', escape(os.environ.get('APP_URL', 'http://localhost:5000')))
+    escaped_kwargs.setdefault('risk_color', '#212529')
 
     # Set risk color based on rating
     if kwargs.get('risk_rating'):
         rating = kwargs['risk_rating'].lower()
         if rating == 'high':
-            kwargs['risk_color'] = '#dc3545'
+            escaped_kwargs['risk_color'] = '#dc3545'
         elif rating == 'medium':
-            kwargs['risk_color'] = '#ffc107'
+            escaped_kwargs['risk_color'] = '#ffc107'
         else:
-            kwargs['risk_color'] = '#198754'
+            escaped_kwargs['risk_color'] = '#198754'
 
-    subject = template['subject'].format(**kwargs)
-    content = template['content'].format(**kwargs)
+    subject = template['subject'].format(**escaped_kwargs)
+    content = template['content'].format(**escaped_kwargs)
     html_body = BASE_TEMPLATE.format(content=content)
 
     return subject, html_body
