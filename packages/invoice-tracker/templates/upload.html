@@ -10,9 +10,9 @@
     }
 
     .upload-area {
-        border: 2px dashed var(--gray-300, #d1d5db);
+        border: 2px dashed #7BBAF2;
         border-radius: 1rem;
-        background: #fff;
+        background: linear-gradient(180deg, #fff 0%, #EBF5FF 100%);
         padding: 3rem 2rem;
         text-align: center;
         transition: all 0.3s ease;
@@ -21,12 +21,14 @@
 
     .upload-area:hover {
         border-color: var(--primary-blue);
-        background-color: var(--light-blue, #eff6ff);
+        background: linear-gradient(180deg, #EBF5FF 0%, #fff 100%);
+        box-shadow: 0 8px 25px rgba(84, 166, 237, 0.15);
     }
 
     .upload-area.drag-over {
-        border-color: var(--primary-blue);
-        background-color: var(--light-blue, #eff6ff);
+        border-color: var(--accent-green, #10B981);
+        border-style: solid;
+        background: linear-gradient(180deg, #ECFDF5 0%, #D1FAE5 100%);
         transform: scale(1.01);
     }
 
@@ -39,13 +41,25 @@
         width: 80px;
         height: 80px;
         margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue, #3b82f6) 100%);
+        background: linear-gradient(135deg, #54A6ED 0%, #3B8FD9 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
         font-size: 2rem;
+        box-shadow: 0 8px 25px rgba(84, 166, 237, 0.35);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .upload-area:hover .upload-icon {
+        transform: scale(1.05);
+        box-shadow: 0 12px 30px rgba(84, 166, 237, 0.45);
+    }
+
+    .upload-area.drag-over .upload-icon {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45);
     }
 
     .upload-title {
@@ -80,7 +94,7 @@
         display: none;
     }
 
-    /* Processing overlay */
+    /* Processing overlay - CoreWorker Dark Theme */
     .processing-overlay {
         display: none;
         position: fixed;
@@ -88,7 +102,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.98);
+        background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(22, 33, 62, 0.98) 100%);
         z-index: 9999;
         justify-content: center;
         align-items: center;
@@ -102,8 +116,8 @@
     .processing-spinner {
         width: 60px;
         height: 60px;
-        border: 4px solid var(--gray-200);
-        border-top-color: var(--primary-blue);
+        border: 4px solid rgba(84, 166, 237, 0.2);
+        border-top-color: #54A6ED;
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
@@ -116,14 +130,15 @@
         margin-top: 1.5rem;
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--gray-700);
+        color: #fff;
         text-align: center;
+        font-family: 'Outfit', sans-serif;
     }
 
     .processing-subtext {
         margin-top: 0.5rem;
         font-size: 0.875rem;
-        color: var(--gray-500);
+        color: #7BBAF2;
     }
 
     .processing-progress {
@@ -134,11 +149,11 @@
     .progress {
         height: 8px;
         border-radius: 4px;
-        background-color: var(--gray-200);
+        background-color: rgba(84, 166, 237, 0.2);
     }
 
     .progress-bar {
-        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue, #3b82f6) 100%);
+        background: linear-gradient(135deg, #54A6ED 0%, #10B981 100%);
         border-radius: 4px;
         transition: width 0.3s ease;
     }
@@ -152,26 +167,43 @@
     .file-item {
         display: flex;
         align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--gray-100);
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.08);
+        margin-bottom: 0.5rem;
         font-size: 0.875rem;
+        color: #fff;
     }
 
     .file-item:last-child {
-        border-bottom: none;
+        margin-bottom: 0;
     }
 
     .file-item i {
-        margin-right: 0.5rem;
-        color: var(--gray-400);
+        margin-right: 0.625rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1rem;
+    }
+
+    .file-item.completed {
+        background: rgba(16, 185, 129, 0.15);
     }
 
     .file-item.completed i {
-        color: #10b981;
+        color: #10B981;
+    }
+
+    .file-item.processing {
+        background: rgba(84, 166, 237, 0.15);
     }
 
     .file-item.processing i {
-        color: var(--primary-blue);
+        color: #54A6ED;
+        animation: spin 1s linear infinite;
+    }
+
+    .file-item.error {
+        background: rgba(239, 68, 68, 0.15);
     }
 
     .file-item.error i {
@@ -188,19 +220,22 @@
     .file-item-status {
         font-size: 0.75rem;
         margin-left: 0.5rem;
+        font-weight: 500;
     }
 
-    /* Instructions card */
+    /* Instructions card - CoreWorker styled */
     .instructions-card {
-        background: var(--light-blue, #eff6ff);
-        border: 1px solid #bfdbfe;
+        background: linear-gradient(135deg, #EBF5FF 0%, #D6EBFF 100%);
+        border: 1px solid rgba(84, 166, 237, 0.3);
         border-radius: 0.75rem;
         padding: 1.25rem;
     }
 
     .instructions-card h6 {
-        color: var(--primary-blue);
+        color: #3B8FD9;
         margin-bottom: 0.75rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
     }
 
     .instructions-card ul {
@@ -209,53 +244,74 @@
     }
 
     .instructions-card li {
-        color: var(--gray-600);
-        margin-bottom: 0.25rem;
+        color: #374151;
+        margin-bottom: 0.375rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- AI Processing Warning Banner -->
+{% if config_status and not config_status.anthropic_configured %}
+<div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert" style="border-left: 4px solid #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 0.5rem;">
+    <i class="bi bi-robot" style="color: #d97706; font-size: 1.5rem; flex-shrink: 0;"></i>
+    <div>
+        <h6 class="fw-semibold mb-1" style="color: #92400e;">AI Processing Unavailable</h6>
+        <p class="mb-0" style="color: #78350f; font-size: 0.875rem;">Invoice upload is currently unavailable. The ANTHROPIC_API_KEY environment variable is not configured. Please contact your administrator to enable AI-powered invoice extraction.</p>
+    </div>
+</div>
+{% endif %}
+
 <div class="upload-container">
     <!-- Page Header -->
-    <div class="text-center mb-4">
-        <h2 class="mb-2">Upload Invoices</h2>
-        <p class="text-muted">Drop your invoices here - they'll be processed automatically</p>
-    </div>
+    <header class="text-center mb-4">
+        <div class="d-inline-flex align-items-center gap-2 mb-2">
+            <span class="badge" style="background: linear-gradient(135deg, #54A6ED 0%, #3B8FD9 100%); font-size: 0.7rem; padding: 0.35rem 0.75rem;">
+                <i class="bi bi-stars me-1" aria-hidden="true"></i>AI-POWERED
+            </span>
+        </div>
+        <h1 class="h2 mb-2" style="font-family: 'Outfit', sans-serif; font-weight: 700;">Upload Invoices</h1>
+        <p class="text-muted">Drop your invoices here - AI extraction starts automatically</p>
+    </header>
 
     <!-- Upload Card -->
-    <div class="card mb-4">
-        <div class="card-body p-4">
-            <div class="upload-area" id="upload-area">
-                <div class="upload-icon">
+    <section aria-label="Invoice upload area">
+        <div class="card mb-4">
+            <div class="card-body p-4">
+            <div class="upload-area" id="upload-area" role="button" tabindex="0"
+                 aria-label="Upload area. Click or press Enter to select invoice files, or drag and drop files here."
+                 aria-describedby="upload-instructions">
+                <div class="upload-icon" aria-hidden="true">
                     <i class="bi bi-cloud-arrow-up"></i>
                 </div>
-                <h4 class="upload-title">Drag & drop invoices here</h4>
-                <p class="upload-subtitle">or click to browse - processing starts automatically</p>
-                <div class="file-types">
-                    <span class="file-type-badge"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
-                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>PNG</span>
-                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1"></i>JPG</span>
+                <h2 class="upload-title">Drag & drop invoices here</h2>
+                <p class="upload-subtitle" id="upload-instructions">or click to browse - processing starts automatically</p>
+                <div class="file-types" aria-label="Supported file formats">
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>PDF</span>
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1" aria-hidden="true"></i>PNG</span>
+                    <span class="file-type-badge"><i class="bi bi-file-earmark-image me-1" aria-hidden="true"></i>JPG</span>
                 </div>
-                <input type="file" id="file-input" class="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple>
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple
+                       aria-label="Select invoice files to upload">
             </div>
         </div>
     </div>
+    </section>
 
     <!-- Instructions -->
-    <div class="instructions-card">
-        <h6><i class="bi bi-info-circle me-2"></i>Tips for best results</h6>
+    <aside class="instructions-card" aria-labelledby="tips-heading">
+        <h2 class="h6" id="tips-heading"><i class="bi bi-info-circle me-2" aria-hidden="true"></i>Tips for best results</h2>
         <ul>
             <li>You can upload multiple invoices at once</li>
             <li>Processing starts automatically when you drop or select files</li>
             <li>Supported formats: PDF, PNG, JPG (max 16MB each)</li>
             <li>After processing, you'll review each invoice before saving</li>
         </ul>
-    </div>
+    </aside>
 </div>
 
 <!-- Processing Overlay -->
-<div class="processing-overlay" id="processing-overlay">
+<div class="processing-overlay" id="processing-overlay" role="dialog" aria-modal="true" aria-labelledby="processing-text">
     <div class="processing-spinner"></div>
     <div class="processing-text" id="processing-text">Processing invoices...</div>
     <div class="processing-subtext" id="processing-subtext">AI is extracting invoice details</div>
@@ -281,6 +337,14 @@
     // Click to select files
     uploadArea.addEventListener('click', () => {
         fileInput.click();
+    });
+
+    // Keyboard support for upload area (Enter/Space)
+    uploadArea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInput.click();
+        }
     });
 
     // Drag and drop handlers

@@ -42,16 +42,101 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['https://coreworker-landing.onrender.com', 'http://localhost:*'])  # Restrict CORS
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
 app.config['UPLOAD_FOLDER'] = os.path.abspath(os.getenv('UPLOAD_FOLDER', 'uploads'))
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16777216))  # 16MB
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'png', 'jpg', 'jpeg'}
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV', 'development') == 'production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+# ========== Security Headers ==========
+
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses"""
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # XSS Protection (legacy browsers)
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Referrer Policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://drive.googleapis.com; "
+        "frame-ancestors 'self';"
+    )
+    return response
+
+
+# ========== Demo Mode Configuration ==========
+
+# Set DEMO_MODE=true in environment to disable password protection
+DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
+
+@app.context_processor
+def inject_demo_mode():
+    """Inject demo_mode flag and configuration status into all templates"""
+    # Check configuration status for graceful error handling
+    config_status = {
+        'google_sheets_configured': bool(os.environ.get('GOOGLE_SHEET_ID')),
+        'anthropic_configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
+        'google_credentials_configured': bool(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') or os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON'))
+    }
+    return {
+        'demo_mode': DEMO_MODE,
+        'config_status': config_status
+    }
+
+
+# ========== Custom Jinja2 Filters ==========
+
+def sanitize_error_value(value, default=''):
+    """
+    Filter to sanitize AI extraction error values like #ERROR!, N/A, etc.
+    Returns the default value if the input contains error indicators.
+    """
+    if value is None:
+        return default
+
+    value_str = str(value).strip()
+
+    # List of error indicators that should be replaced
+    error_indicators = [
+        '#ERROR!', '#error!', '#ERROR', '#error',
+        '#N/A', '#n/a', '#NA', '#na',
+        '#VALUE!', '#value!',
+        '#REF!', '#ref!',
+        '#DIV/0!', '#div/0!',
+        '#NULL!', '#null!',
+        '#NAME?', '#name?',
+        'N/A', 'n/a', 'NA', 'na',
+        'undefined', 'null', 'None',
+        'ERROR', 'Error', 'error'
+    ]
+
+    # Check if value matches any error indicator
+    if value_str in error_indicators or value_str.startswith('#'):
+        return default
+
+    return value_str
+
+# Register the filter with Jinja2
+app.jinja_env.filters['sanitize'] = sanitize_error_value
 
 
 # ========== Authentication ==========
@@ -60,10 +145,18 @@ def login_required(f):
     """Decorator to require login for routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('authenticated'):
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
+        if DEMO_MODE:
+            # Auto-authenticate for POC demo - no password required
+            if not session.get('authenticated'):
+                session['authenticated'] = True
+                session.permanent = True
+            return f(*args, **kwargs)
+        else:
+            # Normal authentication required
+            if not session.get('authenticated'):
+                flash('Please log in to access this page.', 'warning')
+                return redirect(url_for('login', next=request.url))
+            return f(*args, **kwargs)
     return decorated_function
 
 
@@ -141,6 +234,14 @@ def get_sheets_manager():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page"""
+    # Demo mode: auto-authenticate and redirect
+    if DEMO_MODE:
+        session['authenticated'] = True
+        session.permanent = True
+        next_url = request.args.get('next')
+        return redirect(next_url or url_for('index'))
+
+    # Normal mode: require password
     if session.get('authenticated'):
         return redirect(url_for('index'))
 

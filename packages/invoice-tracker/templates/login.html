@@ -64,11 +64,11 @@
 
 {% block content %}
 <div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <i class="bi bi-receipt-cutoff"></i>
-            <h2>Invoice Tracker</h2>
-        </div>
+    <article class="login-card" role="region" aria-labelledby="login-heading">
+        <header class="login-header">
+            <i class="bi bi-receipt-cutoff" aria-hidden="true"></i>
+            <h1 id="login-heading">Invoice Tracker</h1>
+        </header>
         <div class="login-body">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -81,20 +81,23 @@
                 {% endif %}
             {% endwith %}
 
-            <form method="POST" action="{{ url_for('login') }}">
+            <form method="POST" action="{{ url_for('login') }}" aria-label="Login form">
                 <div class="mb-4">
-                    <label for="password" class="form-label fw-semibold">Password</label>
+                    <label for="password" class="form-label fw-semibold" id="password-label">Password</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <span class="input-group-text" aria-hidden="true"><i class="bi bi-lock"></i></span>
                         <input type="password" class="form-control" id="password" name="password"
-                               placeholder="Enter password" required autofocus>
+                               placeholder="Enter password" required autofocus
+                               aria-labelledby="password-label"
+                               aria-required="true"
+                               autocomplete="current-password">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                <button type="submit" class="btn btn-primary btn-login" aria-label="Sign in to Invoice Tracker">
+                    <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Sign In
                 </button>
             </form>
         </div>
-    </div>
+    </article>
 </div>
 {% endblock %}
