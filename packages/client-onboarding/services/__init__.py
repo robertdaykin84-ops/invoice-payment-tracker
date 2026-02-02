@@ -40,6 +40,16 @@ from .pdf_report import (
     REPORT_TYPES
 )
 
+from .email_notify import (
+    notify_edd_triggered,
+    notify_approval_required,
+    notify_screening_complete,
+    notify_phase_completed,
+    notify_onboarding_decision,
+    get_demo_sent_emails,
+    DEMO_MODE as EMAIL_DEMO_MODE
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -69,4 +79,12 @@ __all__ = [
     'generate_report',
     'gather_report_data',
     'REPORT_TYPES',
+    # Email Notifications
+    'notify_edd_triggered',
+    'notify_approval_required',
+    'notify_screening_complete',
+    'notify_phase_completed',
+    'notify_onboarding_decision',
+    'get_demo_sent_emails',
+    'EMAIL_DEMO_MODE',
 ]
