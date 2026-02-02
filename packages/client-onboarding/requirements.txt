@@ -17,3 +17,6 @@ anthropic==0.18.1
 
 # Utilities
 requests==2.31.0
+
+# PDF Generation
+reportlab==4.1.0
