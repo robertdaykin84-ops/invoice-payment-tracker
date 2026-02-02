@@ -161,3 +161,201 @@ def _get_demo_data(onboarding_id: str) -> Dict[str, Any]:
         'generated_at': datetime.now().isoformat(),
         'demo_mode': True
     }
+
+
+def _get_styles() -> Dict[str, ParagraphStyle]:
+    """Get custom paragraph styles for reports."""
+    styles = getSampleStyleSheet()
+
+    custom_styles = {
+        'Title': ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Title'],
+            fontSize=18,
+            spaceAfter=6*mm,
+            textColor=colors.HexColor('#212529')
+        ),
+        'Subtitle': ParagraphStyle(
+            'Subtitle',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.HexColor('#6c757d'),
+            spaceAfter=4*mm
+        ),
+        'Heading1': ParagraphStyle(
+            'CustomH1',
+            parent=styles['Heading1'],
+            fontSize=14,
+            spaceBefore=6*mm,
+            spaceAfter=3*mm,
+            textColor=colors.HexColor('#212529')
+        ),
+        'Heading2': ParagraphStyle(
+            'CustomH2',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceBefore=4*mm,
+            spaceAfter=2*mm,
+            textColor=colors.HexColor('#495057')
+        ),
+        'Normal': ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            leading=14,
+            textColor=colors.HexColor('#212529')
+        ),
+        'Small': ParagraphStyle(
+            'Small',
+            parent=styles['Normal'],
+            fontSize=8,
+            leading=10,
+            textColor=colors.HexColor('#6c757d')
+        ),
+        'Footer': ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.HexColor('#6c757d'),
+            alignment=TA_CENTER
+        ),
+    }
+
+    return custom_styles
+
+
+def _create_header(data: Dict[str, Any], report_type: str, styles: Dict) -> List:
+    """Create report header elements."""
+    elements = []
+
+    # Report title based on type
+    titles = {
+        'compliance': 'Compliance Risk Report',
+        'board': 'Board Risk Summary',
+        'audit': 'Audit Pack - Full Risk Assessment'
+    }
+
+    onboarding = data.get('onboarding', {})
+
+    elements.append(Paragraph(titles.get(report_type, 'Risk Report'), styles['Title']))
+    elements.append(Paragraph(
+        f"{onboarding.get('sponsor_name', 'Unknown')} / {onboarding.get('fund_name', 'Unknown')}",
+        styles['Subtitle']
+    ))
+
+    # Report metadata table
+    generated_at = datetime.fromisoformat(data['generated_at'].replace('Z', '+00:00'))
+    meta_data = [
+        ['Report ID:', f"{onboarding.get('onboarding_id', 'N/A')}-{report_type.upper()}-{generated_at.strftime('%Y%m%d')}"],
+        ['Generated:', generated_at.strftime('%d %B %Y at %H:%M')],
+        ['Onboarding ID:', onboarding.get('onboarding_id', 'N/A')],
+    ]
+
+    if data.get('demo_mode'):
+        meta_data.append(['Mode:', 'DEMO - Not for production use'])
+
+    meta_table = Table(meta_data, colWidths=[30*mm, 80*mm])
+    meta_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#6c757d')),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+    ]))
+    elements.append(meta_table)
+    elements.append(Spacer(1, 6*mm))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#dee2e6')))
+    elements.append(Spacer(1, 4*mm))
+
+    return elements
+
+
+def _create_risk_summary(data: Dict[str, Any], styles: Dict) -> List:
+    """Create risk assessment summary section."""
+    elements = []
+    risk = data.get('risk_assessment', {})
+
+    elements.append(Paragraph('Risk Assessment Summary', styles['Heading1']))
+
+    # Risk score box
+    rating = risk.get('rating', 'unknown')
+    score = risk.get('score', 0)
+    risk_color = RISK_COLORS.get(rating, colors.gray)
+
+    summary_data = [
+        ['Overall Risk Score', 'Risk Rating', 'EDD Required', 'Approval Level'],
+        [
+            str(round(score)),
+            rating.upper(),
+            'Yes' if risk.get('edd_required') else 'No',
+            risk.get('approval_level', 'N/A').upper()
+        ]
+    ]
+
+    summary_table = Table(summary_data, colWidths=[40*mm, 40*mm, 35*mm, 40*mm])
+    summary_table.setStyle(TableStyle([
+        # Header row
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#6c757d')),
+        # Data row
+        ('FONTSIZE', (0, 1), (-1, 1), 14),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        # Risk rating color
+        ('TEXTCOLOR', (1, 1), (1, 1), risk_color),
+        # General
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 4*mm))
+
+    return elements
+
+
+def _create_factor_breakdown(data: Dict[str, Any], styles: Dict) -> List:
+    """Create risk factor breakdown section."""
+    elements = []
+    risk = data.get('risk_assessment', {})
+    factors = risk.get('factors', {})
+
+    elements.append(Paragraph('Risk Factor Breakdown', styles['Heading2']))
+
+    factor_labels = {
+        'jurisdiction': 'Jurisdiction',
+        'pep_status': 'PEP Status',
+        'sanctions': 'Sanctions',
+        'adverse_media': 'Adverse Media',
+        'entity_structure': 'Entity Structure'
+    }
+
+    table_data = [['Factor', 'Weight', 'Score', 'Contribution', 'Assessment']]
+
+    for key in ['jurisdiction', 'pep_status', 'sanctions', 'adverse_media', 'entity_structure']:
+        f = factors.get(key, {})
+        table_data.append([
+            factor_labels.get(key, key),
+            f"{f.get('weight', 0)}%",
+            str(f.get('score', 0)),
+            f"{f.get('contribution', 0)} pts",
+            f.get('reason', 'N/A')[:50]  # Truncate long reasons
+        ])
+
+    factor_table = Table(table_data, colWidths=[30*mm, 18*mm, 15*mm, 22*mm, 70*mm])
+    factor_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (1, 0), (3, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+    ]))
+    elements.append(factor_table)
+    elements.append(Spacer(1, 4*mm))
+
+    return elements
