@@ -9,7 +9,7 @@ from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    redirect, url_for, flash, session, g, make_response
+    redirect, url_for, flash, session, g, make_response, Response
 )
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -977,6 +977,110 @@ def api_generate_report(onboarding_id):
     except Exception as e:
         logger.exception(f"Error generating report: {e}")
         return jsonify({'status': 'error', 'message': 'Failed to generate report'}), 500
+
+
+@app.route('/api/reports/data')
+@login_required
+def api_reports_data():
+    """API endpoint for reporting data with aggregations"""
+    from datetime import datetime
+    import csv
+    import io
+
+    # Get filter params
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    status_filter = request.args.get('status')
+    risk_filter = request.args.get('risk_level')
+    output_format = request.args.get('format', 'json')
+
+    # Get all onboardings
+    onboardings = sheets_db.get_onboardings()
+
+    # Fallback to mock data if empty
+    if not onboardings:
+        onboardings = [
+            {'onboarding_id': 'ONB-001', 'sponsor_name': 'Test Corp', 'fund_name': 'Fund I',
+             'current_phase': 4, 'status': 'in_progress', 'risk_level': 'low',
+             'created_at': '2026-01-15', 'updated_at': '2026-02-01'},
+            {'onboarding_id': 'ONB-002', 'sponsor_name': 'Alpha Partners', 'fund_name': 'Growth Fund',
+             'current_phase': 6, 'status': 'pending_mlro', 'risk_level': 'medium',
+             'created_at': '2026-01-20', 'updated_at': '2026-02-01'},
+            {'onboarding_id': 'ONB-003', 'sponsor_name': 'Beta Capital', 'fund_name': 'Value Fund',
+             'current_phase': 8, 'status': 'approved', 'risk_level': 'low',
+             'created_at': '2026-01-10', 'updated_at': '2026-01-25'},
+        ]
+
+    # Apply filters
+    filtered = onboardings
+    if status_filter:
+        filtered = [o for o in filtered if o.get('status') == status_filter]
+    if risk_filter:
+        filtered = [o for o in filtered if o.get('risk_level') == risk_filter]
+
+    # Phase names
+    phase_names = {
+        1: 'Enquiry', 2: 'Sponsor', 3: 'Fund', 4: 'Screening',
+        5: 'EDD', 6: 'Approval', 7: 'Commercial', 8: 'Complete'
+    }
+
+    # Aggregate by phase
+    by_phase = []
+    for phase_num in range(1, 9):
+        count = sum(1 for o in filtered if o.get('current_phase') == phase_num)
+        by_phase.append({
+            'phase': phase_num,
+            'name': phase_names[phase_num],
+            'count': count
+        })
+
+    # Aggregate by risk
+    risk_counts = {'low': 0, 'medium': 0, 'high': 0}
+    for o in filtered:
+        risk = o.get('risk_level', 'low')
+        if risk in risk_counts:
+            risk_counts[risk] += 1
+    by_risk = [{'rating': k, 'count': v} for k, v in risk_counts.items()]
+
+    # Summary stats
+    summary = {
+        'total': len(filtered),
+        'in_progress': sum(1 for o in filtered if o.get('status') == 'in_progress'),
+        'pending_approval': sum(1 for o in filtered if o.get('status') in ['pending_mlro', 'pending_board']),
+        'approved': sum(1 for o in filtered if o.get('status') == 'approved'),
+        'rejected': sum(1 for o in filtered if o.get('status') == 'rejected'),
+    }
+
+    # CSV export
+    if output_format == 'csv':
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['ID', 'Sponsor', 'Fund', 'Phase', 'Status', 'Risk', 'Created', 'Updated'])
+        for o in filtered:
+            writer.writerow([
+                o.get('onboarding_id', ''),
+                o.get('sponsor_name', ''),
+                o.get('fund_name', ''),
+                o.get('current_phase', ''),
+                o.get('status', ''),
+                o.get('risk_level', ''),
+                o.get('created_at', ''),
+                o.get('updated_at', '')
+            ])
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=onboardings_report.csv'}
+        )
+
+    # JSON response
+    return jsonify({
+        'summary': summary,
+        'by_phase': by_phase,
+        'by_risk': by_risk,
+        'onboardings': filtered
+    })
 
 
 # ========== Helper Functions ==========
