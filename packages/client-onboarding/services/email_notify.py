@@ -131,3 +131,272 @@ def get_demo_sent_emails() -> List[Dict]:
 def clear_demo_sent_emails():
     """Clear demo sent emails (for testing)."""
     _demo_sent_emails.clear()
+
+
+# =============================================================================
+# EMAIL TEMPLATES
+# =============================================================================
+
+BASE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="border-bottom: 3px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="margin: 0; font-size: 20px; color: #212529;">Client Onboarding System</h1>
+    </div>
+
+    {content}
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+        <p>This is an automated notification from the Client Onboarding System.</p>
+        <p>CONFIDENTIAL: This email may contain sensitive compliance information.</p>
+    </div>
+</body>
+</html>
+"""
+
+TEMPLATES = {
+    'edd_triggered': {
+        'subject': '[ALERT] EDD Required - {sponsor_name}',
+        'content': """
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #856404;">⚠️ Enhanced Due Diligence Required</strong>
+        </div>
+
+        <h2 style="color: #212529; font-size: 18px;">Risk Assessment Alert</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Risk Score:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong style="color: {risk_color};">{risk_score} ({risk_rating})</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Approval Level:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{approval_level}</td>
+            </tr>
+        </table>
+
+        <h3 style="font-size: 14px; color: #495057;">Risk Factors:</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+            {risk_factors}
+        </ul>
+
+        <div style="margin-top: 25px;">
+            <a href="{app_url}/onboarding/{onboarding_id}/phase/4" style="display: inline-block; background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review in System</a>
+        </div>
+        """
+    },
+
+    'approval_required': {
+        'subject': '[ACTION] Approval Required - {sponsor_name}',
+        'content': """
+        <div style="background-color: #cfe2ff; border: 1px solid #0d6efd; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #084298;">📋 Approval Required</strong>
+        </div>
+
+        <h2 style="color: #212529; font-size: 18px;">Onboarding Pending {approval_level} Approval</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Risk Rating:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong style="color: {risk_color};">{risk_rating}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">EDD Required:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{edd_required}</td>
+            </tr>
+        </table>
+
+        <p>Screening has been completed and this onboarding requires <strong>{approval_level}</strong> approval before proceeding.</p>
+
+        <div style="margin-top: 25px;">
+            <a href="{app_url}/onboarding/{onboarding_id}/phase/6" style="display: inline-block; background-color: #198754; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review &amp; Approve</a>
+        </div>
+        """
+    },
+
+    'screening_complete': {
+        'subject': '[INFO] Screening Complete - {sponsor_name}',
+        'content': """
+        <h2 style="color: #212529; font-size: 18px;">Screening Completed</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Entities Screened:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{screened_count}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Risk Score:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong style="color: {risk_color};">{risk_score} ({risk_rating})</strong></td>
+            </tr>
+        </table>
+
+        <h3 style="font-size: 14px; color: #495057;">Summary:</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+            <li>Clear: {clear_count}</li>
+            <li>Review Required: {review_count}</li>
+            <li>Hits: {hits_count}</li>
+        </ul>
+
+        <div style="margin-top: 25px;">
+            <a href="{app_url}/onboarding/{onboarding_id}/phase/4" style="display: inline-block; background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Results</a>
+        </div>
+        """
+    },
+
+    'phase_completed': {
+        'subject': '[INFO] Phase {phase_num} Complete - {sponsor_name}',
+        'content': """
+        <h2 style="color: #212529; font-size: 18px;">Onboarding Progress Update</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Completed Phase:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>Phase {phase_num}: {phase_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Next Phase:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">Phase {next_phase_num}: {next_phase_name}</td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 25px;">
+            <a href="{app_url}/onboarding/{onboarding_id}/phase/{next_phase_num}" style="display: inline-block; background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Continue Onboarding</a>
+        </div>
+        """
+    },
+
+    'onboarding_approved': {
+        'subject': '[SUCCESS] Onboarding Approved - {sponsor_name}',
+        'content': """
+        <div style="background-color: #d1e7dd; border: 1px solid #198754; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #0f5132;">✓ Onboarding Approved</strong>
+        </div>
+
+        <h2 style="color: #212529; font-size: 18px;">Client Onboarding Complete</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Approved By:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{approved_by}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Date:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{approval_date}</td>
+            </tr>
+        </table>
+
+        <p>The client onboarding has been approved and is ready for commercial engagement.</p>
+        """
+    },
+
+    'onboarding_rejected': {
+        'subject': '[REJECTED] Onboarding Declined - {sponsor_name}',
+        'content': """
+        <div style="background-color: #f8d7da; border: 1px solid #dc3545; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #842029;">✗ Onboarding Rejected</strong>
+        </div>
+
+        <h2 style="color: #212529; font-size: 18px;">Client Onboarding Declined</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; width: 140px; color: #6c757d;">Client:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>{sponsor_name}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Fund:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{fund_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Rejected By:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{rejected_by}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #6c757d;">Date:</td>
+                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">{rejection_date}</td>
+            </tr>
+        </table>
+
+        <h3 style="font-size: 14px; color: #495057;">Reason:</h3>
+        <p style="background-color: #f8f9fa; padding: 10px; border-radius: 4px;">{rejection_reason}</p>
+        """
+    }
+}
+
+
+def _render_template(template_name: str, **kwargs) -> tuple:
+    """
+    Render an email template with the given variables.
+
+    Returns:
+        Tuple of (subject, html_body)
+    """
+    if template_name not in TEMPLATES:
+        raise ValueError(f"Unknown template: {template_name}")
+
+    template = TEMPLATES[template_name]
+
+    # Add default values
+    kwargs.setdefault('app_url', os.environ.get('APP_URL', 'http://localhost:5000'))
+    kwargs.setdefault('risk_color', '#212529')
+
+    # Set risk color based on rating
+    if kwargs.get('risk_rating'):
+        rating = kwargs['risk_rating'].lower()
+        if rating == 'high':
+            kwargs['risk_color'] = '#dc3545'
+        elif rating == 'medium':
+            kwargs['risk_color'] = '#ffc107'
+        else:
+            kwargs['risk_color'] = '#198754'
+
+    subject = template['subject'].format(**kwargs)
+    content = template['content'].format(**kwargs)
+    html_body = BASE_TEMPLATE.format(content=content)
+
+    return subject, html_body
