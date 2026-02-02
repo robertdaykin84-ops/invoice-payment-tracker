@@ -129,24 +129,45 @@ Proof of concept for automating the New Client Take-on (onboarding) process for 
 | Auth | Flask sessions (POC), upgrade path to Google OAuth |
 | Deployment | Render |
 
-### Google Drive Folder Structure
+### Google Drive Folder Structure (Audit Trail)
+
+Documents are saved immediately on action for JFSC-compliant audit trail:
 
 ```
 Client-Onboarding/
-├── {SponsorID}-{SponsorName}/
-│   ├── 01-Intake/
-│   ├── 02-Verification/
-│   │   ├── Sponsor/
-│   │   └── Principals/
-│   ├── 03-Screening/
-│   ├── 04-Approvals/
-│   ├── 05-Commercial/
-│   └── Funds/
-│       └── {FundID}-{FundName}/
-│           ├── Formation/
-│           ├── Principals/
-│           └── Screening/
+└── {Sponsor Name} - {Fund Name}/
+    ├── _COMPLIANCE/           ← Key compliance docs (easy access)
+    │   └── screening-results.json
+    ├── Phase-1-Enquiry/       ← Initial enquiry forms
+    │   └── uploaded-enquiry-*.html
+    │   └── phase-1-form-data.json
+    ├── Phase-2-Sponsor/       ← Sponsor documentation
+    ├── Phase-3-Fund/          ← Fund structure docs
+    ├── Phase-4-Screening/     ← Screening results
+    │   └── screening-results.json
+    ├── Phase-5-EDD/           ← Enhanced due diligence (if required)
+    ├── Phase-6-Approval/      ← Approval records
+    ├── Phase-7-Commercial/    ← Engagement letters
+    ├── API-Responses/         ← Raw API responses for audit
+    └── Screenshots/           ← Visual evidence
 ```
+
+### Audit Trail Service (`services/gdrive_audit.py`)
+
+| Function | Purpose |
+|----------|---------|
+| `ensure_folder_structure()` | Create folder structure on first onboarding action |
+| `save_screening_results()` | Save screening results to Phase-4 and _COMPLIANCE |
+| `save_form_data()` | Save form submission on each phase completion |
+| `upload_document()` | Upload enquiry forms and documents |
+| `save_api_response()` | Log raw API responses for audit |
+
+### Demo Mode
+
+When Google Drive credentials are not configured, the service runs in demo mode:
+- All operations are logged but not uploaded
+- UI shows "demo mode" indicator
+- Full audit trail functionality demonstrated without GDrive dependency
 
 ---
 

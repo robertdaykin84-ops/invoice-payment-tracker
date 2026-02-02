@@ -53,6 +53,91 @@ DEMO_USERS = {
     'admin_user': {'name': 'Michael Brown', 'role': 'admin', 'email': 'michael.brown@example.com'}
 }
 
+# Mock completed enquiry submissions
+MOCK_ENQUIRIES = {
+    'ENQ-001': {
+        'id': 'ENQ-001',
+        'status': 'pending',
+        'submitted_at': '2026-02-01 09:30',
+        'sponsor_name': 'Granite Capital Partners LLP',
+        'entity_type': 'llp',
+        'jurisdiction': 'UK',
+        'registration_number': 'OC123456',
+        'regulatory_status': 'FCA Regulated',
+        'fca_frn': '123456',
+        'fund_name': 'Granite Capital Fund III LP',
+        'fund_type': 'jpf',
+        'legal_structure': 'lp',
+        'target_size': '500,000,000',
+        'investment_strategy': 'Mid-market buyout investments in UK and European technology and healthcare sectors. Target companies with EBITDA of $10-50M.',
+        'principals': [
+            {'name': 'John Smith', 'role': 'Managing Partner', 'nationality': 'British', 'ownership': '35%'},
+            {'name': 'Sarah Johnson', 'role': 'Partner', 'nationality': 'British', 'ownership': '35%'},
+            {'name': 'Michael Brown', 'role': 'Partner', 'nationality': 'British', 'ownership': '30%'}
+        ],
+        'contact_name': 'John Smith',
+        'contact_email': 'john.smith@granitecapital.com',
+        'contact_phone': '+44 20 7123 4567',
+        'enquiry_source': 'referral',
+        'referrer_name': 'James Wilson - Highland Ventures',
+        'declaration_accepted': True
+    },
+    'ENQ-002': {
+        'id': 'ENQ-002',
+        'status': 'pending',
+        'submitted_at': '2026-02-02 11:15',
+        'sponsor_name': 'Evergreen Capital Management Ltd',
+        'entity_type': 'company',
+        'jurisdiction': 'UK',
+        'registration_number': '12345678',
+        'regulatory_status': 'FCA Regulated',
+        'fca_frn': '654321',
+        'fund_name': 'Evergreen Sustainable Growth Fund LP',
+        'fund_type': 'jpf',
+        'legal_structure': 'lp',
+        'target_size': '250,000,000',
+        'investment_strategy': 'ESG-focused growth equity investments in renewable energy infrastructure and sustainable technology across Europe.',
+        'principals': [
+            {'name': 'Elizabeth Chen', 'role': 'CEO', 'nationality': 'British', 'ownership': '40%'},
+            {'name': 'David Kumar', 'role': 'CIO', 'nationality': 'British', 'ownership': '30%'},
+            {'name': 'Anna Schmidt', 'role': 'CFO', 'nationality': 'German', 'ownership': '30%'}
+        ],
+        'contact_name': 'Elizabeth Chen',
+        'contact_email': 'e.chen@evergreencap.com',
+        'contact_phone': '+44 20 7987 6543',
+        'enquiry_source': 'website',
+        'referrer_name': '',
+        'declaration_accepted': True
+    },
+    'ENQ-003': {
+        'id': 'ENQ-003',
+        'status': 'pending',
+        'submitted_at': '2026-02-02 14:45',
+        'sponsor_name': 'Nordic Ventures AS',
+        'entity_type': 'company',
+        'jurisdiction': 'other',
+        'jurisdiction_other': 'Norway',
+        'registration_number': 'NO 912 345 678',
+        'regulatory_status': 'FSA Norway Regulated',
+        'fca_frn': '',
+        'fund_name': 'Nordic Technology Opportunities Fund LP',
+        'fund_type': 'jpf',
+        'legal_structure': 'lp',
+        'target_size': '150,000,000',
+        'investment_strategy': 'Early-stage and growth investments in Nordic technology companies, with focus on fintech, healthtech, and cleantech sectors.',
+        'principals': [
+            {'name': 'Erik Larsson', 'role': 'Founder & CEO', 'nationality': 'Norwegian', 'ownership': '50%'},
+            {'name': 'Ingrid Olsen', 'role': 'Partner', 'nationality': 'Norwegian', 'ownership': '50%'}
+        ],
+        'contact_name': 'Erik Larsson',
+        'contact_email': 'erik@nordicventures.no',
+        'contact_phone': '+47 22 12 34 56',
+        'enquiry_source': 'event',
+        'referrer_name': 'Met at Jersey Finance Roadshow London',
+        'declaration_accepted': True
+    }
+}
+
 
 # ========== Security Headers ==========
 
@@ -283,10 +368,12 @@ def new_onboarding():
     return render_template('onboarding/new.html', existing_sponsors=existing_sponsors)
 
 
-@app.route('/onboarding/<onboarding_id>/phase/<int:phase>')
+@app.route('/onboarding/<onboarding_id>/phase/<int:phase>', methods=['GET', 'POST'])
 @login_required
 def onboarding_phase(onboarding_id, phase):
     """Onboarding wizard - specific phase"""
+    from services.gdrive_audit import save_form_data, ensure_folder_structure
+
     phases = get_phases()
     if phase < 1 or phase > len(phases):
         flash('Invalid phase.', 'danger')
@@ -294,11 +381,70 @@ def onboarding_phase(onboarding_id, phase):
 
     current_phase = phases[phase - 1]
 
+    # Handle form submission (POST)
+    if request.method == 'POST':
+        action = request.form.get('action', 'next')
+
+        # Extract sponsor and fund info from form for audit trail
+        sponsor_name = request.form.get('sponsor_name', 'Unknown Sponsor')
+        fund_name = request.form.get('fund_name', 'Unknown Fund')
+
+        # Store in session for subsequent phases
+        if sponsor_name and sponsor_name != 'Unknown Sponsor':
+            session['current_sponsor'] = sponsor_name
+        if fund_name and fund_name != 'Unknown Fund':
+            session['current_fund'] = fund_name
+
+        # Use session values if not in form
+        sponsor_name = sponsor_name if sponsor_name != 'Unknown Sponsor' else session.get('current_sponsor', 'Unknown Sponsor')
+        fund_name = fund_name if fund_name != 'Unknown Fund' else session.get('current_fund', 'Unknown Fund')
+
+        # Save form data to audit trail
+        form_data = {key: value for key, value in request.form.items() if key != 'action'}
+        audit_result = save_form_data(form_data, phase, sponsor_name, fund_name)
+        logger.info(f"Audit trail save for phase {phase}: {audit_result.get('status')}")
+
+        # On phase 1, ensure folder structure is created
+        if phase == 1 and sponsor_name != 'Unknown Sponsor':
+            ensure_folder_structure(sponsor_name, fund_name)
+
+        if action == 'save':
+            # Save draft - stay on current phase
+            flash('Draft saved successfully.', 'success')
+            return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=phase))
+        else:
+            # Continue to next phase
+            # In production, this would save data to Google Sheets
+            if phase < len(phases):
+                next_phase = phase + 1
+                # Skip Phase 5 (EDD) if not required (for POC, always skip)
+                if next_phase == 5:
+                    next_phase = 6  # Skip to Approval
+                    flash('EDD not required - proceeding to Approval phase.', 'info')
+                else:
+                    flash(f'Phase {phase} completed. Proceeding to {phases[next_phase - 1]["name"]}.', 'success')
+                return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=next_phase))
+            else:
+                flash('Onboarding complete!', 'success')
+                return redirect(url_for('dashboard'))
+
+    # Handle GET request - display form
+    # Check if we're auto-populating from an enquiry
+    enquiry_id = request.args.get('enquiry_id')
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id) if enquiry_id else None
+    uploaded = request.args.get('uploaded') == '1'  # Flag if data came from uploaded document
+
+    # Get list of pending enquiries for Phase 1 dropdown
+    pending_enquiries = [e for e in MOCK_ENQUIRIES.values() if e['status'] == 'pending'] if phase == 1 else []
+
     return render_template(f'onboarding/phase{phase}.html',
                          onboarding_id=onboarding_id,
                          phase=phase,
                          phases=phases,
-                         current_phase=current_phase)
+                         current_phase=current_phase,
+                         enquiry=enquiry,
+                         pending_enquiries=pending_enquiries,
+                         uploaded=uploaded)
 
 
 @app.route('/onboarding/<onboarding_id>/trigger-review')
@@ -338,7 +484,336 @@ def approvals():
     return render_template('approvals.html', pending=pending)
 
 
+# ========== Enquiry Form Routes ==========
+
+@app.route('/enquiry')
+def enquiry_form():
+    """Public enquiry form for sponsors to complete"""
+    return render_template('enquiry_form.html')
+
+
+@app.route('/enquiry/submit', methods=['POST'])
+def submit_enquiry():
+    """Handle enquiry form submission"""
+    from services.gdrive_audit import save_form_data, ensure_folder_structure
+
+    # Extract form data
+    form_data = {key: value for key, value in request.form.items()}
+    sponsor_name = form_data.get('sponsor_name', 'Unknown Sponsor')
+    fund_name = form_data.get('fund_name', 'Unknown Fund')
+
+    # Create folder structure and save enquiry to audit trail
+    if sponsor_name != 'Unknown Sponsor':
+        ensure_folder_structure(sponsor_name, fund_name)
+        audit_result = save_form_data(form_data, 1, sponsor_name, fund_name)
+        logger.info(f"Enquiry saved to audit trail: {audit_result.get('status')}")
+
+    # In production, this would also save to Google Sheets
+    # For POC, we'll just show a success message
+    flash('Thank you for your enquiry. Our team will review your submission and contact you shortly.', 'success')
+    return redirect(url_for('enquiry_submitted'))
+
+
+@app.route('/enquiry/submitted')
+def enquiry_submitted():
+    """Enquiry submission confirmation page"""
+    return render_template('enquiry_submitted.html')
+
+
+@app.route('/enquiries')
+@login_required
+def pending_enquiries():
+    """View pending enquiries (internal staff)"""
+    enquiries = list(MOCK_ENQUIRIES.values())
+    # Sort by submission date, newest first
+    enquiries.sort(key=lambda x: x['submitted_at'], reverse=True)
+    return render_template('enquiries.html', enquiries=enquiries)
+
+
+@app.route('/enquiry/<enquiry_id>/view')
+@login_required
+def view_enquiry(enquiry_id):
+    """View details of a submitted enquiry"""
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+    if not enquiry:
+        flash('Enquiry not found.', 'danger')
+        return redirect(url_for('pending_enquiries'))
+    return render_template('enquiry_detail.html', enquiry=enquiry)
+
+
+@app.route('/enquiry/<enquiry_id>/start-onboarding')
+@login_required
+def start_onboarding_from_enquiry(enquiry_id):
+    """Start onboarding process from a submitted enquiry"""
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+    if not enquiry:
+        flash('Enquiry not found.', 'danger')
+        return redirect(url_for('pending_enquiries'))
+
+    # Redirect to Phase 1 with enquiry data
+    flash(f'Starting onboarding for {enquiry["sponsor_name"]}. Form pre-populated from enquiry.', 'success')
+    return redirect(url_for('onboarding_phase', onboarding_id='NEW', phase=1, enquiry_id=enquiry_id))
+
+
+@app.route('/samples')
+@login_required
+def sample_enquiries():
+    """List sample enquiry forms for testing"""
+    samples = [
+        {
+            'name': 'Granite Capital Partners LLP',
+            'fund': 'Granite Capital Fund III LP',
+            'file': 'enquiry-granite-capital.html',
+            'size': '$500M',
+            'jurisdiction': 'UK'
+        },
+        {
+            'name': 'Evergreen Capital Management Ltd',
+            'fund': 'Evergreen Sustainable Growth Fund LP',
+            'file': 'enquiry-evergreen-capital.html',
+            'size': '$250M',
+            'jurisdiction': 'UK'
+        },
+        {
+            'name': 'Nordic Ventures AS',
+            'fund': 'Nordic Technology Opportunities Fund LP',
+            'file': 'enquiry-nordic-ventures.html',
+            'size': '$150M',
+            'jurisdiction': 'Norway'
+        }
+    ]
+    return render_template('samples.html', samples=samples)
+
+
+@app.route('/upload-enquiry', methods=['POST'])
+@login_required
+def upload_enquiry():
+    """Handle enquiry form upload and AI extraction"""
+    from services.gdrive_audit import get_client as get_gdrive_client
+    import tempfile
+
+    if 'enquiry_file' not in request.files:
+        flash('No file uploaded.', 'danger')
+        return redirect(url_for('new_onboarding'))
+
+    file = request.files['enquiry_file']
+    if file.filename == '':
+        flash('No file selected.', 'danger')
+        return redirect(url_for('new_onboarding'))
+
+    # Save uploaded file to audit trail
+    gdrive_client = get_gdrive_client()
+
+    # For demo, use mock data; in production would extract from uploaded file
+    # Save the uploaded file temporarily and upload to GDrive
+    enquiry = MOCK_ENQUIRIES.get('ENQ-001')
+    sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor') if enquiry else 'Unknown Sponsor'
+    fund_name = enquiry.get('fund_name', 'Unknown Fund') if enquiry else 'Unknown Fund'
+
+    # Upload the file content to Google Drive
+    file_content = file.read()
+    file.seek(0)  # Reset file pointer
+
+    audit_result = gdrive_client.upload_content(
+        content=file_content,
+        filename=f"uploaded-enquiry-{file.filename}",
+        sponsor_name=sponsor_name,
+        fund_name=fund_name,
+        subfolder='Phase-1-Enquiry',
+        mime_type=file.content_type or 'application/octet-stream'
+    )
+    logger.info(f"Uploaded enquiry document to audit trail: {audit_result.get('status')}")
+
+    # For POC: Simulate AI extraction by using a mock enquiry
+    # In production, this would send the file to an AI service for extraction
+
+    # Simulate processing delay message
+    flash('Document uploaded successfully. AI has extracted the following information - please verify.', 'success')
+
+    # Use ENQ-001 as the "extracted" data for demo purposes
+    # In production, this would create a new extracted enquiry record
+    return redirect(url_for('onboarding_phase', onboarding_id='NEW', phase=1, enquiry_id='ENQ-001', uploaded=1))
+
+
 # ========== API Routes ==========
+
+@app.route('/api/screening/run', methods=['POST'])
+@login_required
+def api_run_screening():
+    """API: Run sanctions/PEP screening via OpenSanctions"""
+    from services.opensanctions import batch_screen, get_client
+    from services.gdrive_audit import save_screening_results, get_client as get_gdrive_client
+
+    data = request.get_json()
+    entities = data.get('entities', [])
+    sponsor_name = data.get('sponsor_name', 'Unknown Sponsor')
+    fund_name = data.get('fund_name', 'Unknown Fund')
+
+    if not entities:
+        return jsonify({'status': 'error', 'message': 'No entities provided'}), 400
+
+    # Check if running in demo mode
+    client = get_client()
+    demo_mode = client.demo_mode
+
+    # Run batch screening
+    results = batch_screen(entities, threshold=0.5)
+
+    # Format response
+    screening_results = []
+    for entity_name, result in results.items():
+        screening_results.append({
+            'name': entity_name,
+            'status': result.get('status'),
+            'risk_level': result.get('risk_level', 'clear'),
+            'has_sanctions_hit': result.get('has_sanctions_hit', False),
+            'has_pep_hit': result.get('has_pep_hit', False),
+            'has_adverse_media': result.get('has_adverse_media', False),
+            'total_matches': result.get('total_matches', 0),
+            'matches': result.get('matches', [])[:5]  # Limit to top 5 matches
+        })
+
+    # Save screening results to Google Drive audit trail
+    gdrive_client = get_gdrive_client()
+    audit_result = save_screening_results(
+        screening_results={
+            'entities_screened': entities,
+            'results': screening_results,
+            'screened_at': datetime.now().isoformat(),
+            'demo_mode': demo_mode
+        },
+        sponsor_name=sponsor_name,
+        fund_name=fund_name
+    )
+
+    return jsonify({
+        'status': 'ok',
+        'demo_mode': demo_mode,
+        'results': screening_results,
+        'screened_count': len(screening_results),
+        'audit_trail': {
+            'saved': audit_result.get('status') != 'error',
+            'gdrive_demo_mode': gdrive_client.demo_mode
+        }
+    })
+
+
+@app.route('/api/screening/person', methods=['POST'])
+@login_required
+def api_screen_person():
+    """API: Screen individual person"""
+    from services.opensanctions import screen_person
+
+    data = request.get_json()
+    name = data.get('name')
+
+    if not name:
+        return jsonify({'status': 'error', 'message': 'Name is required'}), 400
+
+    result = screen_person(
+        name=name,
+        birth_date=data.get('birth_date'),
+        nationality=data.get('nationality'),
+        threshold=0.5
+    )
+
+    return jsonify({
+        'status': 'ok',
+        'name': name,
+        'result': result
+    })
+
+
+@app.route('/api/screening/company', methods=['POST'])
+@login_required
+def api_screen_company():
+    """API: Screen company/entity"""
+    from services.opensanctions import screen_company
+
+    data = request.get_json()
+    name = data.get('name')
+
+    if not name:
+        return jsonify({'status': 'error', 'message': 'Company name is required'}), 400
+
+    result = screen_company(
+        name=name,
+        jurisdiction=data.get('jurisdiction'),
+        registration_number=data.get('registration_number'),
+        threshold=0.5
+    )
+
+    return jsonify({
+        'status': 'ok',
+        'name': name,
+        'result': result
+    })
+
+
+@app.route('/api/audit/status')
+@login_required
+def api_audit_status():
+    """API: Get Google Drive audit trail status"""
+    from services.gdrive_audit import get_client
+
+    client = get_client()
+    return jsonify({
+        'status': 'ok',
+        'audit_enabled': True,
+        'demo_mode': client.demo_mode,
+        'message': 'Audit trail running in demo mode - documents logged but not uploaded' if client.demo_mode else 'Audit trail connected to Google Drive'
+    })
+
+
+@app.route('/api/audit/save', methods=['POST'])
+@login_required
+def api_audit_save():
+    """API: Manually save document/data to audit trail"""
+    from services.gdrive_audit import save_form_data, save_api_response
+
+    data = request.get_json()
+    doc_type = data.get('type', 'form')  # 'form' or 'api'
+    sponsor_name = data.get('sponsor_name')
+    fund_name = data.get('fund_name')
+    content = data.get('content', {})
+
+    if not sponsor_name or not fund_name:
+        return jsonify({'status': 'error', 'message': 'sponsor_name and fund_name are required'}), 400
+
+    if doc_type == 'form':
+        phase = data.get('phase', 1)
+        result = save_form_data(content, phase, sponsor_name, fund_name)
+    else:
+        api_name = data.get('api_name', 'unknown')
+        result = save_api_response(api_name, content, sponsor_name, fund_name)
+
+    return jsonify({
+        'status': 'ok',
+        'result': result
+    })
+
+
+@app.route('/api/audit/folder', methods=['POST'])
+@login_required
+def api_audit_create_folder():
+    """API: Create folder structure for a new onboarding"""
+    from services.gdrive_audit import ensure_folder_structure
+
+    data = request.get_json()
+    sponsor_name = data.get('sponsor_name')
+    fund_name = data.get('fund_name')
+
+    if not sponsor_name or not fund_name:
+        return jsonify({'status': 'error', 'message': 'sponsor_name and fund_name are required'}), 400
+
+    folders = ensure_folder_structure(sponsor_name, fund_name)
+
+    return jsonify({
+        'status': 'ok',
+        'folders_created': len(folders),
+        'folder_ids': folders
+    })
+
 
 @app.route('/api/onboardings')
 @login_required
