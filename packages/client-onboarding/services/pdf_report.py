@@ -359,3 +359,179 @@ def _create_factor_breakdown(data: Dict[str, Any], styles: Dict) -> List:
     elements.append(Spacer(1, 4*mm))
 
     return elements
+
+
+def _create_screening_results(data: Dict[str, Any], styles: Dict, detailed: bool = True) -> List:
+    """Create screening results section."""
+    elements = []
+    screenings = data.get('screenings', [])
+
+    elements.append(Paragraph('Screening Results', styles['Heading1']))
+
+    # Summary counts
+    clear = sum(1 for s in screenings if s.get('risk_level') == 'clear')
+    review = sum(1 for s in screenings if s.get('risk_level') in ['review', 'medium'])
+    hits = sum(1 for s in screenings if s.get('risk_level') in ['high', 'critical'])
+
+    summary_data = [
+        ['Total Screened', 'Clear', 'Review Required', 'Hits'],
+        [str(len(screenings)), str(clear), str(review), str(hits)]
+    ]
+
+    colors_row = [colors.HexColor('#212529'), colors.HexColor('#198754'),
+                  colors.HexColor('#ffc107'), colors.HexColor('#dc3545')]
+
+    summary_table = Table(summary_data, colWidths=[38*mm, 38*mm, 38*mm, 38*mm])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('FONTSIZE', (0, 1), (-1, 1), 16),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (0, 1), (0, 1), colors_row[0]),
+        ('TEXTCOLOR', (1, 1), (1, 1), colors_row[1]),
+        ('TEXTCOLOR', (2, 1), (2, 1), colors_row[2]),
+        ('TEXTCOLOR', (3, 1), (3, 1), colors_row[3]),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 4*mm))
+
+    if detailed and screenings:
+        elements.append(Paragraph('Individual Screening Results', styles['Heading2']))
+
+        detail_data = [['Entity', 'Type', 'PEP', 'Sanctions', 'Adverse Media', 'Result']]
+        for s in screenings:
+            pep = 'Hit' if s.get('has_pep_hit') else 'Clear'
+            sanctions = 'Hit' if s.get('has_sanctions_hit') else 'Clear'
+            adverse = 'Found' if s.get('has_adverse_media') else 'Clear'
+            result = s.get('risk_level', 'unknown').upper()
+
+            detail_data.append([
+                s.get('name', 'Unknown')[:25],
+                s.get('entity_type', 'N/A').capitalize(),
+                pep,
+                sanctions,
+                adverse,
+                result
+            ])
+
+        detail_table = Table(detail_data, colWidths=[45*mm, 20*mm, 18*mm, 22*mm, 28*mm, 22*mm])
+        detail_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ]))
+        elements.append(detail_table)
+
+    elements.append(Spacer(1, 4*mm))
+    return elements
+
+
+def _create_signature_block(styles: Dict) -> List:
+    """Create signature block for compliance sign-off."""
+    elements = []
+
+    elements.append(Paragraph('Sign-Off', styles['Heading1']))
+
+    sig_data = [
+        ['Reviewed By:', '_' * 40, 'Date:', '_' * 20],
+        ['', '', '', ''],
+        ['Signature:', '_' * 40, '', ''],
+        ['', '', '', ''],
+        ['Approved By:', '_' * 40, 'Date:', '_' * 20],
+        ['', '', '', ''],
+        ['Signature:', '_' * 40, '', ''],
+    ]
+
+    sig_table = Table(sig_data, colWidths=[25*mm, 60*mm, 15*mm, 55*mm])
+    sig_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(sig_table)
+
+    return elements
+
+
+def _create_audit_trail(data: Dict[str, Any], styles: Dict) -> List:
+    """Create audit trail section for audit pack."""
+    elements = []
+    audit_log = data.get('audit_log', [])
+
+    elements.append(Paragraph('Audit Trail', styles['Heading1']))
+
+    if not audit_log:
+        elements.append(Paragraph('No audit log entries available.', styles['Normal']))
+        return elements
+
+    audit_data = [['Timestamp', 'Action', 'User']]
+    for entry in audit_log:
+        ts = entry.get('timestamp', '')
+        if ts:
+            try:
+                dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                ts = dt.strftime('%Y-%m-%d %H:%M:%S')
+            except:
+                pass
+        audit_data.append([
+            ts,
+            entry.get('action', 'N/A'),
+            entry.get('user', 'N/A')
+        ])
+
+    audit_table = Table(audit_data, colWidths=[45*mm, 80*mm, 30*mm])
+    audit_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+    ]))
+    elements.append(audit_table)
+
+    return elements
+
+
+def _create_methodology_notes(styles: Dict) -> List:
+    """Create methodology notes for audit pack."""
+    elements = []
+
+    elements.append(Paragraph('Methodology Notes', styles['Heading1']))
+
+    notes = """
+    <b>Risk Scoring Methodology</b><br/>
+    Risk scores are calculated using a weighted formula based on five factors:
+    Jurisdiction (25%), PEP Status (25%), Sanctions (30%), Adverse Media (10%),
+    and Entity Structure (10%). Scores range from 0-100 with thresholds at 40 (Medium)
+    and 70 (High).<br/><br/>
+
+    <b>Jurisdiction Risk Tiers</b><br/>
+    Based on JFSC Appendix D1/D2 and FATF High-Risk Jurisdictions list.
+    Prohibited: FATF Black List (score 100). High: FATF Grey List (score 80).
+    Elevated: Offshore Financial Centers (score 50). Standard: Most jurisdictions (score 20).
+    Low: UK, Jersey, Ireland (score 0).<br/><br/>
+
+    <b>Data Sources</b><br/>
+    Screening performed via OpenSanctions API which aggregates: UN Security Council Sanctions,
+    EU Financial Sanctions, US OFAC SDN List, UK HMT Sanctions, PEP databases,
+    Interpol Notices, and National Crime Databases.<br/><br/>
+
+    <b>Regulatory Framework</b><br/>
+    Assessment performed in accordance with JFSC AML/CFT Handbook requirements and
+    FATF Recommendations for customer due diligence.
+    """
+
+    elements.append(Paragraph(notes, styles['Normal']))
+
+    return elements
