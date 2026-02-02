@@ -1193,6 +1193,45 @@ def api_change_password():
     return jsonify(result), status_code
 
 
+# ========== Workflow API Routes ==========
+
+@app.route('/api/workflow/<onboarding_id>')
+@login_required
+def api_workflow_status(onboarding_id):
+    """Get workflow status for an onboarding"""
+    from services.workflow import generate_workflow_summary, check_phase_completion
+
+    # Get onboarding
+    onboarding = sheets_db.get_onboarding(onboarding_id)
+    if not onboarding:
+        return jsonify({'status': 'error', 'message': 'Onboarding not found'}), 404
+
+    # Get risk assessment if available
+    risk = sheets_db.get_risk_assessment(onboarding_id)
+
+    summary = generate_workflow_summary(onboarding, risk)
+
+    return jsonify({
+        'onboarding_id': onboarding_id,
+        'workflow': summary
+    })
+
+
+@app.route('/api/workflow/overdue')
+@login_required
+def api_overdue_onboardings():
+    """Get list of overdue onboardings"""
+    from services.workflow import check_overdue
+
+    onboardings = sheets_db.get_onboardings()
+    overdue = check_overdue(onboardings)
+
+    return jsonify({
+        'count': len(overdue),
+        'overdue': overdue
+    })
+
+
 # ========== Helper Functions ==========
 
 def get_phases():

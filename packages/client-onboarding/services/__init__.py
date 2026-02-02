@@ -70,6 +70,20 @@ from .auth import (
     DEMO_MODE as AUTH_DEMO_MODE
 )
 
+from .workflow import (
+    PHASES,
+    get_phase_info,
+    get_next_phase,
+    calculate_deadline,
+    check_phase_completion,
+    can_transition_status,
+    determine_approval_routing,
+    get_auto_assignee,
+    check_overdue,
+    generate_workflow_summary,
+    WORKFLOW_EVENTS
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -123,4 +137,16 @@ __all__ = [
     'deactivate_user',
     'USER_ROLES',
     'AUTH_DEMO_MODE',
+    # Workflow
+    'PHASES',
+    'get_phase_info',
+    'get_next_phase',
+    'calculate_deadline',
+    'check_phase_completion',
+    'can_transition_status',
+    'determine_approval_routing',
+    'get_auto_assignee',
+    'check_overdue',
+    'generate_workflow_summary',
+    'WORKFLOW_EVENTS',
 ]
