@@ -34,6 +34,12 @@ from .risk_scoring import (
     THRESHOLD_MEDIUM
 )
 
+from .pdf_report import (
+    generate_report,
+    gather_report_data,
+    REPORT_TYPES
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -59,4 +65,8 @@ __all__ = [
     'JURISDICTION_HIGH',
     'THRESHOLD_LOW',
     'THRESHOLD_MEDIUM',
+    # PDF Reports
+    'generate_report',
+    'gather_report_data',
+    'REPORT_TYPES',
 ]
