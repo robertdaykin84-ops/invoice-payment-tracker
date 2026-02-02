@@ -535,3 +535,83 @@ def _create_methodology_notes(styles: Dict) -> List:
     elements.append(Paragraph(notes, styles['Normal']))
 
     return elements
+
+
+def _build_compliance_report(data: Dict[str, Any]) -> List:
+    """Build compliance report elements (full detail for MLRO/Analyst)."""
+    styles = _get_styles()
+    elements = []
+
+    elements.extend(_create_header(data, 'compliance', styles))
+    elements.extend(_create_risk_summary(data, styles))
+    elements.extend(_create_factor_breakdown(data, styles))
+    elements.extend(_create_screening_results(data, styles, detailed=True))
+    elements.extend(_create_signature_block(styles))
+
+    return elements
+
+
+def _build_board_report(data: Dict[str, Any]) -> List:
+    """Build board summary report (executive overview - 1 page)."""
+    styles = _get_styles()
+    elements = []
+
+    elements.extend(_create_header(data, 'board', styles))
+    elements.extend(_create_risk_summary(data, styles))
+
+    # Brief recommendation
+    risk = data.get('risk_assessment', {})
+    rating = risk.get('rating', 'unknown')
+
+    elements.append(Paragraph('Recommendation', styles['Heading1']))
+
+    if rating == 'high':
+        rec = """
+        <b>HIGH RISK - Enhanced Due Diligence Required</b><br/>
+        This client presents elevated risk factors requiring enhanced due diligence
+        procedures before onboarding can proceed. Board approval is required.
+        """
+    elif rating == 'medium':
+        rec = """
+        <b>MEDIUM RISK - Enhanced Due Diligence Recommended</b><br/>
+        This client presents some risk factors that warrant additional scrutiny.
+        MLRO approval is required before proceeding.
+        """
+    else:
+        rec = """
+        <b>LOW RISK - Standard Onboarding Pathway</b><br/>
+        This client presents a low risk profile suitable for standard onboarding
+        procedures. Compliance approval is sufficient.
+        """
+
+    elements.append(Paragraph(rec, styles['Normal']))
+    elements.append(Spacer(1, 6*mm))
+
+    # Screening summary only (not detailed)
+    elements.extend(_create_screening_results(data, styles, detailed=False))
+
+    # Compact signature
+    elements.append(Spacer(1, 10*mm))
+    elements.append(Paragraph('Board Approval: _________________ Date: _________', styles['Normal']))
+
+    return elements
+
+
+def _build_audit_report(data: Dict[str, Any]) -> List:
+    """Build audit pack report (complete record for external auditors)."""
+    styles = _get_styles()
+    elements = []
+
+    elements.extend(_create_header(data, 'audit', styles))
+    elements.extend(_create_risk_summary(data, styles))
+    elements.extend(_create_factor_breakdown(data, styles))
+    elements.append(PageBreak())
+
+    elements.extend(_create_screening_results(data, styles, detailed=True))
+    elements.extend(_create_audit_trail(data, styles))
+    elements.append(PageBreak())
+
+    elements.extend(_create_methodology_notes(styles))
+    elements.extend(_create_signature_block(styles))
+
+    return elements
