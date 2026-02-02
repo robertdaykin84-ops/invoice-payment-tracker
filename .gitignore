@@ -1,29 +1,68 @@
+# =====================
+# Fund Admin Tools Suite
+# =====================
+
 # Sensitive files - NEVER commit these
 .env
+*.env
 credentials.json
 token.json
 token.pickle
+token_compat.pickle
+**/credentials.json
+**/token.pickle
+**/.env
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
+.Python
 venv/
 env/
 .venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
 
-# Uploads
-uploads/*
-!uploads/.gitkeep
+# Uploads (keep folder structure, ignore contents)
+**/uploads/*
+!**/uploads/.gitkeep
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+*.DS_Store
 
 # Logs
 *.log
+logs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Build
+dist/
+build/
+*.manifest
+*.spec
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local development
+*.local
+.env.local
+.env.*.local
