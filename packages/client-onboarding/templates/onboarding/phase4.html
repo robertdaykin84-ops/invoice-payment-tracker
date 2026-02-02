@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Phase 4: Screening & Risk{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Phase 4: Screening & Risk</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">Screening & Risk Assessment</h1>
+        <p class="text-muted">PEP, Sanctions, Adverse Media screening and risk scoring</p>
+    </div>
+</div>
+
+<!-- Wizard Stepper -->
+<ul class="wizard-stepper mb-4">
+    {% for p in phases %}
+    <li class="wizard-step {% if p.num < phase %}completed{% elif p.num == phase %}current{% endif %}">
+        <div class="step-icon">
+            {% if p.num < phase %}
+            <i class="bi bi-check"></i>
+            {% else %}
+            <i class="bi {{ p.icon }}"></i>
+            {% endif %}
+        </div>
+        <span class="step-label">{{ p.name }}</span>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Screening Results -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-check me-2"></i>Screening Results</span>
+                <button class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Run All Screenings
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Entity</th>
+                                <th>PEP</th>
+                                <th>Sanctions</th>
+                                <th>Adverse Media</th>
+                                <th>Last Screened</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Sponsor Principals -->
+                            <tr class="table-light">
+                                <td colspan="6" class="fw-bold small text-muted">SPONSOR PRINCIPALS</td>
+                            </tr>
+                            <tr>
+                                <td>John Smith</td>
+                                <td><small class="text-muted">Granite Capital Partners</small></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><small class="text-muted">02 Feb 2026</small></td>
+                            </tr>
+                            <tr>
+                                <td>Sarah Johnson</td>
+                                <td><small class="text-muted">Granite Capital Partners</small></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><small class="text-muted">02 Feb 2026</small></td>
+                            </tr>
+                            <tr>
+                                <td>Michael Brown</td>
+                                <td><small class="text-muted">Granite Capital Partners</small></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><small class="text-muted">02 Feb 2026</small></td>
+                            </tr>
+                            <!-- Fund Principals -->
+                            <tr class="table-light">
+                                <td colspan="6" class="fw-bold small text-muted">FUND PRINCIPALS (NEW)</td>
+                            </tr>
+                            <tr>
+                                <td>Robert Jones</td>
+                                <td><small class="text-muted">Independent Director</small></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><small class="text-muted">02 Feb 2026</small></td>
+                            </tr>
+                            <!-- Entity Screening -->
+                            <tr class="table-light">
+                                <td colspan="6" class="fw-bold small text-muted">ENTITY SCREENING</td>
+                            </tr>
+                            <tr>
+                                <td>Granite Capital Partners LLP</td>
+                                <td><small class="text-muted">Sponsor</small></td>
+                                <td><span class="badge bg-secondary">N/A</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><span class="badge bg-success"><i class="bi bi-check"></i> Clear</span></td>
+                                <td><small class="text-muted">02 Feb 2026</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-success small mb-0">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <strong>All screenings clear.</strong> No PEP matches, sanctions hits, or adverse media identified.
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Assessment -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Risk Assessment
+            </div>
+            <div class="card-body">
+                <!-- Risk Score Display -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="small text-muted mb-1">Sponsor Risk</div>
+                            <div class="display-6 fw-bold text-success">22</div>
+                            <span class="badge badge-risk-low">Low</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="small text-muted mb-1">Fund Risk</div>
+                            <div class="display-6 fw-bold text-success">28</div>
+                            <span class="badge badge-risk-low">Low</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded bg-light">
+                            <div class="small text-muted mb-1">Overall Risk</div>
+                            <div class="display-6 fw-bold text-success">28</div>
+                            <span class="badge badge-risk-low">Low</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Factors -->
+                <h6 class="small text-uppercase text-muted mb-3">Risk Factors Assessed</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Factor</th>
+                                <th>Value</th>
+                                <th>Score</th>
+                                <th>Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sponsor Jurisdiction</td>
+                                <td>United Kingdom</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>15%</td>
+                            </tr>
+                            <tr>
+                                <td>Regulatory Status</td>
+                                <td>FCA Regulated</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>15%</td>
+                            </tr>
+                            <tr>
+                                <td>Principal Nationalities</td>
+                                <td>All British</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>10%</td>
+                            </tr>
+                            <tr>
+                                <td>PEP Connections</td>
+                                <td>None</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>20%</td>
+                            </tr>
+                            <tr>
+                                <td>Fund Structure</td>
+                                <td>Simple LP</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>10%</td>
+                            </tr>
+                            <tr>
+                                <td>Investment Strategy</td>
+                                <td>UK/EU Buyouts</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>15%</td>
+                            </tr>
+                            <tr>
+                                <td>Source of Wealth</td>
+                                <td>Clear, documented</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>15%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- AI Risk Analysis -->
+                <div class="border rounded p-3 bg-light mt-3">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-robot text-primary fs-5"></i>
+                        <div>
+                            <h6 class="mb-2">AI Risk Analysis</h6>
+                            <p class="small text-muted mb-0">
+                                This client presents a <strong>low risk profile</strong>. The sponsor is FCA-regulated with
+                                a 10+ year track record. All principals are British nationals with clear backgrounds.
+                                The fund structure is straightforward (single LP) with investment focus on low-risk
+                                UK/EU markets. Source of wealth is well-documented from prior fund management fees.
+                                <br><br>
+                                <strong>Recommendation:</strong> Standard onboarding pathway. No EDD required.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regulatory Verification -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-patch-check me-2"></i>
+                Regulatory Verification
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">FCA Register Check</h6>
+                                    <small class="text-muted">Granite Capital Partners LLP</small>
+                                </div>
+                                <span class="badge bg-success"><i class="bi bi-check"></i> Verified</span>
+                            </div>
+                            <small class="text-muted d-block">
+                                FRN: 123456 | Status: Authorised<br>
+                                Permissions: Managing an AIF, Advising on investments
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Companies House Check</h6>
+                                    <small class="text-muted">OC123456</small>
+                                </div>
+                                <span class="badge bg-success"><i class="bi bi-check"></i> Verified</span>
+                            </div>
+                            <small class="text-muted d-block">
+                                Status: Active | Incorporated: 2012<br>
+                                Last accounts filed: 2025
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=3) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
+            </a>
+            <div>
+                <button class="btn btn-outline-primary me-2">
+                    <i class="bi bi-save me-1"></i> Save Draft
+                </button>
+                <button class="btn btn-primary">
+                    Continue to Phase 6 <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-check2-square me-2"></i>
+                Phase 4 Checklist
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>PEP screening complete</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Sanctions screening complete</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Adverse media screening complete</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Risk assessment calculated</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Regulatory status verified</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>
+                EDD Triggers
+            </div>
+            <div class="card-body small">
+                <p class="text-muted mb-2">EDD is required when:</p>
+                <ul class="text-muted mb-0">
+                    <li>PEP connection identified</li>
+                    <li>High-risk jurisdiction</li>
+                    <li>Sanctions match (review)</li>
+                    <li>Significant adverse media</li>
+                    <li>Complex/opaque structure</li>
+                    <li>Risk score > 60</li>
+                </ul>
+                <hr>
+                <div class="text-success">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <strong>No EDD triggers identified</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-success">
+            <div class="card-header bg-success bg-opacity-10 text-success">
+                <i class="bi bi-shield-check me-2"></i>
+                Screening Status
+            </div>
+            <div class="card-body text-center">
+                <div class="display-6 text-success mb-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h5 class="text-success">All Clear</h5>
+                <p class="small text-muted mb-0">
+                    All screenings completed with no adverse findings.
+                    Ready to proceed to approval.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

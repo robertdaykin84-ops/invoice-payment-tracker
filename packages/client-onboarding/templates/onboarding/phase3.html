@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}Phase 3: Fund Structure{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Phase 3: Fund Structure</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">Fund Structure Setup</h1>
+        <p class="text-muted">Configure the fund vehicles and GP entity</p>
+    </div>
+</div>
+
+<!-- Wizard Stepper -->
+<ul class="wizard-stepper mb-4">
+    {% for p in phases %}
+    <li class="wizard-step {% if p.num < phase %}completed{% elif p.num == phase %}current{% endif %}">
+        <div class="step-icon">
+            {% if p.num < phase %}
+            <i class="bi bi-check"></i>
+            {% else %}
+            <i class="bi {{ p.icon }}"></i>
+            {% endif %}
+        </div>
+        <span class="step-label">{{ p.name }}</span>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Fund Details Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-building me-2"></i>
+                Fund Vehicle Details
+            </div>
+            <div class="card-body">
+                <form method="POST" id="fundForm">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label">Fund Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="fund_name" required
+                                   value="Granite Capital Fund III LP">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fund Type <span class="text-danger">*</span></label>
+                            <select class="form-select" name="fund_type" required>
+                                <option value="jpf" selected>Jersey Private Fund (JPF)</option>
+                                <option value="expert">Expert Fund</option>
+                                <option value="listed">Listed Fund</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Legal Structure <span class="text-danger">*</span></label>
+                            <select class="form-select" name="legal_structure" required>
+                                <option value="lp" selected>Limited Partnership</option>
+                                <option value="unit_trust">Unit Trust</option>
+                                <option value="icc">ICC</option>
+                                <option value="pcc">PCC</option>
+                                <option value="company">Company</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fund Jurisdiction <span class="text-danger">*</span></label>
+                            <select class="form-select" name="fund_jurisdiction" required>
+                                <option value="Jersey" selected>Jersey</option>
+                                <option value="Cayman">Cayman Islands</option>
+                                <option value="Luxembourg">Luxembourg</option>
+                                <option value="Ireland">Ireland</option>
+                                <option value="Delaware">Delaware</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Target Fund Size</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" name="target_size" value="500,000,000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Investment Strategy <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="investment_strategy" rows="3" required
+                                  placeholder="Describe the fund's investment strategy, target sectors, and geographic focus...">Mid-market buyout opportunities in UK and European technology and healthcare sectors.</textarea>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Target Investment Jurisdictions</label>
+                            <select class="form-select" name="target_jurisdictions" multiple size="4">
+                                <option value="UK" selected>United Kingdom</option>
+                                <option value="EU" selected>European Union</option>
+                                <option value="US">United States</option>
+                                <option value="APAC">Asia Pacific</option>
+                            </select>
+                            <small class="form-text">Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Risk Flags</label>
+                            <div class="border rounded p-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="acceptsCash" name="accepts_cash">
+                                    <label class="form-check-label" for="acceptsCash">
+                                        Fund accepts physical currency
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="highRiskJuris" name="high_risk_jurisdictions">
+                                    <label class="form-check-label" for="highRiskJuris">
+                                        Invests in high-risk jurisdictions
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="complexStructure" name="complex_structure">
+                                    <label class="form-check-label" for="complexStructure">
+                                        Complex/multi-tier structure
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GP Entity Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-diagram-3 me-2"></i>
+                General Partner (GP) Entity
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gp_type" id="gpNew" value="new" checked>
+                        <label class="form-check-label" for="gpNew">Create new GP entity</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gp_type" id="gpExisting" value="existing">
+                        <label class="form-check-label" for="gpExisting">Use existing GP</label>
+                    </div>
+                </div>
+
+                <div id="newGpForm">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">GP Legal Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="gp_name"
+                                   value="Granite Capital GP III Limited">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">GP Jurisdiction</label>
+                            <select class="form-select" name="gp_jurisdiction">
+                                <option value="Jersey" selected>Jersey</option>
+                                <option value="Cayman">Cayman</option>
+                                <option value="UK">UK</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fund Principals Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people me-2"></i>Fund Principals</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFundPrincipalModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Principal
+                </button>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Fund principals may differ from sponsor principals. Add GP directors, fund directors, and any independent directors.
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Entity</th>
+                                <th>From Sponsor</th>
+                                <th>CDD Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">JS</div>
+                                        <span>John Smith</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-info">GP Director</span></td>
+                                <td>Granite Capital GP III Ltd</td>
+                                <td><i class="bi bi-check-circle text-success" title="Linked from Sponsor"></i></td>
+                                <td><span class="badge badge-status-approved">Complete</span></td>
+                                <td>
+                                    <button class="btn btn-outline-secondary btn-sm" title="View"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">RJ</div>
+                                        <span>Robert Jones</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-purple" style="background-color: #8b5cf6 !important;">Independent Director</span></td>
+                                <td>Fund III LP</td>
+                                <td><i class="bi bi-dash text-muted" title="New principal"></i></td>
+                                <td><span class="badge badge-status-pending">Pending</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Principals already captured for the sponsor are linked automatically. Only new fund-specific principals require additional CDD.
+                </div>
+            </div>
+        </div>
+
+        <!-- Structure Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-diagram-2 me-2"></i>
+                Structure Visualization
+            </div>
+            <div class="card-body">
+                <div class="text-center py-4 bg-light rounded">
+                    <div class="structure-diagram">
+                        <div class="mb-3">
+                            <div class="badge bg-primary p-2 fs-6">Granite Capital Partners LLP</div>
+                            <div class="small text-muted">Sponsor / Fund Manager</div>
+                        </div>
+                        <div class="text-muted">|</div>
+                        <div class="text-muted small">100% ownership</div>
+                        <div class="text-muted">↓</div>
+                        <div class="mb-3">
+                            <div class="badge bg-success p-2 fs-6">Granite Capital GP III Limited</div>
+                            <div class="small text-muted">General Partner (Jersey)</div>
+                        </div>
+                        <div class="text-muted">|</div>
+                        <div class="text-muted small">GP of</div>
+                        <div class="text-muted">↓</div>
+                        <div>
+                            <div class="badge bg-info p-2 fs-6">Granite Capital Fund III LP</div>
+                            <div class="small text-muted">Jersey Private Fund</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-upload me-1"></i> Upload Structure Chart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=2) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 2
+            </a>
+            <div>
+                <button type="submit" form="fundForm" name="action" value="save" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-save me-1"></i> Save Draft
+                </button>
+                <button type="submit" form="fundForm" name="action" value="next" class="btn btn-primary">
+                    Continue to Phase 4 <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-check2-square me-2"></i>
+                Phase 3 Checklist
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Fund details completed</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>GP entity configured</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Fund principals added</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Structure chart uploaded</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Investment strategy documented</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>
+                JPF Requirements
+            </div>
+            <div class="card-body small text-muted">
+                <p><strong>Jersey Private Fund</strong> requirements:</p>
+                <ul class="mb-0">
+                    <li>Maximum 50 investors OR offer by private placement</li>
+                    <li>Promoter/instigator must be identified</li>
+                    <li>JFSC notification within 10 business days of first subscription</li>
+                    <li>Annual confirmation to JFSC</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-robot me-2"></i>
+                AI Assistance
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Analyze Structure Chart
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-file-text me-2"></i>
+                        Extract from LPA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Fund Principal Modal -->
+<div class="modal fade" id="addFundPrincipalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add Fund Principal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select existing or add new</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="principal_source" id="fromSponsor" value="sponsor" checked>
+                        <label class="form-check-label" for="fromSponsor">
+                            Link from Sponsor principals
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="principal_source" id="newPrincipal" value="new">
+                        <label class="form-check-label" for="newPrincipal">
+                            Add new principal (requires CDD)
+                        </label>
+                    </div>
+                </div>
+
+                <div id="sponsorPrincipalSelect" class="mb-3">
+                    <label class="form-label">Select Sponsor Principal</label>
+                    <select class="form-select">
+                        <option value="">Choose...</option>
+                        <option value="js">John Smith (Partner)</option>
+                        <option value="sj">Sarah Johnson (Partner)</option>
+                        <option value="mb">Michael Brown (Partner)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Role in Fund Structure</label>
+                    <select class="form-select">
+                        <option value="">Select...</option>
+                        <option value="gp_director">GP Director</option>
+                        <option value="fund_director">Fund Director</option>
+                        <option value="independent_director">Independent Director</option>
+                        <option value="investment_committee">Investment Committee</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Entity</label>
+                    <select class="form-select">
+                        <option value="gp">Granite Capital GP III Limited</option>
+                        <option value="fund">Granite Capital Fund III LP</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Add Principal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

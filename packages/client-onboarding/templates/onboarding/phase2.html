@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block title %}Phase 2: Sponsor Onboarding{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('new_onboarding') }}">New Client or Fund</a></li>
+                <li class="breadcrumb-item active">Phase 2: Sponsor</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">Sponsor Onboarding</h1>
+        <p class="text-muted">Capture sponsor entity details and principals</p>
+    </div>
+</div>
+
+<!-- Wizard Stepper -->
+<ul class="wizard-stepper mb-4">
+    {% for p in phases %}
+    <li class="wizard-step {% if p.num < phase %}completed{% elif p.num == phase %}current{% endif %}">
+        <div class="step-icon">
+            {% if p.num < phase %}
+            <i class="bi bi-check"></i>
+            {% else %}
+            <i class="bi {{ p.icon }}"></i>
+            {% endif %}
+        </div>
+        <span class="step-label">{{ p.name }}</span>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Entity Type Selection -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-building me-2"></i>
+                Sponsor Entity Details
+            </div>
+            <div class="card-body">
+                <form method="POST" id="sponsorForm">
+                    <!-- Entity Type Selector -->
+                    <div class="mb-4">
+                        <label class="form-label">Entity Type <span class="text-danger">*</span></label>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_company" value="company" checked>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_company">
+                                    <i class="bi bi-building me-2"></i>
+                                    <strong>Private Company</strong>
+                                    <small class="d-block text-muted">Ltd, Inc, etc.</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_llp" value="llp">
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_llp">
+                                    <i class="bi bi-people me-2"></i>
+                                    <strong>LLP</strong>
+                                    <small class="d-block text-muted">Limited Liability Partnership</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_lp" value="lp">
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_lp">
+                                    <i class="bi bi-diagram-3 me-2"></i>
+                                    <strong>LP</strong>
+                                    <small class="d-block text-muted">Limited Partnership</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Common Entity Fields -->
+                    <h6 class="text-uppercase text-muted small mb-3">Entity Information</h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Legal Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="legal_name" required
+                                   placeholder="e.g., Granite Capital Partners LLP">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Trading Name (if different)</label>
+                            <input type="text" class="form-control" name="trading_name">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Jurisdiction <span class="text-danger">*</span></label>
+                            <select class="form-select" name="jurisdiction" required>
+                                <option value="">Select...</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="Jersey">Jersey</option>
+                                <option value="Guernsey">Guernsey</option>
+                                <option value="Cayman">Cayman Islands</option>
+                                <option value="Luxembourg">Luxembourg</option>
+                                <option value="Ireland">Ireland</option>
+                                <option value="US-Delaware">United States (Delaware)</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Registration Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="registration_number" required
+                                   placeholder="e.g., OC123456">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date of Incorporation</label>
+                            <input type="date" class="form-control" name="date_incorporated">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Registered Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="registered_address" rows="2" required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Principal Place of Business</label>
+                            <textarea class="form-control" name="business_address" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Regulatory Status -->
+                    <h6 class="text-uppercase text-muted small mb-3">Regulatory Status</h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Regulatory Status</label>
+                            <select class="form-select" name="regulatory_status">
+                                <option value="regulated">Regulated</option>
+                                <option value="not_regulated">Not Regulated</option>
+                                <option value="exempt">Exempt</option>
+                                <option value="pending">Pending Registration</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Regulator</label>
+                            <select class="form-select" name="regulator">
+                                <option value="">Select if applicable...</option>
+                                <option value="FCA">FCA (UK)</option>
+                                <option value="JFSC">JFSC (Jersey)</option>
+                                <option value="GFSC">GFSC (Guernsey)</option>
+                                <option value="CIMA">CIMA (Cayman)</option>
+                                <option value="SEC">SEC (US)</option>
+                                <option value="CSSF">CSSF (Luxembourg)</option>
+                                <option value="CBI">CBI (Ireland)</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">License/Registration Number</label>
+                            <input type="text" class="form-control" name="license_number">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Source of Wealth -->
+                    <h6 class="text-uppercase text-muted small mb-3">Source of Wealth</h6>
+
+                    <div class="mb-3">
+                        <label class="form-label">Principal Business Activities <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="business_activities" rows="2" required
+                                  placeholder="Describe the sponsor's primary business activities and revenue sources..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Source of Wealth Narrative <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="source_of_wealth" rows="3" required
+                                  placeholder="Describe how the sponsor accumulated its wealth/capital..."></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Principals Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people me-2"></i>Principals & Beneficial Owners</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addPrincipalModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Principal
+                </button>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Add all directors, partners, shareholders (25%+), and ultimate beneficial owners.
+                    CDD will be required for each principal.
+                </p>
+
+                <!-- Principals Table -->
+                <div class="table-responsive">
+                    <table class="table table-sm" id="principalsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Ownership %</th>
+                                <th>UBO</th>
+                                <th>CDD Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Demo data -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">JS</div>
+                                        <div>
+                                            <div class="fw-medium">John Smith</div>
+                                            <small class="text-muted">British</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Partner</span></td>
+                                <td>40%</td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><span class="badge badge-status-pending">Pending</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">SJ</div>
+                                        <div>
+                                            <div class="fw-medium">Sarah Johnson</div>
+                                            <small class="text-muted">British</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Partner</span></td>
+                                <td>35%</td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><span class="badge badge-status-pending">Pending</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">MB</div>
+                                        <div>
+                                            <div class="fw-medium">Michael Brown</div>
+                                            <small class="text-muted">British</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Partner</span></td>
+                                <td>25%</td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><span class="badge badge-status-pending">Pending</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>UBO Threshold:</strong> Identify all individuals with 25%+ ownership or control.
+                    For new incorporations, use 10% threshold.
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Required Documents
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Certificate of Incorporation</h6>
+                                    <small class="text-muted">Required</small>
+                                </div>
+                                <span class="badge bg-warning">Missing</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Memorandum & Articles</h6>
+                                    <small class="text-muted">Required</small>
+                                </div>
+                                <span class="badge bg-warning">Missing</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Register of Directors</h6>
+                                    <small class="text-muted">Required</small>
+                                </div>
+                                <span class="badge bg-warning">Missing</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Register of Shareholders</h6>
+                                    <small class="text-muted">Required</small>
+                                </div>
+                                <span class="badge bg-warning">Missing</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Structure Chart</h6>
+                                    <small class="text-muted">Required</small>
+                                </div>
+                                <span class="badge bg-warning">Missing</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Certificate of Good Standing</h6>
+                                    <small class="text-muted">If >12 months old</small>
+                                </div>
+                                <span class="badge bg-secondary">Optional</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 1
+            </a>
+            <div>
+                <button type="submit" form="sponsorForm" name="action" value="save" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-save me-1"></i> Save Draft
+                </button>
+                <button type="submit" form="sponsorForm" name="action" value="next" class="btn btn-primary">
+                    Continue to Phase 3 <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Progress Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-check2-square me-2"></i>
+                Phase 2 Checklist
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Entity type selected</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Entity details completed</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>All principals added</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>UBOs identified (25%+)</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Source of Wealth documented</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2">
+                        <i class="bi bi-circle text-muted"></i>
+                        <span>Required documents uploaded</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- AI Assistance Card -->
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-robot me-2"></i>
+                AI Assistance
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Available AI features:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        Extract from Certificate
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-search me-2"></i>
+                        Verify Registration
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Analyze Structure Chart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Principal Modal -->
+<div class="modal fade" id="addPrincipalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add Principal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="principalForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Legal Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="principal_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Former Names (if any)</label>
+                            <input type="text" class="form-control" name="former_names">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="dob" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nationality <span class="text-danger">*</span></label>
+                            <select class="form-select" name="nationality" required>
+                                <option value="">Select...</option>
+                                <option value="British">British</option>
+                                <option value="American">American</option>
+                                <option value="Irish">Irish</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Country of Residence <span class="text-danger">*</span></label>
+                            <select class="form-select" name="residence" required>
+                                <option value="">Select...</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="US">United States</option>
+                                <option value="Jersey">Jersey</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" name="role" required>
+                                <option value="">Select...</option>
+                                <option value="director">Director</option>
+                                <option value="partner">Partner</option>
+                                <option value="shareholder">Shareholder</option>
+                                <option value="ubo">Ultimate Beneficial Owner</option>
+                                <option value="designated_member">Designated Member (LLP)</option>
+                                <option value="gp">General Partner</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ownership Percentage</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="ownership_pct" min="0" max="100" step="0.01">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Residential Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="address" rows="2" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_ubo" id="isUbo">
+                                <label class="form-check-label" for="isUbo">
+                                    This person is an Ultimate Beneficial Owner (25%+ ownership or control)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="principalForm" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Add Principal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
