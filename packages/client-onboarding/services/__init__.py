@@ -59,6 +59,17 @@ from .documents import (
     ALLOWED_EXTENSIONS
 )
 
+from .auth import (
+    authenticate_user,
+    create_user,
+    change_password,
+    get_user,
+    list_users,
+    deactivate_user,
+    USER_ROLES,
+    DEMO_MODE as AUTH_DEMO_MODE
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -103,4 +114,13 @@ __all__ = [
     'delete_document',
     'DOCUMENT_TYPES',
     'ALLOWED_EXTENSIONS',
+    # Authentication
+    'authenticate_user',
+    'create_user',
+    'change_password',
+    'get_user',
+    'list_users',
+    'deactivate_user',
+    'USER_ROLES',
+    'AUTH_DEMO_MODE',
 ]

@@ -1140,6 +1140,59 @@ def api_delete_document(document_id):
     return jsonify(result), status_code
 
 
+# ========== User Management API Routes ==========
+
+@app.route('/api/users')
+@login_required
+@role_required('admin')
+def api_list_users():
+    """List all users (admin only)"""
+    from services.auth import list_users, USER_ROLES
+    return jsonify({
+        'users': list_users(),
+        'roles': USER_ROLES
+    })
+
+
+@app.route('/api/users', methods=['POST'])
+@login_required
+@role_required('admin')
+def api_create_user():
+    """Create a new user (admin only)"""
+    from services.auth import create_user
+
+    data = request.get_json()
+    result = create_user(
+        user_id=data.get('user_id'),
+        name=data.get('name'),
+        email=data.get('email'),
+        role=data.get('role'),
+        password=data.get('password')
+    )
+
+    status_code = 200 if result['status'] == 'success' else 400
+    return jsonify(result), status_code
+
+
+@app.route('/api/users/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    """Change current user's password"""
+    from services.auth import change_password
+
+    user = get_current_user()
+    data = request.get_json()
+
+    result = change_password(
+        user_id=user['id'],
+        old_password=data.get('old_password'),
+        new_password=data.get('new_password')
+    )
+
+    status_code = 200 if result['status'] == 'success' else 400
+    return jsonify(result), status_code
+
+
 # ========== Helper Functions ==========
 
 def get_phases():
