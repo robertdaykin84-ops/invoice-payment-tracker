@@ -9,11 +9,12 @@ from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    redirect, url_for, flash, session, g
+    redirect, url_for, flash, session, g, make_response
 )
 from flask_cors import CORS
 from dotenv import load_dotenv
 from services.sheets_db import get_client as get_sheets_client
+from services.pdf_report import generate_report, REPORT_TYPES
 
 # Load environment variables
 load_dotenv()
@@ -911,6 +912,48 @@ def api_approve(onboarding_id):
     # Will integrate with approval workflow
 
     return jsonify({'status': 'ok', 'message': 'Approved'})
+
+
+@app.route('/api/report/generate/<onboarding_id>')
+def api_generate_report(onboarding_id):
+    """Generate PDF risk report for an onboarding."""
+    report_type = request.args.get('type', 'compliance')
+    save_to_drive = request.args.get('save_to_drive', 'true').lower() == 'true'
+
+    # Get sponsor/fund from session or args
+    sponsor_name = request.args.get('sponsor_name') or session.get('current_sponsor')
+    fund_name = request.args.get('fund_name') or session.get('current_fund')
+
+    try:
+        result = generate_report(
+            onboarding_id=onboarding_id,
+            report_type=report_type,
+            save_to_drive=save_to_drive,
+            sponsor_name=sponsor_name,
+            fund_name=fund_name
+        )
+
+        # Create response with PDF
+        response = make_response(result['pdf_bytes'])
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename="{result["filename"]}"'
+
+        # Add custom headers for JS to read
+        if result.get('drive_result'):
+            drive = result['drive_result']
+            response.headers['X-Drive-Status'] = drive.get('status', 'unknown')
+            if drive.get('file_id'):
+                response.headers['X-Drive-File-Id'] = drive['file_id']
+
+        response.headers['X-Demo-Mode'] = 'true' if result.get('demo_mode') else 'false'
+
+        return response
+
+    except ValueError as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except Exception as e:
+        logger.exception(f"Error generating report: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to generate report'}), 500
 
 
 # ========== Helper Functions ==========
