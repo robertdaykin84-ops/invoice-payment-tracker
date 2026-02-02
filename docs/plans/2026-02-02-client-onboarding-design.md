@@ -412,6 +412,93 @@ Supports: Individual, Company, LLP, LP, Trust, Foundation, PCC, Other
 | 7. Commercial | Execution | Engagement letter, legal review, agreement execution (requires approval) |
 | 8. Onboarding | Completion | Client record creation, monitoring schedule, welcome pack |
 
+### Existing Sponsor - New Fund Workflow
+
+When an **already-approved sponsor** wants to set up a new fund, the system provides a streamlined "Trigger Event Review" workflow rather than full re-onboarding.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         NEW FUND FOR EXISTING SPONSOR                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌─────────────────────────────────┐
+                    │        NEW FUND REQUEST         │
+                    │   (Select existing Sponsor)     │
+                    └───────────────┬─────────────────┘
+                                    │
+                    ┌───────────────▼─────────────────┐
+                    │    SPONSOR TRIGGER REVIEW       │
+                    │                                 │
+                    │  ✓ Any material changes?        │
+                    │  ✓ Re-screen principals (PEP/   │
+                    │    Sanctions refresh)           │
+                    │  ✓ Updated Source of Wealth?    │
+                    │  ✓ New principals to add?       │
+                    │  ✓ Periodic review due?         │
+                    │                                 │
+                    │  [No Changes] → Skip to Fund    │
+                    │  [Changes]    → Update records  │
+                    └───────────────┬─────────────────┘
+                                    │
+                    ┌───────────────▼─────────────────┐
+                    │     FUND STRUCTURE SETUP        │
+                    │    (Phase 3 - Full process)     │
+                    │                                 │
+                    │  • New fund details             │
+                    │  • GP entity (new or existing)  │
+                    │  • Fund principals (may differ) │
+                    │  • Structure visualization      │
+                    └───────────────┬─────────────────┘
+                                    │
+                    ┌───────────────▼─────────────────┐
+                    │   SCREENING & RISK (Phase 4)    │
+                    │                                 │
+                    │  • Screen new fund principals   │
+                    │  • Fund-level risk assessment   │
+                    │  • Combine with sponsor risk    │
+                    └───────────────┬─────────────────┘
+                                    │
+                    ┌───────────────▼─────────────────┐
+                    │   APPROVAL → COMMERCIAL → DONE  │
+                    │        (Phases 5-8)             │
+                    └─────────────────────────────────┘
+```
+
+#### Trigger Event Review Checklist
+
+| Check | Description | Action if Triggered |
+|-------|-------------|---------------------|
+| Material Changes | Ownership, control, or structure changes | Update entity records, re-verify |
+| Principal Refresh | Re-screen all sponsor principals | Flag any new hits, review changes |
+| New Principals | Additional directors, partners, UBOs | Full CDD on new individuals |
+| Adverse Events | Regulatory actions, media since last review | Escalate to Compliance |
+| Periodic Review | Annual review due within 90 days | Combine with onboarding |
+| SOW Changes | Significant changes to business/revenue | Updated SOW documentation |
+| Jurisdiction Changes | New offices, relocations | Update risk assessment |
+
+#### Data Model Support
+
+The system supports existing sponsors through:
+
+| Table | Field | Purpose |
+|-------|-------|---------|
+| Sponsors | last_approved_date | Date of most recent approval |
+| Sponsors | next_review_date | Periodic review due date |
+| Sponsors | onboarding_status | Active / In Review / Dormant |
+| FundStructures | is_new_fund_for_existing | Boolean flag |
+| FundStructures | trigger_review_id | Link to trigger review record |
+| TriggerReviews | sponsor_id | FK to Sponsor |
+| TriggerReviews | review_date | When trigger review performed |
+| TriggerReviews | changes_identified | JSON: list of changes |
+| TriggerReviews | reviewed_by | User who performed review |
+| TriggerReviews | outcome | No Change / Updated / Escalated |
+
+#### Google Sheet Tab Addition
+
+| Tab | Purpose |
+|-----|---------|
+| TriggerReviews | Trigger event review records for existing sponsors |
+
 ### Risk Assessment Levels
 
 ```
@@ -473,7 +560,116 @@ Supports: Individual, Company, LLP, LP, Trust, Foundation, PCC, Other
 
 ---
 
-## 8. AI Integration
+## 8. Dashboard & Navigation
+
+### Multi-Client Dashboard
+
+The system supports multiple concurrent onboardings with a centralized dashboard for tracking and navigation.
+
+#### Main Dashboard Views
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ONBOARDING DASHBOARD                                        [+ New Client] │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │
+│  │ IN PROGRESS  │ │   PENDING    │ │   APPROVED   │ │   ON HOLD    │       │
+│  │     12       │ │   APPROVAL   │ │   THIS MTH   │ │              │       │
+│  │              │ │      5       │ │      3       │ │      2       │       │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘       │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │ ACTIVE ONBOARDINGS                               [Filter ▼] [Search 🔍] ││
+│  ├──────┬──────────────────┬──────────┬─────────┬─────────┬───────────────┤│
+│  │ ID   │ Sponsor          │ Fund     │ Phase   │ Status  │ Assigned      ││
+│  ├──────┼──────────────────┼──────────┼─────────┼─────────┼───────────────┤│
+│  │ S-12 │ Granite Capital  │ Fund III │ ████░░░ │ 🟡 Risk │ J.Smith       ││
+│  │ S-11 │ Ashford Capital  │ Growth I │ █████░░ │ 🔴 MLRO │ A.Jones       ││
+│  │ S-10 │ Bluewater AM     │ RE Fund  │ ██████░ │ 🟢 Exec │ J.Smith       ││
+│  │ S-09 │ Granite Capital* │ Fund IV  │ ██░░░░░ │ 🟡 CDD  │ B.Wilson      ││
+│  └──────┴──────────────────┴──────────┴─────────┴─────────┴───────────────┘│
+│  * = Existing Sponsor (Trigger Review)                                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Progress Tracking
+
+Each onboarding displays progress across phases:
+
+| Phase | Icon | Color When Active |
+|-------|------|-------------------|
+| 1. Enquiry | 📋 | Blue |
+| 2. Sponsor | 👤 | Blue |
+| 3. Fund Structure | 🏛️ | Blue |
+| 4. Screening & Risk | 🔍 | Yellow (pending), Green (clear) |
+| 5. EDD | ⚠️ | Orange |
+| 6. Approval | ✅ | Red (MLRO), Purple (Board) |
+| 7. Commercial | 📝 | Grey (draft), Green (executed) |
+| 8. Complete | 🎉 | Green |
+
+#### Role-Specific Dashboard Views
+
+**BD Dashboard:**
+- My enquiries and cases
+- Commercial track status
+- Pipeline value
+
+**Compliance Dashboard:**
+- Cases assigned to me
+- Document verification queue
+- Screening results requiring review
+
+**MLRO Dashboard:**
+- Approval queue (sorted by age)
+- High-risk cases
+- EDD cases in progress
+- Overdue items
+
+**Admin Dashboard:**
+- System statistics
+- User activity
+- Audit log access
+- Configuration
+
+#### Approval Queue View
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PENDING APPROVALS                                          MLRO Dashboard  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ 🔴 Ashford Capital - Growth Fund I LP                    Waiting 3d   │ │
+│  │    Risk: MEDIUM (55) | PEP: Domestic | Reviewer: A.Jones              │ │
+│  │    [View Memo] [Approve] [Request Info] [Reject]                      │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ 🟡 Bluewater AM - Real Estate Fund LP                    Waiting 1d   │ │
+│  │    Risk: MEDIUM (52) | Adverse Media: Resolved | Reviewer: J.Smith    │ │
+│  │    [View Memo] [Approve] [Request Info] [Reject]                      │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Filters & Search
+
+| Filter | Options |
+|--------|---------|
+| Status | All / In Progress / Pending Approval / Approved / On Hold / Declined |
+| Phase | 1-8 or All |
+| Risk Level | Low / Medium / High / All |
+| Assigned To | User list or "Mine" |
+| Sponsor Type | New / Existing |
+| Date Range | Created / Last Updated |
+| Fund Type | JPF / Expert / Listed |
+
+---
+
+## 9. AI Integration
 
 ### AI Features by Phase
 
@@ -517,7 +713,7 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 
 ---
 
-## 9. Google Sheets Schema
+## 10. Google Sheets Schema
 
 ### Workbook: `Client_Onboarding_DB`
 
@@ -539,13 +735,14 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 | Approvals | Approval workflow |
 | AuditLog | Immutable action log |
 | Reminders | Notification queue |
+| TriggerReviews | Trigger event reviews for existing sponsors |
 | AnticipatedInvestors | Known investors at setup |
 | GeneratedDocs | AI-generated memos, letters |
 | JFSC_Compliance_Map | Compliance evidence mapping |
 
 ---
 
-## 10. JFSC Compliance Mapping
+## 11. JFSC Compliance Mapping
 
 ### Compliance Evidence Tab Structure
 
@@ -581,7 +778,7 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 
 ---
 
-## 11. Notifications & Reminders
+## 12. Notifications & Reminders
 
 ### Reminder Types
 
@@ -602,7 +799,7 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 
 ---
 
-## 12. Mock Test Scenarios
+## 13. Mock Test Scenarios
 
 ### Scenario 1: Granite Capital Partners LLP (Low Risk)
 
@@ -636,9 +833,19 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 **Risk Score:** 75 (High)
 **Flow:** Full EDD, MLRO + Board approval
 
+### Scenario 5: Granite Capital Partners (Existing Sponsor - New Fund)
+
+**Sponsor:** Already approved from Scenario 1 (Granite Capital Partners LLP)
+**Fund:** Granite Capital Fund IV LP (Jersey JPF)
+**Principals:** Same 3 partners (no change), + 1 new external director on Fund
+**Trigger Review:** Sponsor unchanged, new fund principal requires CDD
+**Risk Score:** 28 (Low) - slightly higher due to new principal
+**Flow:** Trigger review → Fund setup → Screen new principal → MLRO approval
+**Tests:** Existing sponsor lookup, trigger review checklist, deduplication of principals, combined risk scoring
+
 ---
 
-## 13. Implementation Plan
+## 14. Implementation Plan
 
 ### Phased Delivery
 
@@ -667,7 +874,7 @@ The AI dynamically determines relevant regulators based on jurisdiction:
 
 ---
 
-## 14. UI/UX Consistency
+## 15. UI/UX Consistency
 
 The system will maintain visual consistency with the existing invoice-tracker using CoreWorker AI branding:
 
