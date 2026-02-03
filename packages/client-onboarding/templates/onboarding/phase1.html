@@ -222,6 +222,58 @@
                         </div>
                     </div>
 
+                    <hr class="my-4">
+
+                    <!-- Section 4: Proposed Fund Structure -->
+                    <h6 class="text-uppercase text-muted small mb-3">Proposed Fund Structure</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Fund Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="fund_name" required
+                                   placeholder="e.g., Granite Capital Fund III LP"
+                                   value="{{ enquiry.fund_name if enquiry else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Fund Type <span class="text-danger">*</span></label>
+                            <select class="form-select" name="fund_type" required>
+                                <option value="">Select type...</option>
+                                <option value="jpf" {% if enquiry and enquiry.fund_type == 'jpf' %}selected{% endif %}>Jersey Private Fund (JPF)</option>
+                                <option value="expert" {% if enquiry and enquiry.fund_type == 'expert' %}selected{% endif %}>Expert Fund</option>
+                                <option value="listed" {% if enquiry and enquiry.fund_type == 'listed' %}selected{% endif %}>Listed Fund</option>
+                                <option value="other" {% if enquiry and enquiry.fund_type == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Legal Structure <span class="text-danger">*</span></label>
+                            <select class="form-select" name="fund_legal_structure" required>
+                                <option value="">Select structure...</option>
+                                <option value="lp" {% if enquiry and enquiry.fund_legal_structure == 'lp' %}selected{% endif %}>Limited Partnership</option>
+                                <option value="unit_trust" {% if enquiry and enquiry.fund_legal_structure == 'unit_trust' %}selected{% endif %}>Unit Trust</option>
+                                <option value="icc" {% if enquiry and enquiry.fund_legal_structure == 'icc' %}selected{% endif %}>ICC</option>
+                                <option value="pcc" {% if enquiry and enquiry.fund_legal_structure == 'pcc' %}selected{% endif %}>PCC</option>
+                                <option value="other" {% if enquiry and enquiry.fund_legal_structure == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Target Fund Size <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" name="target_fund_size" required
+                                       placeholder="e.g., 500000000"
+                                       value="{{ enquiry.target_fund_size if enquiry else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Investment Strategy <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="investment_strategy" rows="3" required
+                                      placeholder="Brief description of investment focus and strategy...">{{ enquiry.investment_strategy if enquiry else '' }}</textarea>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
