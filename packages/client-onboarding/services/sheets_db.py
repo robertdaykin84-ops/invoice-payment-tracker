@@ -2,7 +2,7 @@
 Google Sheets Database Service
 Persistent storage layer using Google Sheets for the Client Onboarding system.
 
-Supports both live mode (with service account credentials) and demo mode (without credentials)
+Supports both live mode (with OAuth credentials) and demo mode (without credentials)
 for PoC demonstrations.
 """
 
@@ -12,17 +12,20 @@ import base64
 import logging
 from datetime import datetime
 from typing import Optional, Any
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Try to import gspread
+# Try to import gspread and OAuth libraries
 try:
     import gspread
-    from google.oauth2.service_account import Credentials
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
     GSPREAD_AVAILABLE = True
 except ImportError:
     GSPREAD_AVAILABLE = False
-    logger.warning("gspread library not available - running in demo mode")
+    logger.warning("gspread or google-auth-oauthlib not available - running in demo mode")
 
 # Google Sheets API scopes
 SCOPES = [
@@ -34,21 +37,27 @@ SCOPES = [
 SCHEMA = {
     'Config': ['key', 'value', 'updated_at'],
     'Enquiries': [
-        'enquiry_id', 'sponsor_name', 'fund_name', 'contact_name', 'contact_email',
-        'entity_type', 'jurisdiction', 'registration_number', 'regulatory_status',
+        'enquiry_id', 'sponsor_name', 'trading_name', 'fund_name', 'contact_name', 'contact_email',
+        'entity_type', 'jurisdiction', 'registration_number', 'date_incorporated',
+        'registered_address', 'business_address',
+        'regulatory_status', 'regulator', 'license_number',
+        'business_activities', 'source_of_wealth',
+        'fund_type', 'legal_structure',
         'investment_strategy', 'target_size', 'status', 'notes', 'created_at', 'created_by'
     ],
     'Sponsors': [
-        'sponsor_id', 'legal_name', 'entity_type', 'jurisdiction',
-        'registration_number', 'regulated_status', 'cdd_status', 'created_at'
+        'sponsor_id', 'legal_name', 'trading_name', 'entity_type', 'jurisdiction',
+        'registration_number', 'date_incorporated', 'registered_address', 'business_address',
+        'business_activities', 'source_of_wealth',
+        'regulated_status', 'cdd_status', 'created_at'
     ],
     'Onboardings': [
         'onboarding_id', 'enquiry_id', 'sponsor_id', 'fund_name', 'current_phase',
         'status', 'risk_level', 'assigned_to', 'is_existing_sponsor', 'created_at', 'updated_at'
     ],
     'Persons': [
-        'person_id', 'full_name', 'nationality', 'dob', 'country_of_residence',
-        'pep_status', 'id_verified', 'created_at'
+        'person_id', 'full_name', 'former_names', 'nationality', 'dob', 'country_of_residence',
+        'residential_address', 'pep_status', 'id_verified', 'created_at'
     ],
     'PersonRoles': [
         'role_id', 'person_id', 'sponsor_id', 'onboarding_id', 'role_type',
@@ -109,32 +118,61 @@ class SheetsDB:
             logger.info("SheetsDB falling back to DEMO MODE")
 
     def _load_credentials(self) -> Optional[Credentials]:
-        """Load Google service account credentials from environment"""
-        # Option 1: Base64 encoded JSON in env var
-        creds_b64 = os.environ.get('GOOGLE_SHEETS_CREDENTIALS')
-        if creds_b64:
+        """Load Google OAuth credentials (same as Google Drive)"""
+        # Default paths (same as gdrive_audit.py)
+        default_creds_path = Path.home() / '.config' / 'mcp' / 'gdrive-credentials.json'
+        default_token_path = Path.home() / '.config' / 'mcp' / 'gdrive-token.json'
+
+        creds_path = Path(os.environ.get('GDRIVE_CREDENTIALS_PATH', default_creds_path))
+        token_path = Path(os.environ.get('GDRIVE_TOKEN_PATH', default_token_path))
+
+        creds = None
+
+        # Check for existing token
+        if token_path.exists():
             try:
-                # Try base64 decode first
+                creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+                logger.info(f"Loaded existing token from {token_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load existing token: {e}")
+
+        # If no valid credentials, check if we can refresh or need new auth
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
                 try:
-                    creds_json = base64.b64decode(creds_b64).decode('utf-8')
-                except Exception:
-                    # If base64 decode fails, assume it's raw JSON
-                    creds_json = creds_b64
+                    creds.refresh(Request())
+                    logger.info("Refreshed expired token")
+                except Exception as e:
+                    logger.warning(f"Failed to refresh token: {e}")
+                    creds = None
 
-                creds_data = json.loads(creds_json)
-                return Credentials.from_service_account_info(creds_data, scopes=SCOPES)
-            except Exception as e:
-                logger.error(f"Failed to parse GOOGLE_SHEETS_CREDENTIALS: {e}")
+            if not creds:
+                # Need to run OAuth flow
+                if not creds_path.exists():
+                    logger.warning(f"No credentials file at {creds_path}")
+                    return None
 
-        # Option 2: Path to credentials file
-        creds_file = os.environ.get('GOOGLE_SHEETS_CREDENTIALS_FILE')
-        if creds_file and os.path.exists(creds_file):
-            try:
-                return Credentials.from_service_account_file(creds_file, scopes=SCOPES)
-            except Exception as e:
-                logger.error(f"Failed to load credentials from file {creds_file}: {e}")
+                try:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        str(creds_path), SCOPES
+                    )
+                    creds = flow.run_local_server(port=0)
+                    logger.info("Completed OAuth flow successfully")
+                except Exception as e:
+                    logger.error(f"OAuth flow failed: {e}")
+                    return None
 
-        return None
+            # Save token for future use
+            if creds:
+                try:
+                    token_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(token_path, 'w') as f:
+                        f.write(creds.to_json())
+                    logger.info(f"Saved token to {token_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to save token: {e}")
+
+        return creds
 
     def _open_or_create_spreadsheet(self):
         """Open existing spreadsheet or create new one"""
