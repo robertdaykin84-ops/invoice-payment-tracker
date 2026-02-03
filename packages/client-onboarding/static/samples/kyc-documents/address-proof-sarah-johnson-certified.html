@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certified Address Proof - Sarah Anne Johnson - Bank Statement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+        }
+        .document {
+            border: 2px solid #333;
+            padding: 30px;
+        }
+        .bank-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #00395d;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .bank-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00395d;
+        }
+        .statement-info {
+            text-align: right;
+        }
+        .statement-type {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .address-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .account-details {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .detail-box {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 5px;
+            min-width: 150px;
+        }
+        .detail-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .detail-value {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        .transactions-table th, .transactions-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .transactions-table th {
+            background: #00395d;
+            color: white;
+            font-weight: normal;
+        }
+        .credit { color: green; }
+        .debit { color: #333; }
+        .balance-summary {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .certification {
+            border: 2px solid #c62828;
+            padding: 20px;
+            margin-top: 30px;
+            background: #fff;
+        }
+        .certification h3 {
+            color: #c62828;
+            margin-top: 0;
+            border-bottom: 1px solid #c62828;
+            padding-bottom: 10px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            width: 250px;
+            height: 40px;
+            margin: 10px 0;
+            font-style: italic;
+            padding-top: 20px;
+        }
+        .certifier-details {
+            margin-top: 15px;
+        }
+        .field {
+            margin: 8px 0;
+            display: flex;
+        }
+        .field-label {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+        .field-value {
+            flex: 1;
+        }
+        .stamp {
+            border: 3px solid #c62828;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 10px;
+            color: #c62828;
+            float: right;
+            margin-top: -80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="bank-header">
+            <div>
+                <div class="bank-logo">BARCLAYS</div>
+                <p style="margin: 5px 0; color: #666;">Personal Banking</p>
+            </div>
+            <div class="statement-info">
+                <div class="statement-type">Bank Statement</div>
+                <p style="margin: 5px 0;">Statement Period: 01 - 31 December 2025</p>
+            </div>
+        </div>
+
+        <div class="address-section">
+            <strong>Ms Sarah Anne Johnson</strong><br>
+            12 Chelsea Embankment<br>
+            London<br>
+            SW3 4LF<br>
+            United Kingdom
+        </div>
+
+        <div class="account-details">
+            <div class="detail-box">
+                <div class="detail-label">Account Name</div>
+                <div class="detail-value">Ms S A Johnson</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Sort Code</div>
+                <div class="detail-value">20-45-67</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Account Number</div>
+                <div class="detail-value">40891234</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">IBAN</div>
+                <div class="detail-value">GB82 BARC 2045 6740 8912 34</div>
+            </div>
+        </div>
+
+        <table class="transactions-table">
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Money Out</th>
+                <th>Money In</th>
+                <th>Balance</th>
+            </tr>
+            <tr>
+                <td>01 Dec</td>
+                <td>Opening Balance</td>
+                <td></td>
+                <td></td>
+                <td>£24,567.89</td>
+            </tr>
+            <tr>
+                <td>02 Dec</td>
+                <td>SALARY - GRANITE CAPITAL</td>
+                <td></td>
+                <td class="credit">£8,500.00</td>
+                <td>£33,067.89</td>
+            </tr>
+            <tr>
+                <td>05 Dec</td>
+                <td>DIRECT DEBIT - MORTGAGE</td>
+                <td class="debit">£2,450.00</td>
+                <td></td>
+                <td>£30,617.89</td>
+            </tr>
+            <tr>
+                <td>10 Dec</td>
+                <td>CARD PAYMENT - WAITROSE</td>
+                <td class="debit">£156.78</td>
+                <td></td>
+                <td>£30,461.11</td>
+            </tr>
+            <tr>
+                <td>15 Dec</td>
+                <td>STANDING ORDER - SAVINGS</td>
+                <td class="debit">£1,000.00</td>
+                <td></td>
+                <td>£29,461.11</td>
+            </tr>
+            <tr>
+                <td>20 Dec</td>
+                <td>FASTER PAYMENT - DIVIDEND</td>
+                <td></td>
+                <td class="credit">£750.00</td>
+                <td>£30,211.11</td>
+            </tr>
+            <tr>
+                <td>31 Dec</td>
+                <td>Closing Balance</td>
+                <td></td>
+                <td></td>
+                <td><strong>£30,211.11</strong></td>
+            </tr>
+        </table>
+
+        <div class="balance-summary">
+            <div>
+                <strong>Total Money In:</strong> £9,250.00
+            </div>
+            <div>
+                <strong>Total Money Out:</strong> £3,606.78
+            </div>
+            <div>
+                <strong>Closing Balance:</strong> £30,211.11
+            </div>
+        </div>
+
+        <div class="certification">
+            <h3>CERTIFICATION</h3>
+
+            <p><strong>I certify this is a true copy of the original document.</strong></p>
+
+            <p>I have seen the original bank statement and confirm that this copy is a true and accurate representation of the original document.</p>
+
+            <div class="signature-line">J. Roberts</div>
+            <p style="margin: 0;"><strong>Signature of Certifier</strong></p>
+
+            <div class="certifier-details">
+                <div class="field">
+                    <span class="field-label">Name:</span>
+                    <span class="field-value">James Roberts</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Qualification:</span>
+                    <span class="field-value">Solicitor</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Firm:</span>
+                    <span class="field-value">Roberts & Partners LLP</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Date:</span>
+                    <span class="field-value">15 January 2026</span>
+                </div>
+            </div>
+
+            <div class="stamp">
+                ROBERTS &<br>PARTNERS<br>SOLICITORS<br>CERTIFIED
+            </div>
+        </div>
+    </div>
+</body>
+</html>

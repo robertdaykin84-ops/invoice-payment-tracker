@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certified Address Proof - John Edward Smith - Utility Bill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+        }
+        .document {
+            border: 2px solid #333;
+            padding: 30px;
+        }
+        .utility-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .company-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        .company-logo span {
+            color: #ff6600;
+        }
+        .bill-info {
+            text-align: right;
+        }
+        .bill-type {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .address-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .address-section h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .address {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .account-details {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .detail-box {
+            background: #f5f5f5;
+            padding: 15px;
+            flex: 1;
+            margin: 0 10px;
+        }
+        .detail-box:first-child {
+            margin-left: 0;
+        }
+        .detail-box:last-child {
+            margin-right: 0;
+        }
+        .detail-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .detail-value {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .charges-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .charges-table th, .charges-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .charges-table th {
+            background: #f5f5f5;
+            font-weight: normal;
+            color: #666;
+        }
+        .charges-table .total {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .certification {
+            border: 2px solid #c62828;
+            padding: 20px;
+            margin-top: 30px;
+            background: #fff;
+        }
+        .certification h3 {
+            color: #c62828;
+            margin-top: 0;
+            border-bottom: 1px solid #c62828;
+            padding-bottom: 10px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            width: 250px;
+            height: 40px;
+            margin: 10px 0;
+            font-style: italic;
+            padding-top: 20px;
+        }
+        .certifier-details {
+            margin-top: 15px;
+        }
+        .field {
+            margin: 8px 0;
+            display: flex;
+        }
+        .field-label {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+        .field-value {
+            flex: 1;
+        }
+        .stamp {
+            border: 3px solid #c62828;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 10px;
+            color: #c62828;
+            float: right;
+            margin-top: -80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="utility-header">
+            <div>
+                <div class="company-logo">British<span>Gas</span></div>
+                <p style="margin: 5px 0; color: #666;">Energy for a better world</p>
+            </div>
+            <div class="bill-info">
+                <div class="bill-type">Gas & Electricity Bill</div>
+                <p style="margin: 5px 0;">Statement Date: 15 December 2025</p>
+            </div>
+        </div>
+
+        <div class="address-section">
+            <h3>Service Address & Account Holder</h3>
+            <div class="address">
+                <strong>Mr John Edward Smith</strong><br>
+                45 Kensington Gardens<br>
+                London<br>
+                W8 4QS<br>
+                United Kingdom
+            </div>
+        </div>
+
+        <div class="account-details">
+            <div class="detail-box">
+                <div class="detail-label">Account Number</div>
+                <div class="detail-value">850 129 4567</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Bill Period</div>
+                <div class="detail-value">15 Nov - 15 Dec 2025</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Payment Due</div>
+                <div class="detail-value">02 January 2026</div>
+            </div>
+        </div>
+
+        <table class="charges-table">
+            <tr>
+                <th>Description</th>
+                <th>Usage</th>
+                <th>Amount</th>
+            </tr>
+            <tr>
+                <td>Gas Consumption</td>
+                <td>485 kWh</td>
+                <td>£58.20</td>
+            </tr>
+            <tr>
+                <td>Electricity Consumption</td>
+                <td>312 kWh</td>
+                <td>£96.72</td>
+            </tr>
+            <tr>
+                <td>Standing Charge (Gas)</td>
+                <td>31 days</td>
+                <td>£8.06</td>
+            </tr>
+            <tr>
+                <td>Standing Charge (Electric)</td>
+                <td>31 days</td>
+                <td>£15.50</td>
+            </tr>
+            <tr>
+                <td>VAT @ 5%</td>
+                <td></td>
+                <td>£8.92</td>
+            </tr>
+            <tr>
+                <td class="total">Total Amount Due</td>
+                <td></td>
+                <td class="total">£187.40</td>
+            </tr>
+        </table>
+
+        <p style="font-size: 12px; color: #666;">
+            If you have any questions about this bill, please call us on 0333 202 9802 or visit britishgas.co.uk
+        </p>
+
+        <div class="certification">
+            <h3>CERTIFICATION</h3>
+
+            <p><strong>I certify this is a true copy of the original document.</strong></p>
+
+            <p>I have seen the original utility bill and confirm that this copy is a true and accurate representation of the original document.</p>
+
+            <div class="signature-line">J. Roberts</div>
+            <p style="margin: 0;"><strong>Signature of Certifier</strong></p>
+
+            <div class="certifier-details">
+                <div class="field">
+                    <span class="field-label">Name:</span>
+                    <span class="field-value">James Roberts</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Qualification:</span>
+                    <span class="field-value">Solicitor</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Firm:</span>
+                    <span class="field-value">Roberts & Partners LLP</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Date:</span>
+                    <span class="field-value">15 January 2026</span>
+                </div>
+            </div>
+
+            <div class="stamp">
+                ROBERTS &<br>PARTNERS<br>SOLICITORS<br>CERTIFIED
+            </div>
+        </div>
+    </div>
+</body>
+</html>
