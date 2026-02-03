@@ -320,6 +320,104 @@
                     <!-- Hidden input to store principals JSON for form submission -->
                     <input type="hidden" name="principals_json" id="principalsJson" value="[]">
 
+                    <hr class="my-4">
+
+                    <!-- Section 6: Primary Contact -->
+                    <h6 class="text-uppercase text-muted small mb-3">Primary Contact</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="contact_name" required
+                                   placeholder="Primary point of contact"
+                                   value="{{ enquiry.contact_name if enquiry else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="contact_email" required
+                                   placeholder="email@example.com"
+                                   value="{{ enquiry.contact_email if enquiry else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" name="contact_phone"
+                                   placeholder="+44 20 1234 5678"
+                                   value="{{ enquiry.contact_phone if enquiry else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Enquiry Source</label>
+                            <select class="form-select" name="enquiry_source" id="enquirySource">
+                                <option value="">Select source...</option>
+                                <option value="referral" {% if enquiry and enquiry.enquiry_source == 'referral' %}selected{% endif %}>Referral</option>
+                                <option value="existing" {% if enquiry and enquiry.enquiry_source == 'existing' %}selected{% endif %}>Existing Client</option>
+                                <option value="website" {% if enquiry and enquiry.enquiry_source == 'website' %}selected{% endif %}>Website</option>
+                                <option value="event" {% if enquiry and enquiry.enquiry_source == 'event' %}selected{% endif %}>Industry Event</option>
+                                <option value="other" {% if enquiry and enquiry.enquiry_source == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8" id="referrerNameField" style="display: none;">
+                            <label class="form-label">Referrer Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="referrer_name" id="referrerName"
+                                   placeholder="Name of the referrer"
+                                   value="{{ enquiry.referrer_name if enquiry else '' }}">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Section 7: Supporting Documents -->
+                    <h6 class="text-uppercase text-muted small mb-3">Supporting Documents</h6>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <p class="small text-muted mb-3">
+                                The following documents can be uploaded now or at a later stage during onboarding.
+                            </p>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 text-center">
+                                        <i class="bi bi-file-earmark-text fs-2 text-muted mb-2"></i>
+                                        <p class="small mb-2">Certificate of Incorporation</p>
+                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 text-center">
+                                        <i class="bi bi-file-earmark-text fs-2 text-muted mb-2"></i>
+                                        <p class="small mb-2">Memorandum & Articles</p>
+                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-3 text-center">
+                                        <i class="bi bi-diagram-3 fs-2 text-muted mb-2"></i>
+                                        <p class="small mb-2">Structure Chart</p>
+                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Section 8: Declaration -->
+                    <h6 class="text-uppercase text-muted small mb-3">Declaration</h6>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
+                            <label class="form-check-label" for="declaration">
+                                I confirm that the information provided is accurate and complete to the best of my knowledge.
+                                I understand that this information will be used for due diligence and regulatory compliance purposes.
+                                <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
@@ -450,6 +548,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 uboCheckbox.checked = true;
             }
         });
+    }
+
+    // Enquiry Source conditional referrer field
+    const enquirySourceSelect = document.getElementById('enquirySource');
+    const referrerNameField = document.getElementById('referrerNameField');
+    const referrerNameInput = document.getElementById('referrerName');
+
+    function toggleReferrerField() {
+        if (enquirySourceSelect.value === 'referral') {
+            referrerNameField.style.display = '';
+            referrerNameInput.required = true;
+        } else {
+            referrerNameField.style.display = 'none';
+            referrerNameInput.required = false;
+            referrerNameInput.value = '';
+        }
+    }
+
+    if (enquirySourceSelect && referrerNameField) {
+        enquirySourceSelect.addEventListener('change', toggleReferrerField);
+        // Initialize on page load
+        toggleReferrerField();
     }
 });
 
