@@ -73,8 +73,18 @@ MOCK_ENQUIRIES = {
         'entity_type': 'llp',
         'jurisdiction': 'UK',
         'registration_number': 'OC123456',
-        'regulatory_status': 'FCA Regulated',
-        'fca_frn': '123456',
+        'registered_address': '100 Liverpool Street, London, EC2M 2RH',
+        'business_address': '100 Liverpool Street, 5th Floor, London, EC2M 2RH',
+        'trading_name': 'Granite Capital',
+        'regulatory_status': 'regulated',
+        'regulator': 'FCA',
+        'license_number': '123456',
+        'date_of_incorporation': '2015-03-15',
+        'website': 'https://www.granitecapital.com',
+        'lei': '5493001KJTIIGC8Y1R17',
+        'tax_id': 'GB123456789',
+        'business_activities': 'Private equity fund management, mid-market buyout investments in technology and healthcare sectors. Managed assets under management of approximately $2 billion across three funds.',
+        'source_of_wealth': 'Management fees from previous funds (Granite I and II totaling $1.2B AUM), carried interest from successful exits, and personal capital contributions from founding partners.',
         'fund_name': 'Granite Capital Fund III LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
@@ -100,8 +110,18 @@ MOCK_ENQUIRIES = {
         'entity_type': 'company',
         'jurisdiction': 'UK',
         'registration_number': '12345678',
-        'regulatory_status': 'FCA Regulated',
-        'fca_frn': '654321',
+        'registered_address': '25 Cannon Street, London, EC4M 5TA',
+        'business_address': '25 Cannon Street, 10th Floor, London, EC4M 5TA',
+        'trading_name': 'Evergreen Capital',
+        'regulatory_status': 'regulated',
+        'regulator': 'FCA',
+        'license_number': '654321',
+        'date_of_incorporation': '2018-07-01',
+        'website': 'https://www.evergreencap.com',
+        'lei': '549300EXAMPLE123456',
+        'tax_id': 'GB987654321',
+        'business_activities': 'ESG-focused investment management specializing in renewable energy and sustainable technology. First fund launched in 2019 with $100M AUM.',
+        'source_of_wealth': 'Seed capital from founders (prior careers in investment banking and asset management), anchor investor commitments, and management fees from Fund I.',
         'fund_name': 'Evergreen Sustainable Growth Fund LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
@@ -128,8 +148,18 @@ MOCK_ENQUIRIES = {
         'jurisdiction': 'other',
         'jurisdiction_other': 'Norway',
         'registration_number': 'NO 912 345 678',
-        'regulatory_status': 'FSA Norway Regulated',
-        'fca_frn': '',
+        'registered_address': 'Aker Brygge, Stranden 1, 0250 Oslo, Norway',
+        'business_address': 'Aker Brygge, Stranden 1, 0250 Oslo, Norway',
+        'trading_name': 'Nordic Ventures',
+        'regulatory_status': 'regulated',
+        'regulator': 'FSA Norway',
+        'license_number': 'NV-2020-0456',
+        'date_of_incorporation': '2020-01-15',
+        'website': 'https://www.nordicventures.no',
+        'lei': '5493009NORDIC12345',
+        'tax_id': 'NO912345678MVA',
+        'business_activities': 'Venture capital and growth equity investments in Nordic technology companies. Focus on fintech, healthtech, and cleantech sectors.',
+        'source_of_wealth': 'Founder capital from successful prior technology exits, institutional investors including Nordic pension funds, and family office commitments.',
         'fund_name': 'Nordic Technology Opportunities Fund LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
@@ -434,6 +464,136 @@ def onboarding_phase(onboarding_id, phase):
         audit_result = save_form_data(form_data, phase, sponsor_name, fund_name)
         logger.info(f"Audit trail save for phase {phase}: {audit_result.get('status')}")
 
+        # Save to Google Sheets if not in demo mode
+        if not sheets_db.demo_mode:
+            try:
+                if phase == 1:
+                    # Phase 1: Create/update enquiry with merged form data
+                    import json
+
+                    # Parse principals from JSON
+                    principals_json = form_data.get('principals_json', '[]')
+                    try:
+                        principals = json.loads(principals_json)
+                    except json.JSONDecodeError:
+                        principals = []
+
+                    # Create enquiry record with all new fields
+                    enquiry_data = {
+                        'sponsor_name': form_data.get('legal_name'),
+                        'trading_name': form_data.get('trading_name', ''),
+                        'fund_name': form_data.get('fund_name'),
+                        'contact_name': form_data.get('contact_name'),
+                        'contact_email': form_data.get('contact_email'),
+                        'entity_type': form_data.get('entity_type'),
+                        'jurisdiction': form_data.get('jurisdiction'),
+                        'registration_number': form_data.get('registration_number'),
+                        'date_incorporated': form_data.get('date_of_incorporation'),
+                        'registered_address': form_data.get('registered_address'),
+                        'business_address': form_data.get('principal_place_of_business', ''),
+                        'regulatory_status': form_data.get('regulatory_status'),
+                        'regulator': form_data.get('regulator', ''),
+                        'license_number': form_data.get('license_number', ''),
+                        'business_activities': form_data.get('principal_business_activities'),
+                        'source_of_wealth': form_data.get('source_of_wealth_narrative'),
+                        'fund_type': form_data.get('fund_type'),
+                        'legal_structure': form_data.get('fund_legal_structure'),
+                        'investment_strategy': form_data.get('investment_strategy'),
+                        'target_size': form_data.get('target_fund_size'),
+                        'status': 'in_progress',
+                        'notes': ''
+                    }
+                    enquiry_id = sheets_db.create_enquiry(enquiry_data)
+                    session['current_enquiry_id'] = enquiry_id
+                    logger.info(f"Phase 1: Created enquiry {enquiry_id} in Sheets")
+
+                    # Create sponsor record
+                    sponsor_data = {
+                        'legal_name': form_data.get('legal_name'),
+                        'trading_name': form_data.get('trading_name', ''),
+                        'entity_type': form_data.get('entity_type'),
+                        'jurisdiction': form_data.get('jurisdiction'),
+                        'registration_number': form_data.get('registration_number'),
+                        'date_incorporated': form_data.get('date_of_incorporation'),
+                        'registered_address': form_data.get('registered_address'),
+                        'business_address': form_data.get('principal_place_of_business', ''),
+                        'business_activities': form_data.get('principal_business_activities'),
+                        'source_of_wealth': form_data.get('source_of_wealth_narrative'),
+                        'regulated_status': form_data.get('regulatory_status'),
+                        'cdd_status': 'in_progress'
+                    }
+                    sponsor_id = sheets_db.create_sponsor(sponsor_data)
+                    session['current_sponsor_id'] = sponsor_id
+                    logger.info(f"Phase 1: Created sponsor {sponsor_id} in Sheets")
+
+                    # Create person records for each principal
+                    for principal in principals:
+                        person_data = {
+                            'full_name': principal.get('full_name'),
+                            'former_names': principal.get('former_names', ''),
+                            'nationality': principal.get('nationality'),
+                            'dob': principal.get('dob'),
+                            'country_of_residence': principal.get('country_of_residence'),
+                            'residential_address': principal.get('residential_address'),
+                            'pep_status': 'unknown',
+                            'id_verified': False
+                        }
+                        person_id = sheets_db.create_person(person_data)
+
+                        # Create person role linking person to sponsor
+                        person_role_data = {
+                            'person_id': person_id,
+                            'entity_id': sponsor_id,
+                            'entity_type': 'Sponsor',
+                            'role': principal.get('role'),
+                            'ownership_pct': principal.get('ownership_pct'),
+                            'is_ubo': principal.get('is_ubo', False)
+                        }
+                        sheets_db.create_person_role(person_role_data)
+                        logger.info(f"Phase 1: Created person {person_id} with role for sponsor {sponsor_id}")
+
+                    # Update session with sponsor/fund names for subsequent phases
+                    session['current_sponsor'] = form_data.get('legal_name')
+                    session['current_fund'] = form_data.get('fund_name')
+
+                elif phase == 2:
+                    # Phase 2: Create/update sponsor
+                    sponsor_data = {
+                        'legal_name': form_data.get('legal_name') or sponsor_name,
+                        'entity_type': form_data.get('entity_type'),
+                        'jurisdiction': form_data.get('jurisdiction'),
+                        'registration_number': form_data.get('registration_number'),
+                        'regulated_status': form_data.get('regulatory_status'),
+                        'cdd_status': 'in_progress'
+                    }
+                    sponsor_id = sheets_db.create_sponsor(sponsor_data)
+                    session['current_sponsor_id'] = sponsor_id
+                    logger.info(f"Phase 2: Created sponsor {sponsor_id} in Sheets")
+
+                elif phase == 3:
+                    # Phase 3: Create/update onboarding record
+                    onboarding_data = {
+                        'enquiry_id': session.get('current_enquiry_id'),
+                        'sponsor_id': session.get('current_sponsor_id'),
+                        'fund_name': form_data.get('fund_name') or fund_name,
+                        'current_phase': phase,
+                        'status': 'in_progress',
+                        'is_existing_sponsor': form_data.get('is_existing_sponsor', False)
+                    }
+                    if onboarding_id == 'NEW':
+                        new_id = sheets_db.create_onboarding(onboarding_data)
+                        session['current_onboarding_id'] = new_id
+                    else:
+                        sheets_db.update_onboarding(onboarding_id, onboarding_data)
+                    logger.info(f"Phase 3: Updated onboarding in Sheets")
+
+                # Update onboarding phase for phases 4+
+                if phase >= 4 and onboarding_id != 'NEW':
+                    sheets_db.update_onboarding(onboarding_id, {'current_phase': phase})
+
+            except Exception as e:
+                logger.error(f"Error saving phase {phase} to Sheets: {e}")
+
         # On phase 1, ensure folder structure is created
         if phase == 1 and sponsor_name != 'Unknown Sponsor':
             ensure_folder_structure(sponsor_name, fund_name)
@@ -459,9 +619,15 @@ def onboarding_phase(onboarding_id, phase):
                 return redirect(url_for('dashboard'))
 
     # Handle GET request - display form
-    # Check if we're auto-populating from an enquiry
-    enquiry_id = request.args.get('enquiry_id')
-    enquiry = MOCK_ENQUIRIES.get(enquiry_id) if enquiry_id else None
+    # Check if we're auto-populating from an enquiry (from URL param or session)
+    enquiry_id = request.args.get('enquiry_id') or session.get('current_enquiry_id')
+    enquiry = None
+    if enquiry_id:
+        enquiry = sheets_db.get_enquiry(enquiry_id)
+        if not enquiry:
+            enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+        # Update session with enquiry_id for subsequent phases
+        session['current_enquiry_id'] = enquiry_id
     uploaded = request.args.get('uploaded') == '1'  # Flag if data came from uploaded document
 
     # Get list of pending enquiries for Phase 1 dropdown
@@ -723,6 +889,8 @@ def start_onboarding_from_enquiry(enquiry_id):
     if not enquiry:
         flash('Enquiry not found.', 'danger')
         return redirect(url_for('pending_enquiries'))
+    # Store enquiry_id in session so it persists across phases
+    session['current_enquiry_id'] = enquiry_id
     flash(f'Starting onboarding for {enquiry.get("sponsor_name")}. Form pre-populated from enquiry.', 'success')
     return redirect(url_for('onboarding_phase', onboarding_id='NEW', phase=1, enquiry_id=enquiry_id))
 
@@ -881,6 +1049,20 @@ def api_run_screening():
         sponsor_name=sponsor_name,
         fund_name=fund_name
     )
+
+    # Save individual screening results to Sheets database
+    current_user = get_current_user()
+    for result in screening_results:
+        screening_data = {
+            'onboarding_id': onboarding_id or 'NEW',
+            'person_id': None,  # Can be linked if tracking persons
+            'screening_type': 'comprehensive',
+            'result': result.get('status', 'clear'),
+            'match_details': json.dumps(result.get('matches', [])),
+            'risk_level': result.get('risk_level', 'clear'),
+            'screened_by': current_user['name'] if current_user else 'System'
+        }
+        sheets_db.save_screening(screening_data)
 
     # Send email notifications
     onboarding_data = {
@@ -1066,14 +1248,156 @@ def api_onboarding_detail(onboarding_id):
 @login_required
 @role_required('mlro', 'compliance')
 def api_approve(onboarding_id):
-    """API: Approve onboarding"""
+    """API: Approve, reject, or request info for onboarding"""
+    from services.gdrive_audit import get_client as get_gdrive_client
+
     user = get_current_user()
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    # Validate approval permissions
-    # Will integrate with approval workflow
+    action = data.get('action', 'approve')  # 'approve', 'reject', 'request_info'
+    comments = data.get('comments', '')
 
-    return jsonify({'status': 'ok', 'message': 'Approved'})
+    # Map action to status
+    status_map = {
+        'approve': 'approved',
+        'reject': 'rejected',
+        'request_info': 'pending_info'
+    }
+
+    if action not in status_map:
+        return jsonify({'status': 'error', 'message': f'Invalid action: {action}'}), 400
+
+    new_status = status_map[action]
+
+    # Get current onboarding data
+    onboarding = sheets_db.get_onboarding(onboarding_id)
+    if not onboarding and onboarding_id != 'NEW':
+        # Create mock onboarding for demo mode
+        onboarding = {
+            'onboarding_id': onboarding_id,
+            'status': 'pending_mlro',
+            'sponsor_name': session.get('current_sponsor', 'Demo Sponsor'),
+            'fund_name': session.get('current_fund', 'Demo Fund')
+        }
+
+    # Validate MLRO can approve (compliance can only approve standard risk)
+    risk_assessment = sheets_db.get_risk_assessment(onboarding_id) or {}
+    risk_level = risk_assessment.get('risk_rating', 'low')
+
+    if user['role'] == 'compliance' and risk_level in ['medium', 'high']:
+        return jsonify({
+            'status': 'error',
+            'message': 'Only MLRO can approve medium/high risk onboardings'
+        }), 403
+
+    # Update onboarding status in Sheets
+    update_data = {
+        'status': new_status,
+        'approval_action': action,
+        'approval_comments': comments,
+        'approved_by': user['name'],
+        'approved_at': datetime.now().isoformat(),
+        'approver_role': user['role']
+    }
+
+    sheets_db.update_onboarding(onboarding_id, update_data)
+
+    # Save approval to audit trail in Google Drive
+    gdrive_client = get_gdrive_client()
+    sponsor_name = onboarding.get('sponsor_name') or session.get('current_sponsor', 'Unknown')
+    fund_name = onboarding.get('fund_name') or session.get('current_fund', 'Unknown')
+
+    audit_data = {
+        'onboarding_id': onboarding_id,
+        'action': action,
+        'new_status': new_status,
+        'comments': comments,
+        'approved_by': user['name'],
+        'approver_role': user['role'],
+        'approved_at': datetime.now().isoformat(),
+        'risk_level': risk_level
+    }
+
+    from services.gdrive_audit import save_json_audit
+    save_json_audit(
+        data=audit_data,
+        filename=f'approval_{action}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json',
+        sponsor_name=sponsor_name,
+        fund_name=fund_name,
+        phase='Phase-6-Approval'
+    )
+
+    # Send email notifications
+    onboarding_data = {
+        'onboarding_id': onboarding_id,
+        'sponsor_name': sponsor_name,
+        'fund_name': fund_name
+    }
+
+    if action == 'approve':
+        notify_onboarding_decision(onboarding_data, 'approved', user['name'], comments)
+    elif action == 'reject':
+        notify_onboarding_decision(onboarding_data, 'rejected', user['name'], comments)
+
+    # Store approval status in session for template access
+    session['approval_status'] = new_status
+    session['approval_action'] = action
+
+    return jsonify({
+        'status': 'ok',
+        'action': action,
+        'new_status': new_status,
+        'approved_by': user['name'],
+        'message': f'Onboarding {action}d successfully'
+    })
+
+
+@app.route('/api/fees/calculate', methods=['POST'])
+@login_required
+def api_calculate_fees():
+    """API: Calculate dynamic fees based on fund parameters and services selected."""
+    from services.fee_calculator import calculate_fees, get_available_services
+
+    data = request.get_json() or {}
+
+    fund_size = data.get('fund_size', 500_000_000)  # Default $500M
+    services = data.get('services', ['nav', 'investor', 'accounting', 'ta', 'director', 'cosec'])
+    num_investors = data.get('num_investors', 50)
+    num_directors = data.get('num_directors', 2)
+    complexity = data.get('complexity', 'low')
+    include_setup = data.get('include_setup', True)
+
+    # Convert fund_size to int if string
+    if isinstance(fund_size, str):
+        # Remove commas and currency symbols
+        fund_size = int(fund_size.replace(',', '').replace('$', '').replace('£', ''))
+
+    result = calculate_fees(
+        fund_size=fund_size,
+        services=services,
+        num_investors=num_investors,
+        num_directors=num_directors,
+        complexity=complexity,
+        include_setup=include_setup
+    )
+
+    return jsonify({
+        'status': 'ok',
+        **result
+    })
+
+
+@app.route('/api/fees/services', methods=['GET'])
+@login_required
+def api_get_services():
+    """API: Get list of available services and their base fees."""
+    from services.fee_calculator import get_available_services, get_setup_fees
+
+    return jsonify({
+        'status': 'ok',
+        'services': get_available_services(),
+        'setup_fees': get_setup_fees()
+    })
 
 
 @app.route('/api/report/generate/<onboarding_id>')

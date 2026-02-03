@@ -828,6 +828,33 @@ class SheetsDB:
             logger.error(f"Error adding person role: {e}")
             return role_id
 
+    def create_person_role(self, data: dict) -> str:
+        """Create a person role linking a person to an entity (sponsor or fund)"""
+        sheet = self._get_sheet('PersonRoles')
+        role_id = self._generate_id('ROL', sheet)
+
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would create person role {role_id}: {data}")
+            return role_id
+
+        try:
+            data['role_id'] = role_id
+            # Map 'role' to 'role_type' if present
+            if 'role' in data and 'role_type' not in data:
+                data['role_type'] = data.pop('role')
+            # Map 'entity_id' to 'sponsor_id' if entity_type is Sponsor
+            if data.get('entity_type') == 'Sponsor' and 'entity_id' in data:
+                data['sponsor_id'] = data.pop('entity_id')
+                data.pop('entity_type', None)
+            row = self._dict_to_row(SCHEMA['PersonRoles'], data)
+            sheet.append_row(row)
+            self._log_action('create', 'PersonRoles', role_id, data)
+            logger.info(f"Created person role {role_id}")
+            return role_id
+        except Exception as e:
+            logger.error(f"Error creating person role: {e}")
+            return role_id
+
     # ========== Screenings CRUD ==========
 
     def get_screenings(self, onboarding_id: str) -> list[dict]:
