@@ -860,15 +860,9 @@ def onboarding_phase(onboarding_id, phase):
             return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=phase))
         else:
             # Continue to next phase
-            # In production, this would save data to Google Sheets
             if phase < len(phases):
                 next_phase = phase + 1
-                # Skip Phase 4 (EDD) if not required (for POC, always skip)
-                if next_phase == 4:
-                    next_phase = 5  # Skip to Approval
-                    flash('EDD not required - proceeding to Approval phase.', 'info')
-                else:
-                    flash(f'Phase {phase} completed. Proceeding to {phases[next_phase - 1]["name"]}.', 'success')
+                flash(f'Phase {phase} completed. Proceeding to {phases[next_phase - 1]["name"]}.', 'success')
                 return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=next_phase))
             else:
                 flash('Onboarding complete!', 'success')
