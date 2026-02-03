@@ -1526,7 +1526,10 @@ def api_delete_onboarding(onboarding_id):
     # Only allow deletion by the assigned user, admin, or if still in early phases
     is_owner = onboarding.get('assigned_to') == user['name']
     is_admin = user['role'] == 'admin'
-    is_early_phase = onboarding.get('current_phase', 1) <= 3
+    current_phase = onboarding.get('current_phase', 1)
+    if isinstance(current_phase, str):
+        current_phase = int(current_phase)
+    is_early_phase = current_phase <= 3
     is_approved = onboarding.get('status') == 'approved'
 
     if is_approved and not is_admin:

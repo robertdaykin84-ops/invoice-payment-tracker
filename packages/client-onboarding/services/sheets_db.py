@@ -659,7 +659,14 @@ class SheetsDB:
         """Get a single onboarding by ID"""
         if self.demo_mode:
             logger.info(f"[DEMO] Would get onboarding {onboarding_id}")
-            return None
+            # Return mock data for demo onboardings
+            demo_onboardings = {
+                'ONB-001': {'onboarding_id': 'ONB-001', 'sponsor_name': 'Granite Capital Partners LLP', 'status': 'in_progress', 'current_phase': 4, 'assigned_to': 'James Smith'},
+                'ONB-002': {'onboarding_id': 'ONB-002', 'sponsor_name': 'Ashford Capital Advisors Ltd', 'status': 'pending_mlro', 'current_phase': 6, 'assigned_to': 'James Smith'},
+                'ONB-003': {'onboarding_id': 'ONB-003', 'sponsor_name': 'Bluewater Asset Management', 'status': 'approved', 'current_phase': 7, 'assigned_to': 'Sarah Johnson'},
+                'ONB-004': {'onboarding_id': 'ONB-004', 'sponsor_name': 'Granite Capital Partners LLP', 'status': 'in_progress', 'current_phase': 2, 'assigned_to': 'James Smith'},
+            }
+            return demo_onboardings.get(onboarding_id)
 
         try:
             sheet = self._get_sheet('Onboardings')
