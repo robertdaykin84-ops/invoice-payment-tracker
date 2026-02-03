@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 4: Enhanced Due Diligence{% endblock %}
+{% block title %}Phase 4: KYC & CDD Documentation{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,11 +8,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 4: EDD</li>
+                <li class="breadcrumb-item active">Phase 4: KYC & CDD</li>
             </ol>
         </nav>
-        <h1 class="h3 mb-1">Enhanced Due Diligence</h1>
-        <p class="text-muted">Additional due diligence for elevated risk clients</p>
+        <h1 class="h3 mb-1">KYC & CDD Documentation</h1>
+        <p class="text-muted">Upload and verify sponsor and key party documentation</p>
     </div>
 </div>
 
@@ -34,140 +34,101 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- EDD Trigger Summary -->
-        <div class="alert alert-warning mb-4">
-            <div class="d-flex align-items-start gap-3">
-                <i class="bi bi-exclamation-triangle fs-4"></i>
-                <div>
-                    <h6 class="mb-1">Enhanced Due Diligence Required</h6>
-                    <p class="mb-2 small">The following triggers have been identified:</p>
-                    <ul class="mb-0 small">
-                        <li><strong>PEP Connection:</strong> John Smith - Former MP (Domestic PEP)</li>
-                    </ul>
+        <!-- Upload Section -->
+        <div class="card mb-4" id="uploadSection">
+            <div class="card-header">
+                <i class="bi bi-cloud-upload me-2"></i>
+                Upload Documents
+            </div>
+            <div class="card-body">
+                <div class="upload-zone border-2 border-dashed rounded p-5 text-center" id="dropZone">
+                    <i class="bi bi-file-earmark-arrow-up fs-1 text-muted mb-3 d-block"></i>
+                    <h5>Drag & drop all documents here</h5>
+                    <p class="text-muted mb-3">or click to browse</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" class="d-none">
+                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                        <i class="bi bi-folder2-open me-1"></i> Browse Files
+                    </button>
+                    <p class="small text-muted mt-3 mb-0">Supported: PDF, JPG, PNG (max 20MB each)</p>
+                </div>
+
+                <!-- Selected Files Preview -->
+                <div id="selectedFiles" class="mt-3 d-none">
+                    <h6 class="mb-2">Selected Files:</h6>
+                    <ul class="list-group" id="fileList"></ul>
+                    <button type="button" class="btn btn-primary mt-3" id="uploadBtn">
+                        <i class="bi bi-cpu me-1"></i> Upload & Analyse
+                    </button>
+                </div>
+
+                <!-- Processing Indicator -->
+                <div id="processingIndicator" class="mt-4 d-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div>
+                            <strong>AI Processing Documents...</strong>
+                            <p class="mb-0 small text-muted">Detecting document types and checking JFSC compliance</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- EDD Requirements -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-shield-exclamation me-2"></i>
-                EDD Requirements
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <!-- Source of Wealth Evidence -->
-                    <div class="col-12">
-                        <div class="border rounded p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1"><i class="bi bi-cash-stack me-2"></i>Enhanced Source of Wealth</h6>
-                                    <small class="text-muted">Additional documentation for PEP</small>
-                                </div>
-                                <span class="badge bg-warning">In Progress</span>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">SOW Narrative - PEP Specific</label>
-                                <textarea class="form-control" rows="3" placeholder="Document the source of wealth with specific reference to the PEP connection..."></textarea>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <button class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="bi bi-upload me-1"></i> Upload Tax Returns
-                                    </button>
-                                </div>
-                                <div class="col-md-6">
-                                    <button class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="bi bi-upload me-1"></i> Upload Bank Statements
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PEP Declassification -->
-                    <div class="col-12">
-                        <div class="border rounded p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1"><i class="bi bi-person-badge me-2"></i>PEP Assessment</h6>
-                                    <small class="text-muted">John Smith - Former Member of Parliament</small>
-                                </div>
-                                <span class="badge bg-warning">Review Required</span>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">PEP Details</label>
-                                <div class="border rounded p-2 bg-light small">
-                                    <strong>Position:</strong> Member of Parliament<br>
-                                    <strong>Period:</strong> 2010 - 2019<br>
-                                    <strong>Departed:</strong> 5 years ago<br>
-                                    <strong>Category:</strong> Domestic PEP
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">Declassification Assessment</label>
-                                <textarea class="form-control" rows="2" placeholder="Document rationale for continued monitoring or declassification...">PEP departed office in 2019 (5 years ago). No ongoing political connections or influence identified. Recommend monitoring for 12 months then declassify.</textarea>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="pepMonitoring">
-                                <label class="form-check-label" for="pepMonitoring">
-                                    Apply enhanced ongoing monitoring (quarterly reviews)
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Senior Management Approval -->
-                    <div class="col-12">
-                        <div class="border rounded p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1"><i class="bi bi-person-check me-2"></i>Senior Management Approval</h6>
-                                    <small class="text-muted">Required before proceeding</small>
-                                </div>
-                                <span class="badge bg-secondary">Pending</span>
-                            </div>
-                            <p class="small text-muted mb-3">
-                                JFSC requires senior management approval before establishing a business relationship
-                                with PEP-connected clients.
-                            </p>
-                            <div class="mb-3">
-                                <label class="form-label small">Approval Rationale</label>
-                                <textarea class="form-control" rows="2" placeholder="Document rationale for accepting this client..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Additional Due Diligence -->
-                    <div class="col-12">
-                        <div class="border rounded p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-1"><i class="bi bi-file-earmark-text me-2"></i>Additional Documentation</h6>
-                                    <small class="text-muted">Supporting evidence</small>
-                                </div>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <button class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="bi bi-upload me-1"></i> CV / Biography
-                                    </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <button class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="bi bi-upload me-1"></i> References
-                                    </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <button class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="bi bi-upload me-1"></i> Other Evidence
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Results Section (hidden until upload complete) -->
+        <div id="resultsSection" class="d-none">
+            <!-- Sponsor Documents -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-building me-2"></i>Sponsor Entity Documents</span>
+                    <span class="badge bg-secondary" id="sponsorDocsCount">0/0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="sponsorDocsList">
+                        <!-- Populated by JavaScript -->
                     </div>
                 </div>
             </div>
+
+            <!-- Key Parties Documents -->
+            <div id="keyPartiesSection">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Unassigned Documents -->
+            <div class="card mb-4 d-none" id="unassignedSection">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <i class="bi bi-question-circle me-2 text-warning"></i>
+                    Unassigned Documents
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="unassignedDocsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDD Section (if required) -->
+            <div class="card mb-4 border-warning d-none" id="eddSection">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                    Enhanced Due Diligence Required
+                </div>
+                <div class="card-body">
+                    <p class="mb-3" id="eddReason"></p>
+                    <div class="list-group list-group-flush" id="eddDocsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investor KYC Note -->
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Note:</strong> Investor KYC is collected separately during subscription. The fund cannot accept investors until their documentation is received and approved.
         </div>
 
         <!-- Form Actions -->
@@ -176,11 +137,11 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
             </a>
             <div>
-                <button class="btn btn-outline-primary me-2">
-                    <i class="bi bi-save me-1"></i> Save Draft
+                <button type="button" class="btn btn-outline-primary me-2" id="uploadMoreBtn" disabled>
+                    <i class="bi bi-plus-lg me-1"></i> Upload More
                 </button>
-                <button class="btn btn-primary">
-                    Continue to Phase 5 <i class="bi bi-arrow-right ms-1"></i>
+                <button type="button" class="btn btn-primary" id="signOffBtn" disabled>
+                    Sign Off & Continue <i class="bi bi-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -188,67 +149,551 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Progress Card -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-check2-square me-2"></i>
-                EDD Checklist
+                Documentation Progress
             </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Enhanced SOW documented</span>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Overall Progress</span>
+                    <strong id="progressPercent">0%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" id="overallProgress" style="width: 0%"></div>
+                </div>
+                <ul class="list-unstyled mb-0 small" id="progressDetails">
+                    <li class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-circle text-muted me-1"></i> Pending</span>
+                        <span id="pendingCount">0</span>
                     </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>PEP assessment complete</span>
+                    <li class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-check-circle text-success me-1"></i> Complete</span>
+                        <span id="completeCount">0</span>
                     </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Additional docs uploaded</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Senior management rationale</span>
+                    <li class="d-flex justify-content-between">
+                        <span><i class="bi bi-exclamation-circle text-warning me-1"></i> Review Needed</span>
+                        <span id="reviewCount">0</span>
                     </li>
                 </ul>
             </div>
         </div>
 
+        <!-- Checklist Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-list-check me-2"></i>
+                Required Documents
+            </div>
+            <div class="card-body">
+                <div id="checklistSummary">
+                    <p class="text-muted small">Upload documents to see checklist</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- JFSC Guidance -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-info-circle me-2"></i>
-                JFSC EDD Guidance
+                JFSC Certification Requirements
             </div>
             <div class="card-body small text-muted">
-                <p>For PEP-connected clients:</p>
-                <ul class="mb-0">
-                    <li>Establish source of wealth and source of funds</li>
-                    <li>Obtain senior management approval</li>
-                    <li>Apply enhanced ongoing monitoring</li>
-                    <li>Review declassification after 12-18 months post-departure</li>
+                <p><strong>Acceptable Certifiers:</strong></p>
+                <ul class="mb-3">
+                    <li>Lawyer / Solicitor</li>
+                    <li>Notary Public</li>
+                    <li>Chartered Accountant</li>
                 </ul>
-            </div>
-        </div>
-
-        <div class="card border-primary">
-            <div class="card-header bg-primary bg-opacity-10 text-primary">
-                <i class="bi bi-robot me-2"></i>
-                AI Assistance
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary btn-sm text-start">
-                        <i class="bi bi-file-text me-2"></i>
-                        Draft EDD Summary
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm text-start">
-                        <i class="bi bi-search me-2"></i>
-                        Research PEP Background
-                    </button>
-                </div>
+                <p><strong>Required Elements:</strong></p>
+                <ul class="mb-0">
+                    <li>"I certify this is a true copy of the original"</li>
+                    <li>Certifier's signature</li>
+                    <li>Certifier's printed name & qualification</li>
+                    <li>Date of certification</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Document Detail Modal -->
+<div class="modal fade" id="docDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Document Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="docDetailContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning d-none" id="overrideBtn">
+                    <i class="bi bi-check-lg me-1"></i> Override Warning
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Override Reason Modal -->
+<div class="modal fade" id="overrideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Override Warning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Provide a reason for overriding this warning. This will be recorded in the audit trail.</p>
+                <textarea class="form-control" id="overrideReason" rows="3" placeholder="Enter justification..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmOverrideBtn">
+                    <i class="bi bi-check-lg me-1"></i> Confirm Override
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-zone {
+    border: 2px dashed #dee2e6;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+.doc-status-pass { color: #198754; }
+.doc-status-review_needed { color: #ffc107; }
+.doc-status-fail { color: #dc3545; }
+.doc-status-pending { color: #6c757d; }
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+.confidence-badge {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const onboardingId = '{{ onboarding_id }}';
+const enquiryId = '{{ enquiry.id if enquiry else "" }}';
+let uploadedDocuments = [];
+let checklist = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Load checklist
+    loadChecklist();
+
+    // Setup drag and drop
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'));
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+    });
+
+    dropZone.addEventListener('drop', handleDrop);
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+
+    document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+    document.getElementById('signOffBtn').addEventListener('click', signOff);
+    document.getElementById('uploadMoreBtn').addEventListener('click', () => {
+        document.getElementById('uploadSection').classList.remove('d-none');
+        document.getElementById('selectedFiles').classList.add('d-none');
+    });
+});
+
+function handleDrop(e) {
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+}
+
+function handleFileSelect(e) {
+    handleFiles(e.target.files);
+}
+
+function handleFiles(files) {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+
+    Array.from(files).forEach(file => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            <span><i class="bi bi-file-earmark me-2"></i>${file.name}</span>
+            <span class="badge bg-secondary">${(file.size / 1024).toFixed(1)} KB</span>
+        `;
+        fileList.appendChild(li);
+    });
+
+    document.getElementById('selectedFiles').classList.remove('d-none');
+    window.selectedFiles = files;
+}
+
+async function loadChecklist() {
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/checklist?enquiry_id=${enquiryId}`);
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            checklist = data.checklist;
+            updateChecklistDisplay(checklist);
+            updateProgress(data.progress);
+
+            // Show EDD section if required
+            if (checklist.edd_required) {
+                document.getElementById('eddSection').classList.remove('d-none');
+                document.getElementById('eddReason').textContent = checklist.edd_trigger_reason;
+            }
+        }
+    } catch (err) {
+        console.error('Error loading checklist:', err);
+    }
+}
+
+function updateChecklistDisplay(checklist) {
+    const summary = document.getElementById('checklistSummary');
+
+    let html = '<h6 class="mb-2">Sponsor Documents</h6><ul class="list-unstyled mb-3">';
+    checklist.sponsor_documents.forEach(doc => {
+        const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+        html += `<li class="small"><i class="bi ${icon} me-1"></i>${doc.label}</li>`;
+    });
+    html += '</ul>';
+
+    checklist.key_parties.forEach(party => {
+        html += `<h6 class="mb-2">${party.name}</h6><ul class="list-unstyled mb-3">`;
+        party.documents.forEach(doc => {
+            const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+            html += `<li class="small"><i class="bi ${icon} me-1"></i>${doc.label}</li>`;
+        });
+        html += '</ul>';
+    });
+
+    summary.innerHTML = html;
+}
+
+function updateProgress(progress) {
+    document.getElementById('progressPercent').textContent = progress.percentage + '%';
+    document.getElementById('overallProgress').style.width = progress.percentage + '%';
+    document.getElementById('pendingCount').textContent = progress.pending;
+    document.getElementById('completeCount').textContent = progress.complete;
+    document.getElementById('reviewCount').textContent = progress.review_needed;
+
+    // Enable sign off if ready
+    document.getElementById('signOffBtn').disabled = !progress.can_sign_off;
+}
+
+async function uploadFiles() {
+    if (!window.selectedFiles || window.selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    Array.from(window.selectedFiles).forEach(file => {
+        formData.append('files', file);
+    });
+    formData.append('enquiry_id', enquiryId);
+
+    // Show processing
+    document.getElementById('selectedFiles').classList.add('d-none');
+    document.getElementById('processingIndicator').classList.remove('d-none');
+
+    // Animate progress bar
+    let progress = 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+    }, 300);
+
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        if (data.status === 'ok') {
+            uploadedDocuments = data.documents;
+            setTimeout(() => {
+                document.getElementById('processingIndicator').classList.add('d-none');
+                displayResults(uploadedDocuments);
+            }, 500);
+        } else {
+            alert('Upload failed: ' + data.message);
+            document.getElementById('processingIndicator').classList.add('d-none');
+            document.getElementById('selectedFiles').classList.remove('d-none');
+        }
+    } catch (err) {
+        clearInterval(progressInterval);
+        console.error('Upload error:', err);
+        alert('Upload failed. Please try again.');
+        document.getElementById('processingIndicator').classList.add('d-none');
+        document.getElementById('selectedFiles').classList.remove('d-none');
+    }
+}
+
+function displayResults(documents) {
+    document.getElementById('resultsSection').classList.remove('d-none');
+    document.getElementById('uploadMoreBtn').disabled = false;
+
+    const sponsorDocs = [];
+    const keyPartyDocs = {};
+    const unassigned = [];
+
+    documents.forEach(doc => {
+        const assignment = doc.suggested_assignment;
+        if (assignment.type === 'sponsor') {
+            sponsorDocs.push(doc);
+        } else if (assignment.type === 'key_party') {
+            const personId = assignment.person_id;
+            if (!keyPartyDocs[personId]) keyPartyDocs[personId] = [];
+            keyPartyDocs[personId].push(doc);
+        } else {
+            unassigned.push(doc);
+        }
+    });
+
+    // Render sponsor documents
+    renderDocumentList('sponsorDocsList', sponsorDocs);
+    document.getElementById('sponsorDocsCount').textContent = `${sponsorDocs.length} uploaded`;
+
+    // Render key party documents
+    renderKeyPartyDocs(keyPartyDocs);
+
+    // Render unassigned
+    if (unassigned.length > 0) {
+        document.getElementById('unassignedSection').classList.remove('d-none');
+        renderDocumentList('unassignedDocsList', unassigned);
+    }
+
+    // Update progress
+    updateProgressFromDocs(documents);
+}
+
+function renderDocumentList(containerId, docs) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    docs.forEach(doc => {
+        const status = doc.analysis.overall_status;
+        const statusIcon = status === 'pass' ? 'bi-check-circle-fill text-success' :
+                          status === 'review_needed' ? 'bi-exclamation-circle-fill text-warning' :
+                          'bi-x-circle-fill text-danger';
+
+        const confidence = Math.round((doc.suggested_assignment.confidence || 0) * 100);
+
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+        item.innerHTML = `
+            <div>
+                <i class="bi ${statusIcon} me-2"></i>
+                <strong>${doc.analysis.detected_type || 'Unknown'}</strong>
+                <small class="text-muted ms-2">${doc.filename}</small>
+                <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${doc.document_id}')">
+                    <i class="bi bi-eye"></i> View
+                </button>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function renderKeyPartyDocs(keyPartyDocs) {
+    const container = document.getElementById('keyPartiesSection');
+    container.innerHTML = '';
+
+    if (!checklist) return;
+
+    checklist.key_parties.forEach(party => {
+        const docs = keyPartyDocs[party.person_id] || [];
+
+        const card = document.createElement('div');
+        card.className = 'card mb-4';
+        card.innerHTML = `
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person me-2"></i>${party.name} <small class="text-muted">(${party.role})</small></span>
+                <span class="badge bg-secondary">${docs.length} uploaded</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="keyParty_${party.person_id}"></div>
+            </div>
+        `;
+        container.appendChild(card);
+
+        renderDocumentList(`keyParty_${party.person_id}`, docs);
+    });
+}
+
+function updateProgressFromDocs(documents) {
+    let complete = 0;
+    let reviewNeeded = 0;
+
+    documents.forEach(doc => {
+        if (doc.analysis.overall_status === 'pass') complete++;
+        else if (doc.analysis.overall_status === 'review_needed') reviewNeeded++;
+    });
+
+    const total = checklist ?
+        checklist.sponsor_documents.length +
+        checklist.key_parties.reduce((sum, p) => sum + p.documents.length, 0) :
+        documents.length;
+
+    updateProgress({
+        total: total,
+        complete: complete,
+        review_needed: reviewNeeded,
+        pending: total - complete - reviewNeeded,
+        percentage: Math.round(complete / total * 100),
+        can_sign_off: reviewNeeded === 0 && complete >= total
+    });
+}
+
+function viewDocument(docId) {
+    const doc = uploadedDocuments.find(d => d.document_id === docId);
+    if (!doc) return;
+
+    const modal = document.getElementById('docDetailModal');
+    const content = document.getElementById('docDetailContent');
+    const overrideBtn = document.getElementById('overrideBtn');
+
+    let checksHtml = '';
+    Object.entries(doc.analysis.checks || {}).forEach(([key, check]) => {
+        const icon = check.status === 'pass' ? 'bi-check-circle-fill text-success' :
+                    check.status === 'review_needed' ? 'bi-exclamation-circle-fill text-warning' :
+                    'bi-x-circle-fill text-danger';
+        checksHtml += `
+            <div class="check-item">
+                <i class="bi ${icon}"></i>
+                <strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
+                <span>${check.detail}</span>
+            </div>
+        `;
+    });
+
+    content.innerHTML = `
+        <h6>${doc.filename}</h6>
+        <p class="text-muted">Detected Type: ${doc.analysis.detected_type}</p>
+        <hr>
+        <h6>AI Review Results</h6>
+        ${checksHtml}
+        ${doc.override ? `
+            <div class="alert alert-info mt-3">
+                <strong>Override Applied:</strong> ${doc.override.reason}<br>
+                <small>By ${doc.override.by} at ${doc.override.at}</small>
+            </div>
+        ` : ''}
+    `;
+
+    // Show override button if review needed
+    if (doc.analysis.overall_status === 'review_needed' && !doc.override) {
+        overrideBtn.classList.remove('d-none');
+        overrideBtn.onclick = () => showOverrideModal(docId);
+    } else {
+        overrideBtn.classList.add('d-none');
+    }
+
+    new bootstrap.Modal(modal).show();
+}
+
+function showOverrideModal(docId) {
+    bootstrap.Modal.getInstance(document.getElementById('docDetailModal')).hide();
+
+    const modal = document.getElementById('overrideModal');
+    document.getElementById('overrideReason').value = '';
+
+    document.getElementById('confirmOverrideBtn').onclick = async () => {
+        const reason = document.getElementById('overrideReason').value.trim();
+        if (!reason) {
+            alert('Please provide a reason for the override.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/override`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Update local data
+                const doc = uploadedDocuments.find(d => d.document_id === docId);
+                if (doc) {
+                    doc.override = data.document.override;
+                    doc.analysis.overall_status = 'pass';
+                }
+
+                bootstrap.Modal.getInstance(modal).hide();
+                displayResults(uploadedDocuments);
+            } else {
+                alert('Override failed: ' + data.message);
+            }
+        } catch (err) {
+            console.error('Override error:', err);
+            alert('Override failed. Please try again.');
+        }
+    };
+
+    new bootstrap.Modal(modal).show();
+}
+
+async function signOff() {
+    if (!confirm('Sign off KYC documentation and proceed to MLRO approval?')) return;
+
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/signoff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+        if (data.status === 'ok') {
+            window.location.href = `/onboarding/${onboardingId}/phase/5`;
+        } else {
+            alert('Sign off failed: ' + data.message);
+        }
+    } catch (err) {
+        console.error('Sign off error:', err);
+        alert('Sign off failed. Please try again.');
+    }
+}
+</script>
 {% endblock %}
