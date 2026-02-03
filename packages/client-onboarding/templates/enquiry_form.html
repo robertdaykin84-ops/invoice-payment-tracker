@@ -160,8 +160,23 @@
                                        placeholder="e.g., FCA, JFSC, SEC">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">License/Registration Number</label>
+                                <input type="text" class="form-control" name="license_number"
+                                       placeholder="Regulatory license or registration number">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Date of Incorporation</label>
                                 <input type="date" class="form-control" name="date_of_incorporation">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trading Name (if different)</label>
+                                <input type="text" class="form-control" name="trading_name"
+                                       placeholder="Trading or brand name if different from legal name">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Principal Place of Business</label>
+                                <textarea class="form-control" name="business_address" rows="2"
+                                          placeholder="Principal place of business if different from registered address"></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Website</label>
@@ -189,6 +204,16 @@
                                 <label class="form-label">Ownership Percentage by Parent</label>
                                 <input type="text" class="form-control" name="parent_ownership"
                                        placeholder="e.g., 100%">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Principal Business Activities <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="business_activities" rows="2" required
+                                          placeholder="Describe the sponsor's primary business activities and revenue sources..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Source of Wealth/Capital <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="source_of_wealth" rows="3" required
+                                          placeholder="Describe how the sponsor accumulated its wealth/capital (e.g., management fees, carried interest, prior fund performance, founder capital)..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -449,10 +474,7 @@
                     </div>
 
                     <!-- Submit -->
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('enquiry_form_download') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-download me-1"></i> Download Blank Form
-                        </a>
+                    <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-send me-1"></i> Submit Enquiry
                         </button>
