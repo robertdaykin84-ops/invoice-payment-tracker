@@ -731,6 +731,70 @@ class SheetsDB:
             logger.error(f"Error updating onboarding {onboarding_id}: {e}")
             return False
 
+    def delete_onboarding(self, onboarding_id: str) -> bool:
+        """Delete an onboarding and its related data"""
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would delete onboarding {onboarding_id}")
+            return True
+
+        try:
+            # Delete from Onboardings sheet
+            sheet = self._get_sheet('Onboardings')
+            if not sheet:
+                return False
+
+            all_values = sheet.get_all_values()
+
+            for i, row in enumerate(all_values[1:], start=2):
+                if row and row[0] == onboarding_id:
+                    sheet.delete_rows(i)
+                    self._log_action('delete', 'Onboardings', onboarding_id, {})
+                    logger.info(f"Deleted onboarding {onboarding_id}")
+
+                    # Also clean up related data in other sheets
+                    self._delete_related_data(onboarding_id)
+                    return True
+
+            return False
+        except Exception as e:
+            logger.error(f"Error deleting onboarding {onboarding_id}: {e}")
+            return False
+
+    def _delete_related_data(self, onboarding_id: str):
+        """Delete data related to an onboarding from other sheets"""
+        related_sheets = ['PersonRoles', 'Screenings', 'RiskAssessments']
+
+        for sheet_name in related_sheets:
+            try:
+                sheet = self._get_sheet(sheet_name)
+                if not sheet:
+                    continue
+
+                all_values = sheet.get_all_values()
+                if len(all_values) <= 1:
+                    continue
+
+                headers = all_values[0]
+                # Find onboarding_id column index
+                try:
+                    id_col = headers.index('onboarding_id')
+                except ValueError:
+                    continue
+
+                # Delete rows matching this onboarding (in reverse to preserve indices)
+                rows_to_delete = []
+                for i, row in enumerate(all_values[1:], start=2):
+                    if len(row) > id_col and row[id_col] == onboarding_id:
+                        rows_to_delete.append(i)
+
+                # Delete in reverse order
+                for row_idx in reversed(rows_to_delete):
+                    sheet.delete_rows(row_idx)
+                    logger.info(f"Deleted row {row_idx} from {sheet_name} for onboarding {onboarding_id}")
+
+            except Exception as e:
+                logger.error(f"Error cleaning up {sheet_name} for {onboarding_id}: {e}")
+
     # ========== Persons CRUD ==========
 
     def get_persons_for_onboarding(self, onboarding_id: str) -> list[dict]:
