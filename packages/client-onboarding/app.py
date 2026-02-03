@@ -2113,14 +2113,22 @@ def api_kyc_upload(onboarding_id):
 def api_kyc_reassign(onboarding_id, doc_id):
     """API: Reassign a document to a different checklist slot"""
     data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON payload'}), 400
 
     assignment_type = data.get('type')  # 'sponsor' or 'key_party'
+    if assignment_type not in ('sponsor', 'key_party'):
+        return jsonify({'status': 'error', 'message': 'Invalid assignment type'}), 400
+
     document_type = data.get('document_type')
     person_id = data.get('person_id')  # For key_party assignments
 
     # Get document from session
     doc = session.get('kyc_documents', {}).get(doc_id)
     if not doc:
+        return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+
+    if doc.get('onboarding_id') != onboarding_id:
         return jsonify({'status': 'error', 'message': 'Document not found'}), 404
 
     # Update assignment
@@ -2146,6 +2154,9 @@ def api_kyc_reassign(onboarding_id, doc_id):
 def api_kyc_override(onboarding_id, doc_id):
     """API: Override a warning on a document"""
     data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON payload'}), 400
+
     reason = data.get('reason')
 
     if not reason:
@@ -2154,6 +2165,9 @@ def api_kyc_override(onboarding_id, doc_id):
     # Get document from session
     doc = session.get('kyc_documents', {}).get(doc_id)
     if not doc:
+        return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+
+    if doc.get('onboarding_id') != onboarding_id:
         return jsonify({'status': 'error', 'message': 'Document not found'}), 404
 
     # Apply override
