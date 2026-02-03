@@ -642,64 +642,80 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Enable continue button
         continueBtn.disabled = false;
+
+        // Auto-download compliance report after screening
+        setTimeout(() => {
+            generateReport('compliance', true);
+        }, 1000);
     }
 
-    // Report generation
-    document.querySelectorAll('.report-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const reportType = this.dataset.type;
-            const statusDiv = document.getElementById('report-status');
-            const originalText = this.innerHTML;
+    // Reusable report generation function
+    async function generateReport(reportType, isAutoDownload = false) {
+        const statusDiv = document.getElementById('report-status');
+        const btn = document.querySelector(`.report-btn[data-type="${reportType}"]`);
+        const originalText = btn ? btn.innerHTML : '';
 
-            // Show loading state
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
-            statusDiv.style.display = 'block';
-            statusDiv.textContent = `Generating ${reportType} report...`;
+        // Show loading state
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
+        }
+        statusDiv.style.display = 'block';
+        statusDiv.textContent = isAutoDownload
+            ? 'Auto-generating compliance backup report...'
+            : `Generating ${reportType} report...`;
 
-            try {
-                const response = await fetch(`/api/report/generate/{{ onboarding_id }}?type=${reportType}`);
+        try {
+            const response = await fetch(`/api/report/generate/{{ onboarding_id }}?type=${reportType}`);
 
-                if (!response.ok) {
-                    throw new Error('Failed to generate report');
-                }
-
-                // Get filename from header
-                const disposition = response.headers.get('Content-Disposition');
-                const filename = disposition ? disposition.split('filename=')[1].replace(/"/g, '') : `report-${reportType}.pdf`;
-
-                // Download the PDF
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-
-                // Show success message
-                const driveStatus = response.headers.get('X-Drive-Status');
-                const demoMode = response.headers.get('X-Demo-Mode') === 'true';
-
-                if (driveStatus === 'success') {
-                    statusDiv.innerHTML = '<i class="bi bi-cloud-check text-success me-1"></i>Report saved to Google Drive';
-                } else if (driveStatus === 'demo') {
-                    statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Demo mode - report not saved to Drive';
-                } else if (demoMode) {
-                    statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Report generated (demo mode)';
-                } else {
-                    statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Report downloaded';
-                }
-
-            } catch (error) {
-                statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle text-danger me-1"></i>Failed to generate report';
-                console.error('Report generation error:', error);
-            } finally {
-                this.disabled = false;
-                this.innerHTML = originalText;
+            if (!response.ok) {
+                throw new Error('Failed to generate report');
             }
+
+            // Get filename from header
+            const disposition = response.headers.get('Content-Disposition');
+            const filename = disposition ? disposition.split('filename=')[1].replace(/"/g, '') : `report-${reportType}.pdf`;
+
+            // Download the PDF
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+            // Show success message
+            const driveStatus = response.headers.get('X-Drive-Status');
+            const demoMode = response.headers.get('X-Demo-Mode') === 'true';
+
+            if (driveStatus === 'success') {
+                statusDiv.innerHTML = '<i class="bi bi-cloud-check text-success me-1"></i>Compliance report saved to Google Drive';
+            } else if (driveStatus === 'demo') {
+                statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Compliance report generated (demo mode)';
+            } else if (demoMode) {
+                statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Compliance report generated (demo mode)';
+            } else {
+                statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Compliance report downloaded';
+            }
+
+        } catch (error) {
+            statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle text-danger me-1"></i>Failed to generate compliance report';
+            console.error('Report generation error:', error);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    }
+
+    // Report generation button handlers
+    document.querySelectorAll('.report-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            generateReport(this.dataset.type);
         });
     });
 });
