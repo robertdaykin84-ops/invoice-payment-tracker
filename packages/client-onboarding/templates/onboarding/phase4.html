@@ -401,15 +401,15 @@ function updateChecklistDisplay(checklist) {
     let html = '<h6 class="mb-2">Sponsor Documents</h6><ul class="list-unstyled mb-3">';
     checklist.sponsor_documents.forEach(doc => {
         const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
-        html += `<li class="small"><i class="bi ${icon} me-1"></i>${doc.label}</li>`;
+        html += `<li class="small"><i class="bi ${icon} me-1"></i>${escapeHtml(doc.label)}</li>`;
     });
     html += '</ul>';
 
     checklist.key_parties.forEach(party => {
-        html += `<h6 class="mb-2">${party.name}</h6><ul class="list-unstyled mb-3">`;
+        html += `<h6 class="mb-2">${escapeHtml(party.name)}</h6><ul class="list-unstyled mb-3">`;
         party.documents.forEach(doc => {
             const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
-            html += `<li class="small"><i class="bi ${icon} me-1"></i>${doc.label}</li>`;
+            html += `<li class="small"><i class="bi ${icon} me-1"></i>${escapeHtml(doc.label)}</li>`;
         });
         html += '</ul>';
     });
@@ -544,7 +544,7 @@ function renderDocumentList(containerId, docs) {
                 <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
             </div>
             <div>
-                <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${doc.document_id}')">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
                     <i class="bi bi-eye"></i> View
                 </button>
             </div>
@@ -570,12 +570,12 @@ function renderKeyPartyDocs(keyPartyDocs) {
                 <span class="badge bg-secondary">${docs.length} uploaded</span>
             </div>
             <div class="card-body p-0">
-                <div class="list-group list-group-flush" id="keyParty_${party.person_id}"></div>
+                <div class="list-group list-group-flush" id="keyParty_${escapeHtml(party.person_id)}"></div>
             </div>
         `;
         container.appendChild(card);
 
-        renderDocumentList(`keyParty_${party.person_id}`, docs);
+        renderDocumentList(`keyParty_${escapeHtml(party.person_id)}`, docs);
     });
 }
 
