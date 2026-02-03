@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sample Enquiry Forms{% endblock %}
+{% block title %}Sample Documents{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -9,13 +9,15 @@
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
                 <li class="breadcrumb-item"><a href="{{ url_for('new_onboarding') }}">New Client or Fund</a></li>
-                <li class="breadcrumb-item active">Sample Forms</li>
+                <li class="breadcrumb-item active">Sample Documents</li>
             </ol>
         </nav>
-        <h1 class="h3 mb-1">Sample Enquiry Forms</h1>
-        <p class="text-muted">Download these completed sample forms to test the upload and extraction feature</p>
+        <h1 class="h3 mb-1">Sample Documents</h1>
+        <p class="text-muted">Download sample enquiry forms and KYC/CDD documents for testing</p>
     </div>
 </div>
+
+<h4 class="mb-3">Sample Enquiry Forms</h4>
 
 <div class="alert alert-info mb-4">
     <div class="d-flex align-items-start gap-3">
@@ -67,6 +69,63 @@
         </div>
     </div>
     {% endfor %}
+</div>
+
+<!-- KYC/CDD Sample Documents Section -->
+<div class="row mt-5 mb-4">
+    <div class="col">
+        <h4 class="mb-1">Sample KYC/CDD Documents</h4>
+        <p class="text-muted">Download certified sample documents for testing the KYC upload and AI review feature</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                <i class="bi bi-folder-fill fs-4 text-success"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-1">Complete KYC Document Set</h5>
+                <p class="text-muted mb-3">
+                    Contains certified sample documents for Granite Capital Partners LLP including:
+                </p>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 bg-light">
+                            <h6 class="small text-uppercase text-muted mb-2">Sponsor Entity Documents</h6>
+                            <ul class="small mb-0 ps-3">
+                                <li>Certificate of Registration</li>
+                                <li>LLP Agreement</li>
+                                <li>Register of Members</li>
+                                <li>Structure Chart</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 bg-light">
+                            <h6 class="small text-uppercase text-muted mb-2">Key Party Documents</h6>
+                            <ul class="small mb-0 ps-3">
+                                <li>John Smith: Passport + Address Proof</li>
+                                <li>Sarah Johnson: Passport + Address Proof</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-success py-2 mb-3">
+                    <small><i class="bi bi-check-circle me-1"></i> All documents include JFSC-compliant certification (Solicitor certified)</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('static', filename='samples/kyc-documents.zip') }}" class="btn btn-success" download>
+                        <i class="bi bi-download me-1"></i> Download ZIP (20KB)
+                    </a>
+                    <a href="{{ url_for('static', filename='samples/kyc-documents/README.html') }}" target="_blank" class="btn btn-outline-secondary">
+                        <i class="bi bi-list-ul me-1"></i> View Document Index
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card mt-4 bg-light border-0">

@@ -2,32 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Completed Enquiry Form - Nordic Ventures</title>
+    <title>Completed Enquiry Form - Nordic Ventures AS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; padding: 40px; max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #333; }
-        .logo { font-size: 24pt; font-weight: bold; color: #54A6ED; }
-        .logo-sub { font-size: 10pt; color: #666; letter-spacing: 2px; }
-        h1 { font-size: 16pt; margin-top: 15px; }
-        .section { margin-bottom: 25px; }
-        .section-title { background: #f5f5f5; padding: 8px 12px; font-weight: bold; margin-bottom: 15px; border-left: 4px solid #54A6ED; }
-        .field { margin-bottom: 12px; }
-        .field-label { font-size: 9pt; color: #666; margin-bottom: 2px; }
-        .field-value { padding: 8px; border: 1px solid #ddd; background: #fafafa; min-height: 20px; }
-        .field-value.filled { background: #fff; }
-        .row { display: flex; gap: 20px; }
+        body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.4; padding: 30px; max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+        .logo { font-size: 22pt; font-weight: bold; color: #54A6ED; }
+        .logo-sub { font-size: 9pt; color: #666; letter-spacing: 2px; }
+        h1 { font-size: 14pt; margin-top: 12px; }
+        .part-header { background: #2563eb; color: white; padding: 10px 15px; margin: 20px 0 15px 0; font-weight: bold; font-size: 11pt; }
+        .part-header.green { background: #16a34a; }
+        .part-header.gray { background: #6b7280; }
+        .section { margin-bottom: 20px; }
+        .section-title { background: #f5f5f5; padding: 6px 10px; font-weight: bold; margin-bottom: 12px; border-left: 4px solid #54A6ED; font-size: 10pt; }
+        .field { margin-bottom: 10px; }
+        .field-label { font-size: 8pt; color: #666; margin-bottom: 2px; }
+        .field-value { padding: 6px 8px; border: 1px solid #ddd; background: #fff; min-height: 18px; font-size: 9pt; }
+        .field-value.multi { min-height: 50px; white-space: pre-wrap; }
+        .row { display: flex; gap: 15px; }
         .row .field { flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
-        th { background: #f5f5f5; }
-        .declaration { background: #f9f9f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd; }
-        .signature-line { border-bottom: 1px solid #333; width: 250px; margin-top: 30px; padding-bottom: 5px; }
-        .signature-label { font-size: 9pt; color: #666; }
-        .checkbox { display: inline-block; width: 14px; height: 14px; border: 1px solid #333; margin-right: 8px; text-align: center; line-height: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; }
+        th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+        th { background: #f5f5f5; font-size: 8pt; }
+        .declaration { background: #f9f9f9; padding: 12px; margin-top: 15px; border: 1px solid #ddd; font-size: 9pt; }
+        .signature-line { border-bottom: 1px solid #333; width: 200px; margin-top: 20px; padding-bottom: 5px; }
+        .signature-label { font-size: 8pt; color: #666; }
+        .checkbox { display: inline-block; width: 12px; height: 12px; border: 1px solid #333; margin-right: 6px; text-align: center; line-height: 10px; font-size: 10pt; }
         .checkbox.checked::after { content: "X"; font-weight: bold; }
-        .stamp { position: absolute; top: 100px; right: 60px; border: 3px solid #10B981; color: #10B981; padding: 10px 20px; transform: rotate(-15deg); font-weight: bold; opacity: 0.7; }
-        @media print { body { padding: 20px; } .stamp { position: fixed; } }
+        .stamp { position: absolute; top: 80px; right: 50px; border: 3px solid #10B981; color: #10B981; padding: 8px 15px; transform: rotate(-15deg); font-weight: bold; opacity: 0.7; font-size: 12pt; }
+        .ubo-badge { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; font-size: 8pt; margin-left: 5px; }
+        @media print { body { padding: 15px; } .stamp { position: fixed; } }
     </style>
 </head>
 <body>
@@ -37,144 +41,315 @@
         <div class="logo">CoreWorker</div>
         <div class="logo-sub">FUND ADMINISTRATION</div>
         <h1>CLIENT ENQUIRY FORM</h1>
+        <div style="font-size: 9pt; color: #666; margin-top: 5px;">Reference: ENQ-003 | Submitted: 02 February 2026</div>
     </div>
 
+    <!-- PART A: SPONSOR DETAILS -->
+    <div class="part-header">PART A: SPONSOR DETAILS</div>
+
     <div class="section">
-        <div class="section-title">1. SPONSOR INFORMATION</div>
+        <div class="section-title">1. ENTITY INFORMATION</div>
         <div class="row">
-            <div class="field">
-                <div class="field-label">Sponsor Legal Name *</div>
-                <div class="field-value filled">Nordic Ventures AS</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Legal Name *</div>
+                <div class="field-value">Nordic Ventures AS</div>
             </div>
+            <div class="field">
+                <div class="field-label">Trading Name</div>
+                <div class="field-value">Nordic Ventures</div>
+            </div>
+        </div>
+        <div class="row">
             <div class="field">
                 <div class="field-label">Entity Type *</div>
-                <div class="field-value filled">Private Company (AS)</div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="field">
-                <div class="field-label">Jurisdiction of Incorporation *</div>
-                <div class="field-value filled">Norway</div>
+                <div class="field-value">Private Company (AS - Aksjeselskap)</div>
             </div>
             <div class="field">
-                <div class="field-label">Registration Number</div>
-                <div class="field-value filled">NO 912 345 678</div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="field">
-                <div class="field-label">Regulatory Status</div>
-                <div class="field-value filled">FSA Norway Regulated</div>
+                <div class="field-label">Jurisdiction *</div>
+                <div class="field-value">Norway</div>
             </div>
             <div class="field">
-                <div class="field-label">FCA FRN (if applicable)</div>
-                <div class="field-value filled">N/A</div>
+                <div class="field-label">Registration Number *</div>
+                <div class="field-value">NO 912 345 678</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date of Incorporation *</div>
+                <div class="field-value">15 January 2020</div>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">2. PROPOSED FUND</div>
+        <div class="section-title">2. ADDRESSES</div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Fund Name *</div>
-                <div class="field-value filled">Nordic Technology Opportunities Fund LP</div>
+                <div class="field-label">Registered Address *</div>
+                <div class="field-value">Aker Brygge, Stranden 1, 0250 Oslo, Norway</div>
             </div>
             <div class="field">
-                <div class="field-label">Fund Type *</div>
-                <div class="field-value filled">Jersey Private Fund (JPF)</div>
+                <div class="field-label">Business Address (if different)</div>
+                <div class="field-value">Same as registered address</div>
             </div>
         </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">3. REGULATORY STATUS</div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Legal Structure</div>
-                <div class="field-value filled">Limited Partnership</div>
+                <div class="field-label">Regulatory Status *</div>
+                <div class="field-value">Regulated</div>
             </div>
             <div class="field">
-                <div class="field-label">Target Fund Size (USD)</div>
-                <div class="field-value filled">$150,000,000</div>
+                <div class="field-label">Regulator</div>
+                <div class="field-value">Finanstilsynet (Norwegian FSA)</div>
+            </div>
+            <div class="field">
+                <div class="field-label">License/Registration Number</div>
+                <div class="field-value">NV-2020-0456</div>
             </div>
         </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">4. SOURCE OF WEALTH & FUNDS</div>
         <div class="field">
-            <div class="field-label">Investment Strategy</div>
-            <div class="field-value filled">Early-stage and growth investments in Nordic technology companies, with focus on fintech, healthtech, and cleantech sectors.</div>
+            <div class="field-label">Principal Business Activities *</div>
+            <div class="field-value multi">Venture capital and growth equity investments in Nordic technology companies. Focus on fintech, healthtech, and cleantech sectors.</div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Source of Wealth *</div>
+                <div class="field-value multi">Founder capital from successful prior technology exits, institutional investors including Nordic pension funds, and family office commitments.</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Source of Funds *</div>
+                <div class="field-value multi">Nordic pension funds, Norwegian sovereign wealth fund co-investments, family offices with technology focus, and corporate venture capital arms.</div>
+            </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">3. KEY PRINCIPALS</div>
+        <div class="section-title">5. SPONSOR DIRECTORS & ULTIMATE BENEFICIAL OWNERS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Individuals with 25% or more ownership are flagged as UBOs</p>
         <table>
             <thead>
                 <tr>
                     <th>Full Name</th>
-                    <th>Role/Position</th>
+                    <th>Former Names</th>
+                    <th>Date of Birth</th>
                     <th>Nationality</th>
+                    <th>Country of Residence</th>
+                    <th>Residential Address</th>
+                    <th>Role</th>
                     <th>Ownership %</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>Erik Larsson</td>
-                    <td>Founder & CEO</td>
+                    <td>Erik Gustav Larsson <span class="ubo-badge">UBO</span></td>
+                    <td>-</td>
+                    <td>20/08/1976</td>
                     <td>Norwegian</td>
+                    <td>Norway</td>
+                    <td>Bygdoy Alle 45, 0265 Oslo, Norway</td>
+                    <td>Controller & UBO</td>
                     <td>50%</td>
                 </tr>
                 <tr>
-                    <td>Ingrid Olsen</td>
-                    <td>Partner</td>
+                    <td>Ingrid Marie Olsen <span class="ubo-badge">UBO</span></td>
+                    <td>Ingrid Marie Hansen (maiden)</td>
+                    <td>12/04/1981</td>
                     <td>Norwegian</td>
+                    <td>Norway</td>
+                    <td>Frognerveien 88, 0271 Oslo, Norway</td>
+                    <td>Controller & UBO</td>
                     <td>50%</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    <!-- PART B: FUND DETAILS -->
+    <div class="part-header green">PART B: FUND DETAILS</div>
+
     <div class="section">
-        <div class="section-title">4. PRIMARY CONTACT</div>
+        <div class="section-title">6. FUND STRUCTURE</div>
         <div class="row">
-            <div class="field">
-                <div class="field-label">Contact Name *</div>
-                <div class="field-value filled">Erik Larsson</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Fund Name *</div>
+                <div class="field-value">Nordic Technology Opportunities Fund LP</div>
             </div>
             <div class="field">
-                <div class="field-label">Position</div>
-                <div class="field-value filled">Founder & CEO</div>
+                <div class="field-label">Fund Type *</div>
+                <div class="field-value">Jersey Private Fund (JPF)</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Legal Structure *</div>
+                <div class="field-value">Limited Partnership</div>
             </div>
         </div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Email *</div>
-                <div class="field-value filled">erik@nordicventures.no</div>
+                <div class="field-label">Target Fund Size *</div>
+                <div class="field-value">$150,000,000</div>
             </div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Investment Strategy *</div>
+                <div class="field-value">Early-stage and growth investments in Nordic technology companies, with focus on fintech, healthtech, and cleantech sectors.</div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 12px;">
             <div class="field">
-                <div class="field-label">Phone</div>
-                <div class="field-value filled">+47 22 12 34 56</div>
+                <div class="field-label">Target Investment Countries/Regions *</div>
+                <div class="field-value">
+                    <span style="display: inline-block; background: #2563eb; color: white; padding: 2px 8px; border-radius: 3px; font-size: 8pt; margin: 2px;">European Union</span>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">5. SOURCE OF ENQUIRY</div>
+        <div class="section-title">7. FUND GP DIRECTORS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Directors of the Fund's General Partner entity</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Former Names</th>
+                    <th>Date of Birth</th>
+                    <th>Nationality</th>
+                    <th>Country of Residence</th>
+                    <th>Residential Address</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Erik Gustav Larsson</td>
+                    <td>-</td>
+                    <td>20/08/1976</td>
+                    <td>Norwegian</td>
+                    <td>Norway</td>
+                    <td>Bygdoy Alle 45, 0265 Oslo, Norway</td>
+                    <td>Chairman</td>
+                </tr>
+                <tr>
+                    <td>Ingrid Marie Olsen</td>
+                    <td>Ingrid Marie Hansen (maiden)</td>
+                    <td>12/04/1981</td>
+                    <td>Norwegian</td>
+                    <td>Norway</td>
+                    <td>Frognerveien 88, 0271 Oslo, Norway</td>
+                    <td>Director</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">8. INITIAL/SEED INVESTORS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Known or expected initial investors and anticipated commitments</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Investor Name</th>
+                    <th>Investor Type</th>
+                    <th>Jurisdiction</th>
+                    <th>Commitment %</th>
+                    <th>Commitment Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Norwegian Tech Pension</td>
+                    <td>Pension Fund</td>
+                    <td>European Union</td>
+                    <td>35%</td>
+                    <td>$52,500,000</td>
+                </tr>
+                <tr>
+                    <td>Larsson Family Trust</td>
+                    <td>Sponsor/Affiliate</td>
+                    <td>European Union</td>
+                    <td>15%</td>
+                    <td>$22,500,000</td>
+                </tr>
+                <tr>
+                    <td>Swedish Innovation Fund</td>
+                    <td>Fund of Funds</td>
+                    <td>European Union</td>
+                    <td>25%</td>
+                    <td>$37,500,000</td>
+                </tr>
+                <tr>
+                    <td>Finnish Technology Ventures</td>
+                    <td>Institutional</td>
+                    <td>European Union</td>
+                    <td>15%</td>
+                    <td>$22,500,000</td>
+                </tr>
+                <tr>
+                    <td>Olsen Investment Holdings</td>
+                    <td>Family Office</td>
+                    <td>Norway</td>
+                    <td>10%</td>
+                    <td>$15,000,000</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="table-success">
+                    <td colspan="3" class="text-end"><strong>Total Commitment:</strong></td>
+                    <td><strong>100%</strong></td>
+                    <td><strong>$150,000,000</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- PART C: CONTACT & DECLARATION -->
+    <div class="part-header gray">PART C: CONTACT & DECLARATION</div>
+
+    <div class="section">
+        <div class="section-title">9. PRIMARY CONTACT</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Contact Name *</div>
+                <div class="field-value">Erik Larsson</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Email *</div>
+                <div class="field-value">erik@nordicventures.no</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value">+47 22 12 34 56</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">10. REFERRAL SOURCE</div>
         <div class="row">
             <div class="field">
                 <div class="field-label">How did you hear about us?</div>
-                <div class="field-value filled">Industry Event</div>
+                <div class="field-value">Industry Event</div>
             </div>
-            <div class="field">
-                <div class="field-label">Referrer Name (if applicable)</div>
-                <div class="field-value filled">Met at Jersey Finance Roadshow London</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Referrer Name/Details</div>
+                <div class="field-value">Met at Jersey Finance Roadshow London - November 2025</div>
             </div>
         </div>
     </div>
 
     <div class="declaration">
-        <p style="margin-bottom: 15px;"><strong>DECLARATION</strong></p>
-        <p style="font-size: 10pt; margin-bottom: 15px;">
+        <p style="margin-bottom: 12px; font-weight: bold;">12. DECLARATION</p>
+        <p style="margin-bottom: 10px;">
             <span class="checkbox checked"></span>
-            I confirm that the information provided in this form is true and accurate to the best of my knowledge.
-            I understand that CoreWorker will conduct due diligence checks as part of the onboarding process.
+            I confirm that the information provided in this form is accurate and complete to the best of my knowledge.
+            I understand that this information will be used for due diligence and regulatory compliance purposes.
         </p>
-        <div class="row" style="margin-top: 30px;">
+        <div class="row" style="margin-top: 25px;">
             <div class="field">
                 <div class="signature-line">Erik Larsson</div>
                 <div class="signature-label">Signature</div>

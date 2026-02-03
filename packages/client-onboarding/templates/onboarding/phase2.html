@@ -34,42 +34,62 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- Fund Details Card -->
+        <!-- Fund Details from Enquiry (Read-Only Summary) -->
+        {% if enquiry %}
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-info-circle me-2"></i>
+                Fund Details (From Enquiry)
+                <span class="badge bg-white text-info ms-2">Pre-populated</span>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Fund Name</small>
+                        <p class="mb-1"><strong>{{ enquiry.fund_name or 'Not specified' }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Fund Type</small>
+                        <p class="mb-1"><strong>{{ enquiry.fund_type|upper if enquiry.fund_type else 'Not specified' }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Legal Structure</small>
+                        <p class="mb-1"><strong>{{ enquiry.legal_structure|upper if enquiry.legal_structure else 'Not specified' }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">Target Size</small>
+                        <p class="mb-1"><strong>${{ enquiry.target_size or 'Not specified' }}</strong></p>
+                    </div>
+                    <div class="col-md-9">
+                        <small class="text-muted">Investment Strategy</small>
+                        <p class="mb-1">{{ enquiry.investment_strategy or 'Not specified' }}</p>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-pencil me-1"></i>Edit in Enquiry
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Fund Configuration Card (Unique to Phase 2) -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-building me-2"></i>
-                Fund Vehicle Details
+                Fund Configuration
             </div>
             <div class="card-body">
                 <form method="POST" id="fundForm">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-8">
-                            <label class="form-label">Fund Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="fund_name" required
-                                   value="Granite Capital Fund III LP">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Fund Type <span class="text-danger">*</span></label>
-                            <select class="form-select" name="fund_type" required>
-                                <option value="jpf" selected>Jersey Private Fund (JPF)</option>
-                                <option value="expert">Expert Fund</option>
-                                <option value="listed">Listed Fund</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- Hidden fields to carry forward enquiry data -->
+                    <input type="hidden" name="fund_name" value="{{ enquiry.fund_name if enquiry else '' }}">
+                    <input type="hidden" name="fund_type" value="{{ enquiry.fund_type if enquiry else 'jpf' }}">
+                    <input type="hidden" name="legal_structure" value="{{ enquiry.legal_structure if enquiry else 'lp' }}">
+                    <input type="hidden" name="target_size" value="{{ enquiry.target_size if enquiry else '' }}">
+                    <input type="hidden" name="investment_strategy" value="{{ enquiry.investment_strategy if enquiry else '' }}">
 
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Legal Structure <span class="text-danger">*</span></label>
-                            <select class="form-select" name="legal_structure" required>
-                                <option value="lp" selected>Limited Partnership</option>
-                                <option value="unit_trust">Unit Trust</option>
-                                <option value="icc">ICC</option>
-                                <option value="pcc">PCC</option>
-                                <option value="company">Company</option>
-                            </select>
-                        </div>
                         <div class="col-md-4">
                             <label class="form-label">Fund Jurisdiction <span class="text-danger">*</span></label>
                             <select class="form-select" name="fund_jurisdiction" required>
@@ -79,46 +99,65 @@
                                 <option value="Ireland">Ireland</option>
                                 <option value="Delaware">Delaware</option>
                             </select>
+                            <small class="text-muted">Where the fund will be domiciled</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Target Fund Size</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control" name="target_size" value="500,000,000">
-                            </div>
+                            <label class="form-label">Base Currency <span class="text-danger">*</span></label>
+                            <select class="form-select" name="base_currency" required>
+                                <option value="USD" selected>USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="CHF">CHF - Swiss Franc</option>
+                            </select>
                         </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Investment Strategy <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="investment_strategy" rows="3" required
-                                  placeholder="Describe the fund's investment strategy, target sectors, and geographic focus...">Mid-market buyout opportunities in UK and European technology and healthcare sectors.</textarea>
+                        <div class="col-md-4">
+                            <label class="form-label">Fund Term (Years)</label>
+                            <input type="number" class="form-control" name="fund_term" value="10" min="1" max="25">
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">Target Investment Jurisdictions</label>
-                            <select class="form-select" name="target_jurisdictions" multiple size="4">
-                                <option value="UK" selected>United Kingdom</option>
-                                <option value="EU" selected>European Union</option>
-                                <option value="US">United States</option>
-                                <option value="APAC">Asia Pacific</option>
-                            </select>
-                            <small class="form-text">Hold Ctrl/Cmd to select multiple</small>
+                            <label class="form-label">Target Investment Countries</label>
+                            {% if enquiry and enquiry.target_countries %}
+                            <div class="border rounded p-3 bg-light">
+                                <small class="text-muted d-block mb-2">From Enquiry:</small>
+                                {% set country_labels = {'uk': 'United Kingdom', 'eu': 'European Union', 'us': 'United States', 'canada': 'Canada', 'asia_pacific': 'Asia Pacific', 'middle_east': 'Middle East', 'africa': 'Africa', 'latin_america': 'Latin America', 'russia': 'Russia', 'china': 'China', 'iran': 'Iran', 'north_korea': 'North Korea', 'global': 'Global', 'other': 'Other'} %}
+                                {% for country in enquiry.target_countries %}
+                                    <span class="badge {% if country in ['russia', 'china', 'iran', 'north_korea'] %}bg-danger{% else %}bg-primary{% endif %} me-1 mb-1">
+                                        {{ country_labels.get(country, country) }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="border rounded p-3 text-muted">
+                                <small>Not specified in Enquiry</small>
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Risk Flags</label>
                             <div class="border rounded p-3">
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="acceptsCash" name="accepts_cash">
-                                    <label class="form-check-label" for="acceptsCash">
-                                        Fund accepts physical currency
+                                    <input class="form-check-input" type="checkbox" id="acceptsCrypto" name="accepts_crypto">
+                                    <label class="form-check-label" for="acceptsCrypto">
+                                        Fund accepts cryptocurrency
                                     </label>
                                 </div>
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="highRiskJuris" name="high_risk_jurisdictions">
+                                    {% set has_high_risk = false %}
+                                    {% if enquiry and enquiry.target_countries %}
+                                        {% if 'russia' in enquiry.target_countries or 'china' in enquiry.target_countries or 'iran' in enquiry.target_countries or 'north_korea' in enquiry.target_countries %}
+                                            {% set has_high_risk = true %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <input class="form-check-input" type="checkbox" id="highRiskJuris" name="high_risk_jurisdictions"
+                                           {{ 'checked' if has_high_risk }}>
                                     <label class="form-check-label" for="highRiskJuris">
                                         Invests in high-risk jurisdictions
+                                        {% if has_high_risk %}
+                                        <span class="badge bg-warning text-dark ms-1">Auto-detected from Enquiry</span>
+                                        {% endif %}
                                     </label>
                                 </div>
                                 <div class="form-check">
@@ -175,14 +214,19 @@
         <!-- Fund Principals Card -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people me-2"></i>Fund Principals</span>
+                <span>
+                    <i class="bi bi-people me-2"></i>Fund Principals
+                    {% if enquiry and enquiry.gp_directors %}
+                    <span class="badge bg-info ms-2">{{ enquiry.gp_directors|length }} from Enquiry</span>
+                    {% endif %}
+                </span>
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFundPrincipalModal">
                     <i class="bi bi-plus-lg me-1"></i> Add Principal
                 </button>
             </div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    Fund principals may differ from sponsor principals. Add GP directors, fund directors, and any independent directors.
+                    GP Directors from the Enquiry are shown below. Add any additional fund directors or independent directors as needed.
                 </p>
 
                 <div class="table-responsive">
@@ -192,12 +236,33 @@
                                 <th>Name</th>
                                 <th>Role</th>
                                 <th>Entity</th>
-                                <th>From Sponsor</th>
+                                <th>Source</th>
                                 <th>CDD Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% if enquiry and enquiry.gp_directors %}
+                            {% for director in enquiry.gp_directors %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                                            {{ director.full_name[:2]|upper if director.full_name else 'GP' }}
+                                        </div>
+                                        <span>{{ director.full_name }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-info">{{ director.position|title if director.position else 'GP Director' }}</span></td>
+                                <td>{{ enquiry.fund_name or 'Fund GP' }}</td>
+                                <td><i class="bi bi-check-circle text-success" title="From Enquiry"></i> <small class="text-muted">Enquiry</small></td>
+                                <td><span class="badge badge-status-pending">Pending</span></td>
+                                <td>
+                                    <button class="btn btn-outline-secondary btn-sm" title="View"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
@@ -207,12 +272,13 @@
                                 </td>
                                 <td><span class="badge bg-info">GP Director</span></td>
                                 <td>Granite Capital GP III Ltd</td>
-                                <td><i class="bi bi-check-circle text-success" title="Linked from Sponsor"></i></td>
+                                <td><i class="bi bi-check-circle text-success" title="From Sponsor"></i> <small class="text-muted">Sponsor</small></td>
                                 <td><span class="badge badge-status-approved">Complete</span></td>
                                 <td>
                                     <button class="btn btn-outline-secondary btn-sm" title="View"><i class="bi bi-eye"></i></button>
                                 </td>
                             </tr>
+                            {% endif %}
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">

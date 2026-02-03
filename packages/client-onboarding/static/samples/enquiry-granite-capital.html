@@ -5,29 +5,34 @@
     <title>Completed Enquiry Form - Granite Capital Partners</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; padding: 40px; max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #333; }
-        .logo { font-size: 24pt; font-weight: bold; color: #54A6ED; }
-        .logo-sub { font-size: 10pt; color: #666; letter-spacing: 2px; }
-        h1 { font-size: 16pt; margin-top: 15px; }
-        .section { margin-bottom: 25px; }
-        .section-title { background: #f5f5f5; padding: 8px 12px; font-weight: bold; margin-bottom: 15px; border-left: 4px solid #54A6ED; }
-        .field { margin-bottom: 12px; }
-        .field-label { font-size: 9pt; color: #666; margin-bottom: 2px; }
-        .field-value { padding: 8px; border: 1px solid #ddd; background: #fafafa; min-height: 20px; }
-        .field-value.filled { background: #fff; }
-        .row { display: flex; gap: 20px; }
+        body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.4; padding: 30px; max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+        .logo { font-size: 22pt; font-weight: bold; color: #54A6ED; }
+        .logo-sub { font-size: 9pt; color: #666; letter-spacing: 2px; }
+        h1 { font-size: 14pt; margin-top: 12px; }
+        .part-header { background: #2563eb; color: white; padding: 10px 15px; margin: 20px 0 15px 0; font-weight: bold; font-size: 11pt; }
+        .part-header.green { background: #16a34a; }
+        .part-header.gray { background: #6b7280; }
+        .section { margin-bottom: 20px; }
+        .section-title { background: #f5f5f5; padding: 6px 10px; font-weight: bold; margin-bottom: 12px; border-left: 4px solid #54A6ED; font-size: 10pt; }
+        .field { margin-bottom: 10px; }
+        .field-label { font-size: 8pt; color: #666; margin-bottom: 2px; }
+        .field-value { padding: 6px 8px; border: 1px solid #ddd; background: #fff; min-height: 18px; font-size: 9pt; }
+        .field-value.multi { min-height: 50px; white-space: pre-wrap; }
+        .row { display: flex; gap: 15px; }
         .row .field { flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
-        th { background: #f5f5f5; }
-        .declaration { background: #f9f9f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd; }
-        .signature-line { border-bottom: 1px solid #333; width: 250px; margin-top: 30px; padding-bottom: 5px; }
-        .signature-label { font-size: 9pt; color: #666; }
-        .checkbox { display: inline-block; width: 14px; height: 14px; border: 1px solid #333; margin-right: 8px; text-align: center; line-height: 12px; }
+        .row-3 .field { flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; }
+        th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+        th { background: #f5f5f5; font-size: 8pt; }
+        .declaration { background: #f9f9f9; padding: 12px; margin-top: 15px; border: 1px solid #ddd; font-size: 9pt; }
+        .signature-line { border-bottom: 1px solid #333; width: 200px; margin-top: 20px; padding-bottom: 5px; }
+        .signature-label { font-size: 8pt; color: #666; }
+        .checkbox { display: inline-block; width: 12px; height: 12px; border: 1px solid #333; margin-right: 6px; text-align: center; line-height: 10px; font-size: 10pt; }
         .checkbox.checked::after { content: "X"; font-weight: bold; }
-        .stamp { position: absolute; top: 100px; right: 60px; border: 3px solid #10B981; color: #10B981; padding: 10px 20px; transform: rotate(-15deg); font-weight: bold; opacity: 0.7; }
-        @media print { body { padding: 20px; } .stamp { position: fixed; } }
+        .stamp { position: absolute; top: 80px; right: 50px; border: 3px solid #10B981; color: #10B981; padding: 8px 15px; transform: rotate(-15deg); font-weight: bold; opacity: 0.7; font-size: 12pt; }
+        .ubo-badge { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; font-size: 8pt; margin-left: 5px; }
+        @media print { body { padding: 15px; } .stamp { position: fixed; } }
     </style>
 </head>
 <body>
@@ -37,150 +42,326 @@
         <div class="logo">CoreWorker</div>
         <div class="logo-sub">FUND ADMINISTRATION</div>
         <h1>CLIENT ENQUIRY FORM</h1>
+        <div style="font-size: 9pt; color: #666; margin-top: 5px;">Reference: ENQ-001 | Submitted: 01 February 2026</div>
     </div>
 
+    <!-- PART A: SPONSOR DETAILS -->
+    <div class="part-header">PART A: SPONSOR DETAILS</div>
+
     <div class="section">
-        <div class="section-title">1. SPONSOR INFORMATION</div>
+        <div class="section-title">1. ENTITY INFORMATION</div>
         <div class="row">
-            <div class="field">
-                <div class="field-label">Sponsor Legal Name *</div>
-                <div class="field-value filled">Granite Capital Partners LLP</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Legal Name *</div>
+                <div class="field-value">Granite Capital Partners LLP</div>
             </div>
+            <div class="field">
+                <div class="field-label">Trading Name</div>
+                <div class="field-value">Granite Capital</div>
+            </div>
+        </div>
+        <div class="row">
             <div class="field">
                 <div class="field-label">Entity Type *</div>
-                <div class="field-value filled">Limited Liability Partnership (LLP)</div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="field">
-                <div class="field-label">Jurisdiction of Incorporation *</div>
-                <div class="field-value filled">United Kingdom</div>
+                <div class="field-value">Limited Liability Partnership (LLP)</div>
             </div>
             <div class="field">
-                <div class="field-label">Registration Number</div>
-                <div class="field-value filled">OC123456</div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="field">
-                <div class="field-label">Regulatory Status</div>
-                <div class="field-value filled">FCA Regulated</div>
+                <div class="field-label">Jurisdiction *</div>
+                <div class="field-value">United Kingdom</div>
             </div>
             <div class="field">
-                <div class="field-label">FCA FRN (if applicable)</div>
-                <div class="field-value filled">123456</div>
+                <div class="field-label">Registration Number *</div>
+                <div class="field-value">OC123456</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date of Incorporation *</div>
+                <div class="field-value">15 March 2015</div>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">2. PROPOSED FUND</div>
+        <div class="section-title">2. ADDRESSES</div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Fund Name *</div>
-                <div class="field-value filled">Granite Capital Fund III LP</div>
+                <div class="field-label">Registered Address *</div>
+                <div class="field-value">100 Liverpool Street, London, EC2M 2RH, United Kingdom</div>
             </div>
             <div class="field">
-                <div class="field-label">Fund Type *</div>
-                <div class="field-value filled">Jersey Private Fund (JPF)</div>
+                <div class="field-label">Business Address (if different)</div>
+                <div class="field-value">100 Liverpool Street, 5th Floor, London, EC2M 2RH, United Kingdom</div>
             </div>
         </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">3. REGULATORY STATUS</div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Legal Structure</div>
-                <div class="field-value filled">Limited Partnership</div>
+                <div class="field-label">Regulatory Status *</div>
+                <div class="field-value">Regulated</div>
             </div>
             <div class="field">
-                <div class="field-label">Target Fund Size (USD)</div>
-                <div class="field-value filled">$500,000,000</div>
+                <div class="field-label">Regulator</div>
+                <div class="field-value">FCA (Financial Conduct Authority)</div>
+            </div>
+            <div class="field">
+                <div class="field-label">License/Registration Number</div>
+                <div class="field-value">FRN 123456</div>
             </div>
         </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">4. SOURCE OF WEALTH & FUNDS</div>
         <div class="field">
-            <div class="field-label">Investment Strategy</div>
-            <div class="field-value filled">Mid-market buyout investments in UK and European technology and healthcare sectors. Target companies with EBITDA of $10-50M.</div>
+            <div class="field-label">Principal Business Activities *</div>
+            <div class="field-value multi">Private equity fund management, mid-market buyout investments in technology and healthcare sectors. Managed assets under management of approximately $2 billion across three funds.</div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Source of Wealth *</div>
+                <div class="field-value multi">Management fees from previous funds (Granite I and II totaling $1.2B AUM), carried interest from successful exits, and personal capital contributions from founding partners.</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Source of Funds *</div>
+                <div class="field-value multi">Institutional investors (pension funds, endowments), family offices, and high net worth individuals. Anchor commitments from UK pension funds totaling $150M.</div>
+            </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">3. KEY PRINCIPALS</div>
+        <div class="section-title">5. SPONSOR DIRECTORS & ULTIMATE BENEFICIAL OWNERS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Individuals with 25% or more ownership are flagged as UBOs</p>
         <table>
             <thead>
                 <tr>
                     <th>Full Name</th>
-                    <th>Role/Position</th>
+                    <th>Former Names</th>
+                    <th>Date of Birth</th>
                     <th>Nationality</th>
+                    <th>Country of Residence</th>
+                    <th>Residential Address</th>
+                    <th>Role</th>
                     <th>Ownership %</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>John Smith</td>
-                    <td>Managing Partner</td>
+                    <td>John Edward Smith <span class="ubo-badge">UBO</span></td>
+                    <td>-</td>
+                    <td>15/05/1972</td>
                     <td>British</td>
+                    <td>United Kingdom</td>
+                    <td>45 Kensington Gardens, London, W8 4QS</td>
+                    <td>Controller & UBO</td>
                     <td>35%</td>
                 </tr>
                 <tr>
-                    <td>Sarah Johnson</td>
-                    <td>Partner</td>
+                    <td>Sarah Anne Johnson <span class="ubo-badge">UBO</span></td>
+                    <td>Sarah Anne Williams (maiden)</td>
+                    <td>22/09/1978</td>
                     <td>British</td>
+                    <td>United Kingdom</td>
+                    <td>12 Chelsea Embankment, London, SW3 4LF</td>
+                    <td>Controller & UBO</td>
                     <td>35%</td>
                 </tr>
                 <tr>
-                    <td>Michael Brown</td>
-                    <td>Partner</td>
+                    <td>Michael James Brown <span class="ubo-badge">UBO</span></td>
+                    <td>-</td>
+                    <td>10/01/1980</td>
                     <td>British</td>
+                    <td>United Kingdom</td>
+                    <td>8 Hampstead Heath, London, NW3 1AA</td>
+                    <td>Controller & UBO</td>
                     <td>30%</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    <!-- PART B: FUND DETAILS -->
+    <div class="part-header green">PART B: FUND DETAILS</div>
+
     <div class="section">
-        <div class="section-title">4. PRIMARY CONTACT</div>
+        <div class="section-title">6. FUND STRUCTURE</div>
         <div class="row">
-            <div class="field">
-                <div class="field-label">Contact Name *</div>
-                <div class="field-value filled">John Smith</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Fund Name *</div>
+                <div class="field-value">Granite Capital Fund III LP</div>
             </div>
             <div class="field">
-                <div class="field-label">Position</div>
-                <div class="field-value filled">Managing Partner</div>
+                <div class="field-label">Fund Type *</div>
+                <div class="field-value">Jersey Private Fund (JPF)</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Legal Structure *</div>
+                <div class="field-value">Limited Partnership</div>
             </div>
         </div>
         <div class="row">
             <div class="field">
-                <div class="field-label">Email *</div>
-                <div class="field-value filled">john.smith@granitecapital.com</div>
+                <div class="field-label">Target Fund Size *</div>
+                <div class="field-value">$500,000,000</div>
             </div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Investment Strategy *</div>
+                <div class="field-value">Mid-market buyout investments in UK and European technology and healthcare sectors. Target companies with EBITDA of $10-50M.</div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 12px;">
             <div class="field">
-                <div class="field-label">Phone</div>
-                <div class="field-value filled">+44 20 7123 4567</div>
+                <div class="field-label">Target Investment Countries/Regions *</div>
+                <div class="field-value">
+                    <span style="display: inline-block; background: #2563eb; color: white; padding: 2px 8px; border-radius: 3px; font-size: 8pt; margin: 2px;">United Kingdom</span>
+                    <span style="display: inline-block; background: #2563eb; color: white; padding: 2px 8px; border-radius: 3px; font-size: 8pt; margin: 2px;">European Union</span>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">5. SOURCE OF ENQUIRY</div>
+        <div class="section-title">7. FUND GP DIRECTORS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Directors of the Fund's General Partner entity</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Former Names</th>
+                    <th>Date of Birth</th>
+                    <th>Nationality</th>
+                    <th>Country of Residence</th>
+                    <th>Residential Address</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>John Edward Smith</td>
+                    <td>-</td>
+                    <td>15/05/1972</td>
+                    <td>British</td>
+                    <td>United Kingdom</td>
+                    <td>45 Kensington Gardens, London, W8 4QS</td>
+                    <td>Director</td>
+                </tr>
+                <tr>
+                    <td>Sarah Anne Johnson</td>
+                    <td>Sarah Anne Williams (maiden)</td>
+                    <td>22/09/1978</td>
+                    <td>British</td>
+                    <td>United Kingdom</td>
+                    <td>12 Chelsea Embankment, London, SW3 4LF</td>
+                    <td>Director</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">8. INITIAL/SEED INVESTORS</div>
+        <p style="font-size: 8pt; color: #666; margin-bottom: 8px;">Known or expected initial investors and anticipated commitments</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Investor Name</th>
+                    <th>Investor Type</th>
+                    <th>Jurisdiction</th>
+                    <th>Commitment %</th>
+                    <th>Commitment Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>UK Public Pension Fund</td>
+                    <td>Pension Fund</td>
+                    <td>United Kingdom</td>
+                    <td>30%</td>
+                    <td>$150,000,000</td>
+                </tr>
+                <tr>
+                    <td>Smith Family Office</td>
+                    <td>Family Office</td>
+                    <td>United Kingdom</td>
+                    <td>10%</td>
+                    <td>$50,000,000</td>
+                </tr>
+                <tr>
+                    <td>European Insurance Co</td>
+                    <td>Institutional</td>
+                    <td>European Union</td>
+                    <td>25%</td>
+                    <td>$125,000,000</td>
+                </tr>
+                <tr>
+                    <td>US University Endowment</td>
+                    <td>Institutional</td>
+                    <td>United States</td>
+                    <td>20%</td>
+                    <td>$100,000,000</td>
+                </tr>
+                <tr>
+                    <td>GP Commitment</td>
+                    <td>Sponsor/Affiliate</td>
+                    <td>United Kingdom</td>
+                    <td>15%</td>
+                    <td>$75,000,000</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="table-success">
+                    <td colspan="3" class="text-end"><strong>Total Commitment:</strong></td>
+                    <td><strong>100%</strong></td>
+                    <td><strong>$500,000,000</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- PART C: CONTACT & DECLARATION -->
+    <div class="part-header gray">PART C: CONTACT & DECLARATION</div>
+
+    <div class="section">
+        <div class="section-title">9. PRIMARY CONTACT</div>
+        <div class="row">
+            <div class="field">
+                <div class="field-label">Contact Name *</div>
+                <div class="field-value">John Smith</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Email *</div>
+                <div class="field-value">john.smith@granitecapital.com</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value">+44 20 7123 4567</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">10. REFERRAL SOURCE</div>
         <div class="row">
             <div class="field">
                 <div class="field-label">How did you hear about us?</div>
-                <div class="field-value filled">Referral</div>
+                <div class="field-value">Referral</div>
             </div>
-            <div class="field">
-                <div class="field-label">Referrer Name (if applicable)</div>
-                <div class="field-value filled">James Wilson - Highland Ventures</div>
+            <div class="field" style="flex: 2;">
+                <div class="field-label">Referrer Name/Details</div>
+                <div class="field-value">James Wilson - Highland Ventures</div>
             </div>
         </div>
     </div>
 
     <div class="declaration">
-        <p style="margin-bottom: 15px;"><strong>DECLARATION</strong></p>
-        <p style="font-size: 10pt; margin-bottom: 15px;">
+        <p style="margin-bottom: 12px; font-weight: bold;">12. DECLARATION</p>
+        <p style="margin-bottom: 10px;">
             <span class="checkbox checked"></span>
-            I confirm that the information provided in this form is true and accurate to the best of my knowledge.
-            I understand that CoreWorker will conduct due diligence checks as part of the onboarding process.
+            I confirm that the information provided in this form is accurate and complete to the best of my knowledge.
+            I understand that this information will be used for due diligence and regulatory compliance purposes.
         </p>
-        <div class="row" style="margin-top: 30px;">
+        <div class="row" style="margin-top: 25px;">
             <div class="field">
                 <div class="signature-line">John Smith</div>
                 <div class="signature-label">Signature</div>

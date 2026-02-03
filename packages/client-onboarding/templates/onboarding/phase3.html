@@ -419,10 +419,19 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.textContent = 'Screening complete!';
 
             setTimeout(() => {
-                displayResults(data);
+                // Re-enable buttons first to ensure UI is responsive
                 progressDiv.classList.add('d-none');
                 runBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Re-run Screening';
                 runBtn.disabled = false;
+                continueBtn.disabled = false; // Enable continue regardless of display success
+
+                // Display results with error handling
+                try {
+                    displayResults(data);
+                } catch (displayError) {
+                    console.error('Error displaying results:', displayError);
+                    alert('Screening completed but there was an error displaying results. Check console for details.');
+                }
             }, 500);
 
         } catch (error) {
