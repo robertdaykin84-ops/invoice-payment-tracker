@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if enquiry %}Verify {% if uploaded %}Extracted Data{% else %}Enquiry{% endif %}{% else %}Phase 1: Enquiry{% endif %}{% endblock %}
+{% block title %}New Client Enquiry{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,22 +8,12 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                {% if enquiry %}
-                <li class="breadcrumb-item"><a href="{{ url_for('pending_enquiries') }}">Enquiries</a></li>
-                <li class="breadcrumb-item active">Verify & Confirm</li>
-                {% else %}
                 <li class="breadcrumb-item"><a href="{{ url_for('new_onboarding') }}">New Client or Fund</a></li>
-                <li class="breadcrumb-item active">Phase 1: Enquiry</li>
-                {% endif %}
+                <li class="breadcrumb-item active">New Enquiry</li>
             </ol>
         </nav>
-        {% if enquiry %}
-        <h1 class="h3 mb-1">{% if uploaded %}Verify Extracted Information{% else %}Verify Enquiry Information{% endif %}</h1>
-        <p class="text-muted">{% if uploaded %}Review the AI-extracted data and correct any errors before proceeding{% else %}Review and confirm the details from the client's submitted enquiry form{% endif %}</p>
-        {% else %}
-        <h1 class="h3 mb-1">Initial Enquiry</h1>
-        <p class="text-muted">Capture basic client information and perform initial checks</p>
-        {% endif %}
+        <h1 class="h3 mb-1">New Client Enquiry</h1>
+        <p class="text-muted">Complete this form to submit a new client enquiry</p>
     </div>
 </div>
 
@@ -45,74 +35,89 @@
 
 <div class="row">
     <div class="col-lg-8">
-        {% if enquiry %}
-        <!-- Verification Banner -->
-        <div class="alert {% if uploaded %}alert-success{% else %}alert-info{% endif %} mb-4">
-            <div class="d-flex align-items-start gap-3">
-                {% if uploaded %}
-                <i class="bi bi-robot fs-4"></i>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1">AI Data Extraction Complete</h6>
-                    <p class="small mb-0">
-                        The information below was automatically extracted from the uploaded enquiry form.
-                        <strong>Please review carefully</strong> and correct any extraction errors before confirming.
-                    </p>
-                </div>
-                {% else %}
-                <i class="bi bi-clipboard-check fs-4"></i>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1">Enquiry {{ enquiry.id }} - Submitted {{ enquiry.submitted_at }}</h6>
-                    <p class="small mb-0">
-                        Please review the information below. Make any necessary corrections before confirming to proceed with onboarding.
-                    </p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
         <div class="card">
             <div class="card-header">
-                {% if enquiry %}
-                <i class="bi bi-pencil-square me-2"></i>
-                Review & Edit Information
-                {% else %}
                 <i class="bi bi-clipboard-check me-2"></i>
-                Initial Enquiry Form
-                {% endif %}
+                Client Enquiry Form
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}">
-                    <!-- Sponsor Information -->
-                    <h6 class="text-uppercase text-muted small mb-3">
-                        Sponsor Information
-                        {% if enquiry %}<span class="badge bg-secondary ms-2">From Enquiry</span>{% endif %}
-                    </h6>
+                    <!-- Section 1: Sponsor Entity Details -->
+                    <h6 class="text-uppercase text-muted small mb-3">Sponsor Entity Details</h6>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Sponsor Legal Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="sponsor_name" required
+                        <div class="col-md-8">
+                            <label class="form-label">Legal Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="legal_name" required
                                    placeholder="e.g., Granite Capital Partners LLP"
-                                   value="{{ enquiry.sponsor_name if enquiry else '' }}">
+                                   value="{{ enquiry.legal_name if enquiry else '' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Entity Type <span class="text-danger">*</span></label>
-                            <select class="form-select" name="entity_type" required>
-                                <option value="">Select entity type...</option>
-                                <option value="company" {% if enquiry and enquiry.entity_type == 'company' %}selected{% endif %}>Private Company (Ltd/Inc)</option>
-                                <option value="llp" {% if enquiry and enquiry.entity_type == 'llp' %}selected{% endif %}>Limited Liability Partnership (LLP)</option>
-                                <option value="lp" {% if enquiry and enquiry.entity_type == 'lp' %}selected{% endif %}>Limited Partnership (LP)</option>
-                                <option value="trust" {% if enquiry and enquiry.entity_type == 'trust' %}selected{% endif %}>Trust</option>
-                                <option value="foundation" {% if enquiry and enquiry.entity_type == 'foundation' %}selected{% endif %}>Foundation</option>
-                                <option value="other" {% if enquiry and enquiry.entity_type == 'other' %}selected{% endif %}>Other</option>
-                            </select>
+                        <div class="col-md-4">
+                            <label class="form-label">Trading Name</label>
+                            <input type="text" class="form-control" name="trading_name"
+                                   placeholder="If different from legal name"
+                                   value="{{ enquiry.trading_name if enquiry else '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Entity Type Radio Button Cards -->
+                    <div class="mb-4">
+                        <label class="form-label">Entity Type <span class="text-danger">*</span></label>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_company" value="company" {% if enquiry and enquiry.entity_type == 'company' %}checked{% elif not enquiry %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_company">
+                                    <i class="bi bi-building me-2"></i>
+                                    <strong>Company</strong>
+                                    <small class="d-block text-muted">Ltd, Inc, PLC</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_llp" value="llp" {% if enquiry and enquiry.entity_type == 'llp' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_llp">
+                                    <i class="bi bi-people me-2"></i>
+                                    <strong>LLP</strong>
+                                    <small class="d-block text-muted">Limited Liability Partnership</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_lp" value="lp" {% if enquiry and enquiry.entity_type == 'lp' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_lp">
+                                    <i class="bi bi-diagram-3 me-2"></i>
+                                    <strong>LP</strong>
+                                    <small class="d-block text-muted">Limited Partnership</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_trust" value="trust" {% if enquiry and enquiry.entity_type == 'trust' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_trust">
+                                    <i class="bi bi-shield-check me-2"></i>
+                                    <strong>Trust</strong>
+                                    <small class="d-block text-muted">Trust structure</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_foundation" value="foundation" {% if enquiry and enquiry.entity_type == 'foundation' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_foundation">
+                                    <i class="bi bi-bank me-2"></i>
+                                    <strong>Foundation</strong>
+                                    <small class="d-block text-muted">Foundation entity</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="entity_type" id="type_other" value="other" {% if enquiry and enquiry.entity_type == 'other' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_other">
+                                    <i class="bi bi-three-dots me-2"></i>
+                                    <strong>Other</strong>
+                                    <small class="d-block text-muted">Other entity type</small>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Jurisdiction of Incorporation <span class="text-danger">*</span></label>
+                        <div class="col-md-4">
+                            <label class="form-label">Jurisdiction <span class="text-danger">*</span></label>
                             <select class="form-select" name="jurisdiction" required>
                                 <option value="">Select jurisdiction...</option>
                                 <option value="UK" {% if enquiry and enquiry.jurisdiction == 'UK' %}selected{% endif %}>United Kingdom</option>
@@ -122,187 +127,53 @@
                                 <option value="Luxembourg" {% if enquiry and enquiry.jurisdiction == 'Luxembourg' %}selected{% endif %}>Luxembourg</option>
                                 <option value="Ireland" {% if enquiry and enquiry.jurisdiction == 'Ireland' %}selected{% endif %}>Ireland</option>
                                 <option value="US-Delaware" {% if enquiry and enquiry.jurisdiction == 'US-Delaware' %}selected{% endif %}>United States (Delaware)</option>
-                                <option value="other" {% if enquiry and enquiry.jurisdiction == 'other' %}selected{% endif %}>Other (specify below)</option>
+                                <option value="Other" {% if enquiry and enquiry.jurisdiction == 'Other' %}selected{% endif %}>Other</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Registration Number</label>
-                            <input type="text" class="form-control" name="registration_number"
+                        <div class="col-md-4">
+                            <label class="form-label">Registration Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="registration_number" required
                                    placeholder="e.g., OC123456"
                                    value="{{ enquiry.registration_number if enquiry else '' }}">
                         </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <!-- Proposed Fund -->
-                    <h6 class="text-uppercase text-muted small mb-3">
-                        Proposed Fund Structure
-                        {% if enquiry %}<span class="badge bg-secondary ms-2">From Enquiry</span>{% endif %}
-                    </h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Fund Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="fund_name" required
-                                   placeholder="e.g., Granite Capital Fund III LP"
-                                   value="{{ enquiry.fund_name if enquiry else '' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Fund Type <span class="text-danger">*</span></label>
-                            <select class="form-select" name="fund_type" required>
-                                <option value="">Select fund type...</option>
-                                <option value="jpf" {% if enquiry and enquiry.fund_type == 'jpf' %}selected{% endif %}>Jersey Private Fund (JPF)</option>
-                                <option value="expert" {% if enquiry and enquiry.fund_type == 'expert' %}selected{% endif %}>Expert Fund</option>
-                                <option value="listed" {% if enquiry and enquiry.fund_type == 'listed' %}selected{% endif %}>Listed Fund</option>
-                                <option value="other" {% if enquiry and enquiry.fund_type == 'other' %}selected{% endif %}>Other</option>
-                            </select>
+                        <div class="col-md-4">
+                            <label class="form-label">Date of Incorporation <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="date_of_incorporation" required
+                                   value="{{ enquiry.date_of_incorporation if enquiry else '' }}">
                         </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">Legal Structure</label>
-                            <select class="form-select" name="legal_structure">
-                                <option value="">Select structure...</option>
-                                <option value="lp" {% if enquiry and enquiry.legal_structure == 'lp' %}selected{% endif %}>Limited Partnership</option>
-                                <option value="unit_trust" {% if enquiry and enquiry.legal_structure == 'unit_trust' %}selected{% endif %}>Unit Trust</option>
-                                <option value="icc" {% if enquiry and enquiry.legal_structure == 'icc' %}selected{% endif %}>Incorporated Cell Company (ICC)</option>
-                                <option value="pcc" {% if enquiry and enquiry.legal_structure == 'pcc' %}selected{% endif %}>Protected Cell Company (PCC)</option>
-                                <option value="other" {% if enquiry and enquiry.legal_structure == 'other' %}selected{% endif %}>Other</option>
-                            </select>
+                            <label class="form-label">Registered Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="registered_address" rows="2" required
+                                      placeholder="Full registered address...">{{ enquiry.registered_address if enquiry else '' }}</textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Target Fund Size</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control" name="target_size"
-                                       placeholder="e.g., 500,000,000"
-                                       value="{{ enquiry.target_size if enquiry else '' }}">
+                            <label class="form-label">Principal Place of Business</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="sameAsRegistered" name="same_as_registered">
+                                <label class="form-check-label small" for="sameAsRegistered">
+                                    Same as registered address
+                                </label>
                             </div>
+                            <textarea class="form-control" name="principal_place_of_business" rows="2" id="principalPlaceOfBusiness"
+                                      placeholder="Principal place of business...">{{ enquiry.principal_place_of_business if enquiry else '' }}</textarea>
                         </div>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Investment Strategy</label>
-                        <textarea class="form-control" name="investment_strategy" rows="3"
-                                  placeholder="Brief description of investment focus and strategy...">{{ enquiry.investment_strategy if enquiry else '' }}</textarea>
-                    </div>
-
-                    {% if enquiry and enquiry.principals %}
-                    <hr class="my-4">
-
-                    <!-- Principals from Enquiry -->
-                    <h6 class="text-uppercase text-muted small mb-3">
-                        Key Principals <span class="badge bg-secondary ms-2">From Enquiry</span>
-                    </h6>
-                    <div class="alert alert-light border small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        These principals were provided in the enquiry. You'll capture full CDD details in Phase 2.
-                    </div>
-                    <div class="table-responsive mb-4">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Nationality</th>
-                                    <th>Ownership</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for principal in enquiry.principals %}
-                                <tr>
-                                    <td>{{ principal.name }}</td>
-                                    <td>{{ principal.role }}</td>
-                                    <td>{{ principal.nationality }}</td>
-                                    <td>{{ principal.ownership }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% endif %}
-
-                    <hr class="my-4">
-
-                    <!-- Contact Information -->
-                    <h6 class="text-uppercase text-muted small mb-3">
-                        Primary Contact
-                        {% if enquiry %}<span class="badge bg-secondary ms-2">From Enquiry</span>{% endif %}
-                    </h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Contact Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="contact_name" required
-                                   value="{{ enquiry.contact_name if enquiry else '' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" name="contact_email" required
-                                   value="{{ enquiry.contact_email if enquiry else '' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Phone</label>
-                            <input type="tel" class="form-control" name="contact_phone"
-                                   value="{{ enquiry.contact_phone if enquiry else '' }}">
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <!-- Source of Enquiry -->
-                    <h6 class="text-uppercase text-muted small mb-3">Enquiry Source</h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">How did they hear about us?</label>
-                            <select class="form-select" name="enquiry_source">
-                                <option value="">Select source...</option>
-                                <option value="referral" {% if enquiry and enquiry.enquiry_source == 'referral' %}selected{% endif %}>Referral</option>
-                                <option value="existing" {% if enquiry and enquiry.enquiry_source == 'existing' %}selected{% endif %}>Existing Client</option>
-                                <option value="website" {% if enquiry and enquiry.enquiry_source == 'website' %}selected{% endif %}>Website</option>
-                                <option value="event" {% if enquiry and enquiry.enquiry_source == 'event' %}selected{% endif %}>Industry Event</option>
-                                <option value="other" {% if enquiry and enquiry.enquiry_source == 'other' %}selected{% endif %}>Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Referrer Name (if applicable)</label>
-                            <input type="text" class="form-control" name="referrer_name"
-                                   value="{{ enquiry.referrer_name if enquiry else '' }}">
-                        </div>
-                    </div>
-
-                    <!-- Hidden field for enquiry ID -->
-                    {% if enquiry %}
-                    <input type="hidden" name="source_enquiry_id" value="{{ enquiry.id }}">
-                    {% endif %}
 
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-between mt-4 pt-3 border-top">
-                        {% if enquiry %}
-                        <a href="{{ url_for('pending_enquiries') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i> Back to Enquiries
-                        </a>
-                        {% else %}
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-x-lg me-1"></i> Cancel
                         </a>
-                        {% endif %}
                         <div>
                             <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
                                 <i class="bi bi-save me-1"></i> Save Draft
                             </button>
-                            {% if enquiry %}
-                            <button type="submit" name="action" value="next" class="btn btn-success">
-                                <i class="bi bi-check-lg me-1"></i> Confirm & Continue
-                            </button>
-                            {% else %}
                             <button type="submit" name="action" value="next" class="btn btn-primary">
-                                Continue to Phase 2 <i class="bi bi-arrow-right ms-1"></i>
+                                Continue <i class="bi bi-arrow-right ms-1"></i>
                             </button>
-                            {% endif %}
                         </div>
                     </div>
                 </form>
@@ -312,83 +183,23 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
-        {% if enquiry %}
-        <!-- Source Document Reference -->
-        <div class="card mb-4 {% if uploaded %}border-success{% else %}border-info{% endif %}">
-            <div class="card-header {% if uploaded %}bg-success bg-opacity-10 text-success{% else %}bg-info bg-opacity-10 text-info{% endif %}">
-                {% if uploaded %}
-                <i class="bi bi-file-earmark-arrow-up me-2"></i>
-                Uploaded Document
-                {% else %}
-                <i class="bi bi-file-earmark-text me-2"></i>
-                Original Enquiry
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if uploaded %}
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">Source</span>
-                    <span class="small">Uploaded File</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">Extraction</span>
-                    <span class="text-success small"><i class="bi bi-check-circle"></i> Complete</span>
-                </div>
-                <div class="d-flex justify-content-between mb-3">
-                    <span class="text-muted small">Status</span>
-                    <span class="badge bg-warning text-dark">Awaiting Verification</span>
-                </div>
-                {% else %}
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">Enquiry ID</span>
-                    <code>{{ enquiry.id }}</code>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">Submitted</span>
-                    <span class="small">{{ enquiry.submitted_at }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-3">
-                    <span class="text-muted small">Declaration</span>
-                    <span class="text-success small"><i class="bi bi-check-circle"></i> Accepted</span>
-                </div>
-                <a href="{{ url_for('view_enquiry', enquiry_id=enquiry.id) }}" target="_blank" class="btn btn-outline-info btn-sm w-100">
-                    <i class="bi bi-eye me-1"></i> View Full Enquiry
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
         <!-- Phase Info -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-info-circle me-2"></i>
-                {% if enquiry %}Verification Checklist{% else %}Phase 1 Guidance{% endif %}
+                Enquiry Guidance
             </div>
             <div class="card-body">
-                {% if enquiry %}
                 <p class="small text-muted mb-3">
-                    Before confirming, please verify:
+                    This form captures the essential information about the sponsor entity to begin the client onboarding process.
                 </p>
-                <ul class="small mb-0">
-                    <li class="mb-2">Sponsor name and entity type are correct</li>
-                    <li class="mb-2">Jurisdiction matches company registration</li>
-                    <li class="mb-2">Fund details align with your understanding</li>
-                    <li class="mb-2">Contact information is up to date</li>
-                    <li>Any obvious errors have been corrected</li>
-                </ul>
-                {% else %}
-                <p class="small text-muted mb-3">
-                    The initial enquiry captures basic information to assess whether to proceed with onboarding.
-                </p>
-                <h6 class="small fw-bold">Key Checks:</h6>
+                <h6 class="small fw-bold">Required Information:</h6>
                 <ul class="small text-muted mb-0">
-                    <li>Jurisdiction risk assessment</li>
-                    <li>Conflict of interest check</li>
-                    <li>Initial sanction screening</li>
-                    <li>Service capacity check</li>
+                    <li>Legal name and entity type</li>
+                    <li>Jurisdiction of incorporation</li>
+                    <li>Registration details</li>
+                    <li>Registered address</li>
                 </ul>
-                {% endif %}
             </div>
         </div>
 
@@ -420,4 +231,29 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sameAsRegisteredCheckbox = document.getElementById('sameAsRegistered');
+    const principalPlaceOfBusiness = document.getElementById('principalPlaceOfBusiness');
+    const registeredAddress = document.querySelector('textarea[name="registered_address"]');
+
+    if (sameAsRegisteredCheckbox && principalPlaceOfBusiness && registeredAddress) {
+        sameAsRegisteredCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                principalPlaceOfBusiness.value = registeredAddress.value;
+                principalPlaceOfBusiness.disabled = true;
+            } else {
+                principalPlaceOfBusiness.disabled = false;
+            }
+        });
+
+        registeredAddress.addEventListener('input', function() {
+            if (sameAsRegisteredCheckbox.checked) {
+                principalPlaceOfBusiness.value = this.value;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
