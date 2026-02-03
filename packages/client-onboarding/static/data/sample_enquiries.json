@@ -1,0 +1,277 @@
+[
+  {
+    "sponsor": {
+      "legal_name": "Granite Capital Partners LLP",
+      "trading_name": "Granite Capital",
+      "entity_type": "LLP",
+      "jurisdiction": "United Kingdom",
+      "registration_number": "OC412589",
+      "date_incorporated": "2018-03-15",
+      "registered_address": {
+        "line1": "45 Moorgate",
+        "line2": "Floor 3",
+        "city": "London",
+        "postcode": "EC2R 6AR",
+        "country": "United Kingdom"
+      },
+      "business_address": {
+        "line1": "45 Moorgate",
+        "line2": "Floor 3",
+        "city": "London",
+        "postcode": "EC2R 6AR",
+        "country": "United Kingdom"
+      },
+      "regulatory_status": "Authorised",
+      "regulator": "Financial Conduct Authority",
+      "license_number": "FRN 823456",
+      "business_activities": [
+        "Investment Management",
+        "Investment Advisory"
+      ],
+      "source_of_wealth": "Partner capital contributions and retained earnings from investment management fees"
+    },
+    "fund": {
+      "fund_name": "Granite UK Property Opportunities Fund I",
+      "fund_type": "Closed-Ended",
+      "legal_structure": "Limited Partnership",
+      "target_size": 150000000,
+      "investment_strategy": "Value-add commercial real estate investments in UK regional cities, focusing on office and industrial properties with repositioning potential"
+    },
+    "principals": [
+      {
+        "full_name": "John Edward Smith",
+        "former_names": null,
+        "dob": "1975-06-22",
+        "nationality": "British",
+        "country_of_residence": "United Kingdom",
+        "residential_address": {
+          "line1": "12 Kensington Gardens Square",
+          "line2": "Flat 4",
+          "city": "London",
+          "postcode": "W2 4BH",
+          "country": "United Kingdom"
+        },
+        "role": "Managing Partner",
+        "ownership_pct": 40,
+        "is_ubo": true
+      },
+      {
+        "full_name": "Sarah Louise Johnson",
+        "former_names": "Sarah Louise Williams",
+        "dob": "1980-11-03",
+        "nationality": "British",
+        "country_of_residence": "United Kingdom",
+        "residential_address": {
+          "line1": "78 Hampstead Lane",
+          "line2": null,
+          "city": "London",
+          "postcode": "N6 4RS",
+          "country": "United Kingdom"
+        },
+        "role": "Partner",
+        "ownership_pct": 35,
+        "is_ubo": true
+      },
+      {
+        "full_name": "Michael James Brown",
+        "former_names": null,
+        "dob": "1982-02-14",
+        "nationality": "British",
+        "country_of_residence": "United Kingdom",
+        "residential_address": {
+          "line1": "5 Richmond Hill",
+          "line2": "Apartment 12",
+          "city": "Richmond",
+          "postcode": "TW10 6QX",
+          "country": "United Kingdom"
+        },
+        "role": "Partner",
+        "ownership_pct": 25,
+        "is_ubo": true
+      }
+    ],
+    "contact": {
+      "name": "John Edward Smith",
+      "email": "john.smith@granitecapital.co.uk",
+      "phone": "+44 20 7946 0958",
+      "enquiry_source": "Referral",
+      "referrer_name": "Clifford Chance LLP"
+    }
+  },
+  {
+    "sponsor": {
+      "legal_name": "Evergreen Capital Management Ltd",
+      "trading_name": "Evergreen Capital",
+      "entity_type": "Private Limited Company",
+      "jurisdiction": "United Kingdom",
+      "registration_number": "09876543",
+      "date_incorporated": "2015-09-01",
+      "registered_address": {
+        "line1": "One Canada Square",
+        "line2": "Level 28",
+        "city": "London",
+        "postcode": "E14 5AB",
+        "country": "United Kingdom"
+      },
+      "business_address": {
+        "line1": "One Canada Square",
+        "line2": "Level 28",
+        "city": "London",
+        "postcode": "E14 5AB",
+        "country": "United Kingdom"
+      },
+      "regulatory_status": "Authorised",
+      "regulator": "Financial Conduct Authority",
+      "license_number": "FRN 756234",
+      "business_activities": [
+        "Portfolio Management",
+        "Investment Advisory",
+        "Fund Administration"
+      ],
+      "source_of_wealth": "Institutional seed capital and accumulated management fees from fund operations"
+    },
+    "fund": {
+      "fund_name": "Evergreen Sustainable Infrastructure Fund",
+      "fund_type": "Open-Ended",
+      "legal_structure": "Unit Trust",
+      "target_size": 500000000,
+      "investment_strategy": "Long-term investments in renewable energy infrastructure across Europe, including solar, wind, and energy storage projects"
+    },
+    "principals": [
+      {
+        "full_name": "Catherine Elizabeth Morgan",
+        "former_names": null,
+        "dob": "1972-04-18",
+        "nationality": "British",
+        "country_of_residence": "United Kingdom",
+        "residential_address": {
+          "line1": "23 Chelsea Embankment",
+          "line2": null,
+          "city": "London",
+          "postcode": "SW3 4LG",
+          "country": "United Kingdom"
+        },
+        "role": "Chief Executive Officer",
+        "ownership_pct": 0,
+        "is_ubo": false
+      },
+      {
+        "full_name": "David Robert Chen",
+        "former_names": null,
+        "dob": "1978-08-25",
+        "nationality": "British",
+        "country_of_residence": "United Kingdom",
+        "residential_address": {
+          "line1": "15 Primrose Hill Road",
+          "line2": "Garden Flat",
+          "city": "London",
+          "postcode": "NW3 3AD",
+          "country": "United Kingdom"
+        },
+        "role": "Chief Investment Officer",
+        "ownership_pct": 0,
+        "is_ubo": false
+      },
+      {
+        "full_name": "Meridian Holdings PLC",
+        "former_names": null,
+        "dob": null,
+        "nationality": null,
+        "country_of_residence": null,
+        "residential_address": null,
+        "role": "Corporate Shareholder",
+        "ownership_pct": 100,
+        "is_ubo": false
+      }
+    ],
+    "contact": {
+      "name": "Catherine Elizabeth Morgan",
+      "email": "c.morgan@evergreencapital.com",
+      "phone": "+44 20 3456 7890",
+      "enquiry_source": "Industry Conference",
+      "referrer_name": null
+    }
+  },
+  {
+    "sponsor": {
+      "legal_name": "Nordic Ventures AS",
+      "trading_name": "Nordic Ventures",
+      "entity_type": "Aksjeselskap",
+      "jurisdiction": "Norway",
+      "registration_number": "923 456 789",
+      "date_incorporated": "2019-06-12",
+      "registered_address": {
+        "line1": "Aker Brygge 21",
+        "line2": "4th Floor",
+        "city": "Oslo",
+        "postcode": "0250",
+        "country": "Norway"
+      },
+      "business_address": {
+        "line1": "Aker Brygge 21",
+        "line2": "4th Floor",
+        "city": "Oslo",
+        "postcode": "0250",
+        "country": "Norway"
+      },
+      "regulatory_status": "Authorised",
+      "regulator": "Financial Supervisory Authority of Norway",
+      "license_number": "AIFM-2020-0145",
+      "business_activities": [
+        "Venture Capital",
+        "Private Equity Advisory"
+      ],
+      "source_of_wealth": "Founder capital and institutional commitments from Nordic pension funds"
+    },
+    "fund": {
+      "fund_name": "Nordic Growth Technology Fund II",
+      "fund_type": "Closed-Ended",
+      "legal_structure": "Limited Partnership",
+      "target_size": 200000000,
+      "investment_strategy": "Early to growth-stage investments in Nordic technology companies, with focus on SaaS, fintech, and cleantech sectors"
+    },
+    "principals": [
+      {
+        "full_name": "Erik Anders Lindqvist",
+        "former_names": null,
+        "dob": "1976-12-08",
+        "nationality": "Norwegian",
+        "country_of_residence": "Norway",
+        "residential_address": {
+          "line1": "Bygdoy Alle 45",
+          "line2": null,
+          "city": "Oslo",
+          "postcode": "0265",
+          "country": "Norway"
+        },
+        "role": "Managing Director",
+        "ownership_pct": 60,
+        "is_ubo": true
+      },
+      {
+        "full_name": "Ingrid Marie Haugen",
+        "former_names": "Ingrid Marie Olsen",
+        "dob": "1983-05-30",
+        "nationality": "Norwegian",
+        "country_of_residence": "Norway",
+        "residential_address": {
+          "line1": "Holmenkollveien 112",
+          "line2": null,
+          "city": "Oslo",
+          "postcode": "0784",
+          "country": "Norway"
+        },
+        "role": "Investment Director",
+        "ownership_pct": 40,
+        "is_ubo": true
+      }
+    ],
+    "contact": {
+      "name": "Erik Anders Lindqvist",
+      "email": "erik.lindqvist@nordicventures.no",
+      "phone": "+47 22 83 45 67",
+      "enquiry_source": "Website",
+      "referrer_name": null
+    }
+  }
+]
