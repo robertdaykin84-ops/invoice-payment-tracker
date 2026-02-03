@@ -972,47 +972,77 @@ class SheetsDB:
 
         logger.info("Seeding initial data...")
 
-        # Create 3 enquiries
+        # Create 3 enquiries with enhanced fields
         enquiries = [
             {
                 'sponsor_name': 'Granite Capital Partners LLP',
+                'trading_name': '',
                 'fund_name': 'Granite Capital Fund III LP',
                 'contact_name': 'John Smith',
                 'contact_email': 'john.smith@granitecapital.com',
                 'entity_type': 'llp',
                 'jurisdiction': 'UK',
                 'registration_number': 'OC123456',
-                'regulatory_status': 'FCA Regulated',
+                'date_incorporated': '2015-03-15',
+                'registered_address': '10 Fleet Street\nLondon\nEC4Y 1AU\nUnited Kingdom',
+                'business_address': '',
+                'regulatory_status': 'regulated',
+                'regulator': 'FCA',
+                'license_number': '789012',
+                'business_activities': 'Private equity fund management focused on mid-market buyouts in technology and healthcare sectors.',
+                'source_of_wealth': 'Management fees from existing funds (Funds I and II totaling $800M AUM), carried interest from successful exits.',
+                'fund_type': 'jpf',
+                'legal_structure': 'lp',
                 'investment_strategy': 'Mid-market buyout investments in UK and European technology and healthcare sectors.',
-                'target_size': '500,000,000',
+                'target_size': '500000000',
                 'status': 'pending',
                 'created_by': 'system'
             },
             {
                 'sponsor_name': 'Evergreen Capital Management Ltd',
+                'trading_name': 'Evergreen Capital',
                 'fund_name': 'Evergreen Sustainable Growth Fund LP',
                 'contact_name': 'Elizabeth Chen',
                 'contact_email': 'e.chen@evergreencap.com',
                 'entity_type': 'company',
                 'jurisdiction': 'UK',
                 'registration_number': '12345678',
-                'regulatory_status': 'FCA Regulated',
+                'date_incorporated': '2018-07-20',
+                'registered_address': '25 Old Broad Street\nLondon\nEC2N 1HQ\nUnited Kingdom',
+                'business_address': '25 Old Broad Street\nLondon\nEC2N 1HQ\nUnited Kingdom',
+                'regulatory_status': 'regulated',
+                'regulator': 'FCA',
+                'license_number': '823456',
+                'business_activities': 'ESG-focused investment management specializing in renewable energy infrastructure.',
+                'source_of_wealth': 'Seed capital from founding partners, subsequently grown through management and performance fees from Fund I.',
+                'fund_type': 'jpf',
+                'legal_structure': 'lp',
                 'investment_strategy': 'ESG-focused growth equity investments in renewable energy infrastructure.',
-                'target_size': '250,000,000',
+                'target_size': '250000000',
                 'status': 'pending',
                 'created_by': 'system'
             },
             {
                 'sponsor_name': 'Nordic Ventures AS',
+                'trading_name': '',
                 'fund_name': 'Nordic Technology Opportunities Fund LP',
                 'contact_name': 'Erik Larsson',
                 'contact_email': 'erik@nordicventures.no',
                 'entity_type': 'company',
-                'jurisdiction': 'Norway',
+                'jurisdiction': 'Other',
                 'registration_number': 'NO 912 345 678',
-                'regulatory_status': 'FSA Norway Regulated',
+                'date_incorporated': '2012-01-10',
+                'registered_address': 'Aker Brygge 1\nOslo 0250\nNorway',
+                'business_address': 'Aker Brygge 1\nOslo 0250\nNorway',
+                'regulatory_status': 'regulated',
+                'regulator': 'Other',
+                'license_number': 'NOR-2012-0456',
+                'business_activities': 'Venture capital and growth equity investments in Nordic technology companies.',
+                'source_of_wealth': 'Founding partners successful exits from previous ventures, combined with institutional LP commitments.',
+                'fund_type': 'expert',
+                'legal_structure': 'lp',
                 'investment_strategy': 'Early-stage and growth investments in Nordic technology companies.',
-                'target_size': '150,000,000',
+                'target_size': '150000000',
                 'status': 'pending',
                 'created_by': 'system'
             }
@@ -1023,30 +1053,48 @@ class SheetsDB:
             enq_id = self.create_enquiry(enq)
             enquiry_ids[enq['sponsor_name']] = enq_id
 
-        # Create 3 sponsors
+        # Create 3 sponsors with enhanced fields
         sponsors = [
             {
                 'legal_name': 'Granite Capital Partners LLP',
+                'trading_name': '',
                 'entity_type': 'llp',
                 'jurisdiction': 'UK',
                 'registration_number': 'OC123456',
-                'regulated_status': 'FCA Regulated',
+                'date_incorporated': '2015-03-15',
+                'registered_address': '10 Fleet Street\nLondon\nEC4Y 1AU\nUnited Kingdom',
+                'business_address': '',
+                'business_activities': 'Private equity fund management focused on mid-market buyouts.',
+                'source_of_wealth': 'Management fees and carried interest from successful fund exits.',
+                'regulated_status': 'regulated',
                 'cdd_status': 'verified'
             },
             {
                 'legal_name': 'Ashford Capital Advisors Ltd',
+                'trading_name': 'Ashford Capital',
                 'entity_type': 'company',
                 'jurisdiction': 'UK',
                 'registration_number': '87654321',
-                'regulated_status': 'FCA Regulated',
+                'date_incorporated': '2019-05-10',
+                'registered_address': '50 Berkeley Square\nLondon\nW1J 5BA\nUnited Kingdom',
+                'business_address': '50 Berkeley Square\nLondon\nW1J 5BA\nUnited Kingdom',
+                'business_activities': 'Multi-strategy investment management.',
+                'source_of_wealth': 'Capital from institutional investors and family offices.',
+                'regulated_status': 'regulated',
                 'cdd_status': 'verified'
             },
             {
                 'legal_name': 'Bluewater Asset Management',
+                'trading_name': 'Bluewater',
                 'entity_type': 'company',
                 'jurisdiction': 'UK',
                 'registration_number': '11223344',
-                'regulated_status': 'FCA Regulated',
+                'date_incorporated': '2017-11-22',
+                'registered_address': '30 Moorgate\nLondon\nEC2R 6PJ\nUnited Kingdom',
+                'business_address': '30 Moorgate\nLondon\nEC2R 6PJ\nUnited Kingdom',
+                'business_activities': 'Real estate investment and asset management.',
+                'source_of_wealth': 'Successful property development and investment returns.',
+                'regulated_status': 'regulated',
                 'cdd_status': 'verified'
             }
         ]
@@ -1056,13 +1104,13 @@ class SheetsDB:
             spo_id = self.create_sponsor(spo)
             sponsor_ids[spo['legal_name']] = spo_id
 
-        # Create 4 onboardings at various phases
+        # Create 4 onboardings at various phases (7 phases total now)
         onboardings = [
             {
                 'enquiry_id': enquiry_ids.get('Granite Capital Partners LLP', 'ENQ-001'),
                 'sponsor_id': sponsor_ids.get('Granite Capital Partners LLP', 'SPO-001'),
                 'fund_name': 'Granite Capital Fund III LP',
-                'current_phase': '4',
+                'current_phase': '3',  # Screening (formerly phase 4)
                 'status': 'in_progress',
                 'risk_level': 'low',
                 'assigned_to': 'James Smith',
@@ -1071,7 +1119,7 @@ class SheetsDB:
             {
                 'sponsor_id': sponsor_ids.get('Ashford Capital Advisors Ltd', 'SPO-002'),
                 'fund_name': 'Ashford Growth Fund I LP',
-                'current_phase': '6',
+                'current_phase': '5',  # Approval (formerly phase 6)
                 'status': 'pending_mlro',
                 'risk_level': 'medium',
                 'assigned_to': 'James Smith',
@@ -1080,7 +1128,7 @@ class SheetsDB:
             {
                 'sponsor_id': sponsor_ids.get('Bluewater Asset Management', 'SPO-003'),
                 'fund_name': 'Bluewater Real Estate Fund LP',
-                'current_phase': '7',
+                'current_phase': '6',  # Commercial (formerly phase 7)
                 'status': 'approved',
                 'risk_level': 'medium',
                 'assigned_to': 'Sarah Johnson',
@@ -1089,7 +1137,7 @@ class SheetsDB:
             {
                 'sponsor_id': sponsor_ids.get('Granite Capital Partners LLP', 'SPO-001'),
                 'fund_name': 'Granite Capital Fund IV LP',
-                'current_phase': '2',
+                'current_phase': '2',  # Fund (formerly phase 3)
                 'status': 'in_progress',
                 'risk_level': 'low',
                 'assigned_to': 'James Smith',
@@ -1099,6 +1147,54 @@ class SheetsDB:
 
         for onb in onboardings:
             self.create_onboarding(onb)
+
+        # Create sample persons (principals) for Granite Capital
+        granite_sponsor_id = sponsor_ids.get('Granite Capital Partners LLP', 'SPO-001')
+        persons = [
+            {
+                'full_name': 'John Edward Smith',
+                'former_names': '',
+                'nationality': 'British',
+                'dob': '1975-06-12',
+                'country_of_residence': 'UK',
+                'residential_address': '42 Kensington Gardens\nLondon\nW8 4PX\nUnited Kingdom',
+                'pep_status': 'not_pep',
+                'id_verified': True
+            },
+            {
+                'full_name': 'Sarah Jane Johnson',
+                'former_names': 'Sarah Jane Mitchell',
+                'nationality': 'British',
+                'dob': '1978-09-23',
+                'country_of_residence': 'UK',
+                'residential_address': '15 Chelsea Embankment\nLondon\nSW3 4LG\nUnited Kingdom',
+                'pep_status': 'not_pep',
+                'id_verified': True
+            },
+            {
+                'full_name': 'Michael James Brown',
+                'former_names': '',
+                'nationality': 'British',
+                'dob': '1980-02-08',
+                'country_of_residence': 'UK',
+                'residential_address': '8 Richmond Hill\nRichmond\nTW10 6QX\nUnited Kingdom',
+                'pep_status': 'not_pep',
+                'id_verified': True
+            }
+        ]
+
+        person_roles = [
+            {'role_type': 'partner', 'ownership_pct': 40, 'is_ubo': True},
+            {'role_type': 'partner', 'ownership_pct': 35, 'is_ubo': True},
+            {'role_type': 'partner', 'ownership_pct': 25, 'is_ubo': True}
+        ]
+
+        for i, person in enumerate(persons):
+            person_id = self.create_person(person)
+            role_data = person_roles[i].copy()
+            role_data['person_id'] = person_id
+            role_data['sponsor_id'] = granite_sponsor_id
+            self.create_person_role(role_data)
 
         self.mark_seeded()
         logger.info("Initial data seeded successfully")
