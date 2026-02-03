@@ -557,21 +557,7 @@ def onboarding_phase(onboarding_id, phase):
                     session['current_fund'] = form_data.get('fund_name')
 
                 elif phase == 2:
-                    # Phase 2: Create/update sponsor
-                    sponsor_data = {
-                        'legal_name': form_data.get('legal_name') or sponsor_name,
-                        'entity_type': form_data.get('entity_type'),
-                        'jurisdiction': form_data.get('jurisdiction'),
-                        'registration_number': form_data.get('registration_number'),
-                        'regulated_status': form_data.get('regulatory_status'),
-                        'cdd_status': 'in_progress'
-                    }
-                    sponsor_id = sheets_db.create_sponsor(sponsor_data)
-                    session['current_sponsor_id'] = sponsor_id
-                    logger.info(f"Phase 2: Created sponsor {sponsor_id} in Sheets")
-
-                elif phase == 3:
-                    # Phase 3: Create/update onboarding record
+                    # Phase 2 (Fund): Create/update onboarding record with fund details
                     onboarding_data = {
                         'enquiry_id': session.get('current_enquiry_id'),
                         'sponsor_id': session.get('current_sponsor_id'),
@@ -585,10 +571,10 @@ def onboarding_phase(onboarding_id, phase):
                         session['current_onboarding_id'] = new_id
                     else:
                         sheets_db.update_onboarding(onboarding_id, onboarding_data)
-                    logger.info(f"Phase 3: Updated onboarding in Sheets")
+                    logger.info(f"Phase 2: Updated onboarding (Fund) in Sheets")
 
-                # Update onboarding phase for phases 4+
-                if phase >= 4 and onboarding_id != 'NEW':
+                # Update onboarding phase for phases 3+
+                if phase >= 3 and onboarding_id != 'NEW':
                     sheets_db.update_onboarding(onboarding_id, {'current_phase': phase})
 
             except Exception as e:
@@ -607,9 +593,9 @@ def onboarding_phase(onboarding_id, phase):
             # In production, this would save data to Google Sheets
             if phase < len(phases):
                 next_phase = phase + 1
-                # Skip Phase 5 (EDD) if not required (for POC, always skip)
-                if next_phase == 5:
-                    next_phase = 6  # Skip to Approval
+                # Skip Phase 4 (EDD) if not required (for POC, always skip)
+                if next_phase == 4:
+                    next_phase = 5  # Skip to Approval
                     flash('EDD not required - proceeding to Approval phase.', 'info')
                 else:
                     flash(f'Phase {phase} completed. Proceeding to {phases[next_phase - 1]["name"]}.', 'success')
@@ -1693,14 +1679,13 @@ def api_overdue_onboardings():
 def get_phases():
     """Get workflow phases configuration"""
     return [
-        {'num': 1, 'name': 'Enquiry', 'icon': 'bi-clipboard-check', 'description': 'Initial intake and conflict check'},
-        {'num': 2, 'name': 'Sponsor', 'icon': 'bi-person-badge', 'description': 'Sponsor entity and principals'},
-        {'num': 3, 'name': 'Fund Structure', 'icon': 'bi-building', 'description': 'Fund vehicles and GP setup'},
-        {'num': 4, 'name': 'Screening & Risk', 'icon': 'bi-search', 'description': 'PEP, Sanctions, Risk assessment'},
-        {'num': 5, 'name': 'EDD', 'icon': 'bi-shield-exclamation', 'description': 'Enhanced due diligence (if required)'},
-        {'num': 6, 'name': 'Approval', 'icon': 'bi-check-circle', 'description': 'MLRO and Board sign-off'},
-        {'num': 7, 'name': 'Commercial', 'icon': 'bi-file-earmark-text', 'description': 'Engagement letter execution'},
-        {'num': 8, 'name': 'Complete', 'icon': 'bi-flag', 'description': 'Onboarding finalization'}
+        {'num': 1, 'name': 'Enquiry', 'icon': 'bi-clipboard-check', 'description': 'Merged enquiry, sponsor, and principals'},
+        {'num': 2, 'name': 'Fund', 'icon': 'bi-diagram-3', 'description': 'Fund vehicles and GP setup'},
+        {'num': 3, 'name': 'Screening', 'icon': 'bi-search', 'description': 'PEP, Sanctions, Risk assessment'},
+        {'num': 4, 'name': 'EDD', 'icon': 'bi-shield-check', 'description': 'Enhanced due diligence (if required)'},
+        {'num': 5, 'name': 'Approval', 'icon': 'bi-check-circle', 'description': 'MLRO and Board sign-off'},
+        {'num': 6, 'name': 'Commercial', 'icon': 'bi-currency-pound', 'description': 'Engagement letter execution'},
+        {'num': 7, 'name': 'Complete', 'icon': 'bi-flag', 'description': 'Onboarding finalization'}
     ]
 
 
