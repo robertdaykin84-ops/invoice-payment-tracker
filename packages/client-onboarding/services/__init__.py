@@ -84,6 +84,17 @@ from .workflow import (
     WORKFLOW_EVENTS
 )
 
+from .kyc_checklist import (
+    generate_checklist,
+    get_checklist_progress
+)
+
+from .document_review import (
+    analyze_document,
+    analyze_batch,
+    get_service as get_document_review_service
+)
+
 __all__ = [
     # OpenSanctions
     'OpenSanctionsClient',
@@ -149,4 +160,11 @@ __all__ = [
     'check_overdue',
     'generate_workflow_summary',
     'WORKFLOW_EVENTS',
+    # KYC Checklist
+    'generate_checklist',
+    'get_checklist_progress',
+    # Document Review
+    'analyze_document',
+    'analyze_batch',
+    'get_document_review_service',
 ]
