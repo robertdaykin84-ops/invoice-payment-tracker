@@ -5,6 +5,7 @@ JFSC-compliant client onboarding for Jersey fund administration
 
 import os
 import logging
+import threading
 from datetime import datetime
 from functools import wraps
 from flask import (
@@ -20,6 +21,15 @@ from services import (
     notify_approval_required,
     notify_screening_complete
 )
+from services.gdrive_audit import save_form_data, ensure_folder_structure, save_api_response
+import json
+
+
+def run_in_background(func, *args, **kwargs):
+    """Run a function in a background thread without blocking the response"""
+    thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
+    thread.start()
+    return thread
 
 # Load environment variables
 load_dotenv()
@@ -85,15 +95,80 @@ MOCK_ENQUIRIES = {
         'tax_id': 'GB123456789',
         'business_activities': 'Private equity fund management, mid-market buyout investments in technology and healthcare sectors. Managed assets under management of approximately $2 billion across three funds.',
         'source_of_wealth': 'Management fees from previous funds (Granite I and II totaling $1.2B AUM), carried interest from successful exits, and personal capital contributions from founding partners.',
+        'source_of_funds': 'Institutional investors (pension funds, endowments), family offices, and high net worth individuals. Anchor commitments from UK pension funds totaling $150M.',
         'fund_name': 'Granite Capital Fund III LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
         'target_size': '500,000,000',
         'investment_strategy': 'Mid-market buyout investments in UK and European technology and healthcare sectors. Target companies with EBITDA of $10-50M.',
+        'target_countries': ['uk', 'eu'],
         'principals': [
-            {'name': 'John Smith', 'role': 'Managing Partner', 'nationality': 'British', 'ownership': '35%'},
-            {'name': 'Sarah Johnson', 'role': 'Partner', 'nationality': 'British', 'ownership': '35%'},
-            {'name': 'Michael Brown', 'role': 'Partner', 'nationality': 'British', 'ownership': '30%'}
+            {
+                'name': 'John Smith',
+                'full_name': 'John Edward Smith',
+                'former_names': '',
+                'role': 'both',
+                'nationality': 'British',
+                'dob': '1972-05-15',
+                'residential_address': '45 Kensington Gardens, London, W8 4QS',
+                'country_of_residence': 'UK',
+                'ownership': '35',
+                'ownership_pct': 35,
+                'is_ubo': True
+            },
+            {
+                'name': 'Sarah Johnson',
+                'full_name': 'Sarah Anne Johnson',
+                'former_names': 'Sarah Anne Williams (maiden name)',
+                'role': 'both',
+                'nationality': 'British',
+                'dob': '1978-09-22',
+                'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
+                'country_of_residence': 'UK',
+                'ownership': '35',
+                'ownership_pct': 35,
+                'is_ubo': True
+            },
+            {
+                'name': 'Michael Brown',
+                'full_name': 'Michael James Brown',
+                'former_names': '',
+                'role': 'both',
+                'nationality': 'British',
+                'dob': '1980-01-10',
+                'residential_address': '8 Hampstead Heath, London, NW3 1AA',
+                'country_of_residence': 'UK',
+                'ownership': '30',
+                'ownership_pct': 30,
+                'is_ubo': True
+            }
+        ],
+        'gp_directors': [
+            {
+                'full_name': 'John Edward Smith',
+                'former_names': '',
+                'dob': '1972-05-15',
+                'nationality': 'British',
+                'residential_address': '45 Kensington Gardens, London, W8 4QS',
+                'country_of_residence': 'UK',
+                'position': 'director'
+            },
+            {
+                'full_name': 'Sarah Anne Johnson',
+                'former_names': 'Sarah Anne Williams (maiden name)',
+                'dob': '1978-09-22',
+                'nationality': 'British',
+                'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
+                'country_of_residence': 'UK',
+                'position': 'director'
+            }
+        ],
+        'initial_investors': [
+            {'name': 'UK Public Pension Fund', 'type': 'pension_fund', 'jurisdiction': 'UK', 'commitment_pct': 30, 'commitment_amount': '150,000,000'},
+            {'name': 'Smith Family Office', 'type': 'family_office', 'jurisdiction': 'UK', 'commitment_pct': 10, 'commitment_amount': '50,000,000'},
+            {'name': 'European Insurance Co', 'type': 'institutional', 'jurisdiction': 'EU', 'commitment_pct': 25, 'commitment_amount': '125,000,000'},
+            {'name': 'US University Endowment', 'type': 'institutional', 'jurisdiction': 'US', 'commitment_pct': 20, 'commitment_amount': '100,000,000'},
+            {'name': 'GP Commitment', 'type': 'sponsor_affiliate', 'jurisdiction': 'UK', 'commitment_pct': 15, 'commitment_amount': '75,000,000'}
         ],
         'contact_name': 'John Smith',
         'contact_email': 'john.smith@granitecapital.com',
@@ -122,15 +197,80 @@ MOCK_ENQUIRIES = {
         'tax_id': 'GB987654321',
         'business_activities': 'ESG-focused investment management specializing in renewable energy and sustainable technology. First fund launched in 2019 with $100M AUM.',
         'source_of_wealth': 'Seed capital from founders (prior careers in investment banking and asset management), anchor investor commitments, and management fees from Fund I.',
+        'source_of_funds': 'ESG-focused institutional investors, impact funds, sovereign wealth funds with sustainability mandates, and green bond investors.',
         'fund_name': 'Evergreen Sustainable Growth Fund LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
         'target_size': '250,000,000',
         'investment_strategy': 'ESG-focused growth equity investments in renewable energy infrastructure and sustainable technology across Europe.',
+        'target_countries': ['uk', 'eu', 'global'],
         'principals': [
-            {'name': 'Elizabeth Chen', 'role': 'CEO', 'nationality': 'British', 'ownership': '40%'},
-            {'name': 'David Kumar', 'role': 'CIO', 'nationality': 'British', 'ownership': '30%'},
-            {'name': 'Anna Schmidt', 'role': 'CFO', 'nationality': 'German', 'ownership': '30%'}
+            {
+                'name': 'Elizabeth Chen',
+                'full_name': 'Elizabeth Wei Chen',
+                'former_names': '',
+                'role': 'both',
+                'nationality': 'British',
+                'dob': '1975-03-28',
+                'residential_address': '22 Mayfair Place, London, W1K 3AE',
+                'country_of_residence': 'UK',
+                'ownership': '40',
+                'ownership_pct': 40,
+                'is_ubo': True
+            },
+            {
+                'name': 'David Kumar',
+                'full_name': 'David Raj Kumar',
+                'former_names': '',
+                'role': 'both',
+                'nationality': 'British',
+                'dob': '1979-11-05',
+                'residential_address': '15 Richmond Hill, Surrey, TW10 6QX',
+                'country_of_residence': 'UK',
+                'ownership': '30',
+                'ownership_pct': 30,
+                'is_ubo': True
+            },
+            {
+                'name': 'Anna Schmidt',
+                'full_name': 'Anna Maria Schmidt',
+                'former_names': 'Anna Maria Weber (maiden name)',
+                'role': 'both',
+                'nationality': 'German',
+                'dob': '1982-07-14',
+                'residential_address': 'Friedrichstrasse 123, 10117 Berlin, Germany',
+                'country_of_residence': 'Germany',
+                'ownership': '30',
+                'ownership_pct': 30,
+                'is_ubo': True
+            }
+        ],
+        'gp_directors': [
+            {
+                'full_name': 'Elizabeth Wei Chen',
+                'former_names': '',
+                'dob': '1975-03-28',
+                'nationality': 'British',
+                'residential_address': '22 Mayfair Place, London, W1K 3AE',
+                'country_of_residence': 'UK',
+                'position': 'chairman'
+            },
+            {
+                'full_name': 'David Raj Kumar',
+                'former_names': '',
+                'dob': '1979-11-05',
+                'nationality': 'British',
+                'residential_address': '15 Richmond Hill, Surrey, TW10 6QX',
+                'country_of_residence': 'UK',
+                'position': 'director'
+            }
+        ],
+        'initial_investors': [
+            {'name': 'Nordic Green Fund', 'type': 'fund_of_funds', 'jurisdiction': 'EU', 'commitment_pct': 30, 'commitment_amount': '75,000,000'},
+            {'name': 'Impact Capital Partners', 'type': 'institutional', 'jurisdiction': 'UK', 'commitment_pct': 25, 'commitment_amount': '62,500,000'},
+            {'name': 'Swiss Sustainability Fund', 'type': 'institutional', 'jurisdiction': 'Other', 'commitment_pct': 20, 'commitment_amount': '50,000,000'},
+            {'name': 'German Pension Alliance', 'type': 'pension_fund', 'jurisdiction': 'EU', 'commitment_pct': 15, 'commitment_amount': '37,500,000'},
+            {'name': 'Chen Family Trust', 'type': 'sponsor_affiliate', 'jurisdiction': 'UK', 'commitment_pct': 10, 'commitment_amount': '25,000,000'}
         ],
         'contact_name': 'Elizabeth Chen',
         'contact_email': 'e.chen@evergreencap.com',
@@ -145,14 +285,14 @@ MOCK_ENQUIRIES = {
         'submitted_at': '2026-02-02 14:45',
         'sponsor_name': 'Nordic Ventures AS',
         'entity_type': 'company',
-        'jurisdiction': 'other',
+        'jurisdiction': 'Other',
         'jurisdiction_other': 'Norway',
         'registration_number': 'NO 912 345 678',
         'registered_address': 'Aker Brygge, Stranden 1, 0250 Oslo, Norway',
         'business_address': 'Aker Brygge, Stranden 1, 0250 Oslo, Norway',
         'trading_name': 'Nordic Ventures',
         'regulatory_status': 'regulated',
-        'regulator': 'FSA Norway',
+        'regulator': 'Other',
         'license_number': 'NV-2020-0456',
         'date_of_incorporation': '2020-01-15',
         'website': 'https://www.nordicventures.no',
@@ -160,14 +300,67 @@ MOCK_ENQUIRIES = {
         'tax_id': 'NO912345678MVA',
         'business_activities': 'Venture capital and growth equity investments in Nordic technology companies. Focus on fintech, healthtech, and cleantech sectors.',
         'source_of_wealth': 'Founder capital from successful prior technology exits, institutional investors including Nordic pension funds, and family office commitments.',
+        'source_of_funds': 'Nordic pension funds, Norwegian sovereign wealth fund co-investments, family offices with technology focus, and corporate venture capital arms.',
         'fund_name': 'Nordic Technology Opportunities Fund LP',
         'fund_type': 'jpf',
         'legal_structure': 'lp',
         'target_size': '150,000,000',
         'investment_strategy': 'Early-stage and growth investments in Nordic technology companies, with focus on fintech, healthtech, and cleantech sectors.',
+        'target_countries': ['eu'],
         'principals': [
-            {'name': 'Erik Larsson', 'role': 'Founder & CEO', 'nationality': 'Norwegian', 'ownership': '50%'},
-            {'name': 'Ingrid Olsen', 'role': 'Partner', 'nationality': 'Norwegian', 'ownership': '50%'}
+            {
+                'name': 'Erik Larsson',
+                'full_name': 'Erik Gustav Larsson',
+                'former_names': '',
+                'role': 'both',
+                'nationality': 'Norwegian',
+                'dob': '1976-08-20',
+                'residential_address': 'Bygdoy Alle 45, 0265 Oslo, Norway',
+                'country_of_residence': 'Norway',
+                'ownership': '50',
+                'ownership_pct': 50,
+                'is_ubo': True
+            },
+            {
+                'name': 'Ingrid Olsen',
+                'full_name': 'Ingrid Marie Olsen',
+                'former_names': 'Ingrid Marie Hansen (maiden name)',
+                'role': 'both',
+                'nationality': 'Norwegian',
+                'dob': '1981-04-12',
+                'residential_address': 'Frognerveien 88, 0271 Oslo, Norway',
+                'country_of_residence': 'Norway',
+                'ownership': '50',
+                'ownership_pct': 50,
+                'is_ubo': True
+            }
+        ],
+        'gp_directors': [
+            {
+                'full_name': 'Erik Gustav Larsson',
+                'former_names': '',
+                'dob': '1976-08-20',
+                'nationality': 'Norwegian',
+                'residential_address': 'Bygdoy Alle 45, 0265 Oslo, Norway',
+                'country_of_residence': 'Norway',
+                'position': 'chairman'
+            },
+            {
+                'full_name': 'Ingrid Marie Olsen',
+                'former_names': 'Ingrid Marie Hansen (maiden name)',
+                'dob': '1981-04-12',
+                'nationality': 'Norwegian',
+                'residential_address': 'Frognerveien 88, 0271 Oslo, Norway',
+                'country_of_residence': 'Norway',
+                'position': 'director'
+            }
+        ],
+        'initial_investors': [
+            {'name': 'Norwegian Tech Pension', 'type': 'pension_fund', 'jurisdiction': 'EU', 'commitment_pct': 35, 'commitment_amount': '52,500,000'},
+            {'name': 'Larsson Family Trust', 'type': 'sponsor_affiliate', 'jurisdiction': 'EU', 'commitment_pct': 15, 'commitment_amount': '22,500,000'},
+            {'name': 'Swedish Innovation Fund', 'type': 'fund_of_funds', 'jurisdiction': 'EU', 'commitment_pct': 25, 'commitment_amount': '37,500,000'},
+            {'name': 'Finnish Technology Ventures', 'type': 'institutional', 'jurisdiction': 'EU', 'commitment_pct': 15, 'commitment_amount': '22,500,000'},
+            {'name': 'Olsen Investment Holdings', 'type': 'family_office', 'jurisdiction': 'Other', 'commitment_pct': 10, 'commitment_amount': '15,000,000'}
         ],
         'contact_name': 'Erik Larsson',
         'contact_email': 'erik@nordicventures.no',
@@ -235,6 +428,9 @@ def login_required(f):
             session['user_id'] = 'bd_user'
 
         if not get_current_user():
+            # For API endpoints, return JSON error instead of redirect
+            if request.path.startswith('/api/'):
+                return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
@@ -432,8 +628,6 @@ def new_onboarding():
 @login_required
 def onboarding_phase(onboarding_id, phase):
     """Onboarding wizard - specific phase"""
-    from services.gdrive_audit import save_form_data, ensure_folder_structure
-
     phases = get_phases()
     if phase < 1 or phase > len(phases):
         flash('Invalid phase.', 'danger')
@@ -459,130 +653,206 @@ def onboarding_phase(onboarding_id, phase):
         sponsor_name = sponsor_name if sponsor_name != 'Unknown Sponsor' else session.get('current_sponsor', 'Unknown Sponsor')
         fund_name = fund_name if fund_name != 'Unknown Fund' else session.get('current_fund', 'Unknown Fund')
 
-        # Save form data to audit trail
+        # Build form data dict once
         form_data = {key: value for key, value in request.form.items() if key != 'action'}
-        audit_result = save_form_data(form_data, phase, sponsor_name, fund_name)
-        logger.info(f"Audit trail save for phase {phase}: {audit_result.get('status')}")
+
+        # Save form data to audit trail (skip in demo mode for performance)
+        if not DEMO_MODE:
+            audit_result = save_form_data(form_data, phase, sponsor_name, fund_name)
+            logger.info(f"Audit trail save for phase {phase}: {audit_result.get('status')}")
 
         # Save to Google Sheets if not in demo mode
+        # Run non-essential operations in background for faster phase transitions
         if not sheets_db.demo_mode:
-            try:
-                if phase == 1:
-                    # Phase 1: Create/update enquiry with merged form data
-                    import json
+            def save_phase_to_sheets():
+                """Background task to save phase data to Google Sheets"""
+                try:
+                    if phase == 1:
+                        # Phase 1: Create/update enquiry with merged form data
+                        # Parse sponsor principals, GP directors, and investors from JSON
+                        sponsor_principals_json = form_data.get('sponsor_principals_json', '[]')
+                        gp_directors_json = form_data.get('gp_directors_json', '[]')
+                        investors_json = form_data.get('investors_json', '[]')
+                        try:
+                            sponsor_principals = json.loads(sponsor_principals_json)
+                        except json.JSONDecodeError:
+                            sponsor_principals = []
+                        try:
+                            gp_directors = json.loads(gp_directors_json)
+                        except json.JSONDecodeError:
+                            gp_directors = []
+                        try:
+                            investors = json.loads(investors_json)
+                        except json.JSONDecodeError:
+                            investors = []
 
-                    # Parse principals from JSON
-                    principals_json = form_data.get('principals_json', '[]')
-                    try:
-                        principals = json.loads(principals_json)
-                    except json.JSONDecodeError:
-                        principals = []
-
-                    # Create enquiry record with all new fields
-                    enquiry_data = {
-                        'sponsor_name': form_data.get('legal_name'),
-                        'trading_name': form_data.get('trading_name', ''),
-                        'fund_name': form_data.get('fund_name'),
-                        'contact_name': form_data.get('contact_name'),
-                        'contact_email': form_data.get('contact_email'),
-                        'entity_type': form_data.get('entity_type'),
-                        'jurisdiction': form_data.get('jurisdiction'),
-                        'registration_number': form_data.get('registration_number'),
-                        'date_incorporated': form_data.get('date_of_incorporation'),
-                        'registered_address': form_data.get('registered_address'),
-                        'business_address': form_data.get('principal_place_of_business', ''),
-                        'regulatory_status': form_data.get('regulatory_status'),
-                        'regulator': form_data.get('regulator', ''),
-                        'license_number': form_data.get('license_number', ''),
-                        'business_activities': form_data.get('principal_business_activities'),
-                        'source_of_wealth': form_data.get('source_of_wealth_narrative'),
-                        'fund_type': form_data.get('fund_type'),
-                        'legal_structure': form_data.get('fund_legal_structure'),
-                        'investment_strategy': form_data.get('investment_strategy'),
-                        'target_size': form_data.get('target_fund_size'),
-                        'status': 'in_progress',
-                        'notes': ''
-                    }
-                    enquiry_id = sheets_db.create_enquiry(enquiry_data)
-                    session['current_enquiry_id'] = enquiry_id
-                    logger.info(f"Phase 1: Created enquiry {enquiry_id} in Sheets")
-
-                    # Create sponsor record
-                    sponsor_data = {
-                        'legal_name': form_data.get('legal_name'),
-                        'trading_name': form_data.get('trading_name', ''),
-                        'entity_type': form_data.get('entity_type'),
-                        'jurisdiction': form_data.get('jurisdiction'),
-                        'registration_number': form_data.get('registration_number'),
-                        'date_incorporated': form_data.get('date_of_incorporation'),
-                        'registered_address': form_data.get('registered_address'),
-                        'business_address': form_data.get('principal_place_of_business', ''),
-                        'business_activities': form_data.get('principal_business_activities'),
-                        'source_of_wealth': form_data.get('source_of_wealth_narrative'),
-                        'regulated_status': form_data.get('regulatory_status'),
-                        'cdd_status': 'in_progress'
-                    }
-                    sponsor_id = sheets_db.create_sponsor(sponsor_data)
-                    session['current_sponsor_id'] = sponsor_id
-                    logger.info(f"Phase 1: Created sponsor {sponsor_id} in Sheets")
-
-                    # Create person records for each principal
-                    for principal in principals:
-                        person_data = {
-                            'full_name': principal.get('full_name'),
-                            'former_names': principal.get('former_names', ''),
-                            'nationality': principal.get('nationality'),
-                            'dob': principal.get('dob'),
-                            'country_of_residence': principal.get('country_of_residence'),
-                            'residential_address': principal.get('residential_address'),
-                            'pep_status': 'unknown',
-                            'id_verified': False
+                        # Create enquiry record with all new fields
+                        enquiry_data = {
+                            'sponsor_name': form_data.get('legal_name'),
+                            'trading_name': form_data.get('trading_name', ''),
+                            'fund_name': form_data.get('fund_name'),
+                            'contact_name': form_data.get('contact_name'),
+                            'contact_email': form_data.get('contact_email'),
+                            'entity_type': form_data.get('entity_type'),
+                            'jurisdiction': form_data.get('jurisdiction'),
+                            'registration_number': form_data.get('registration_number'),
+                            'date_incorporated': form_data.get('date_of_incorporation'),
+                            'registered_address': form_data.get('registered_address'),
+                            'business_address': form_data.get('business_address', ''),
+                            'regulatory_status': form_data.get('regulatory_status'),
+                            'regulator': form_data.get('regulator', ''),
+                            'license_number': form_data.get('license_number', ''),
+                            'business_activities': form_data.get('principal_business_activities'),
+                            'source_of_wealth': form_data.get('source_of_wealth', ''),
+                            'source_of_funds': form_data.get('source_of_funds', ''),
+                            'fund_type': form_data.get('fund_type'),
+                            'legal_structure': form_data.get('fund_legal_structure'),
+                            'investment_strategy': form_data.get('investment_strategy'),
+                            'target_size': form_data.get('target_fund_size'),
+                            'status': 'in_progress',
+                            'notes': ''
                         }
-                        person_id = sheets_db.create_person(person_data)
+                        enquiry_id = sheets_db.create_enquiry(enquiry_data)
+                        logger.info(f"Phase 1 (background): Created enquiry {enquiry_id} in Sheets")
 
-                        # Create person role linking person to sponsor
-                        person_role_data = {
-                            'person_id': person_id,
-                            'entity_id': sponsor_id,
-                            'entity_type': 'Sponsor',
-                            'role': principal.get('role'),
-                            'ownership_pct': principal.get('ownership_pct'),
-                            'is_ubo': principal.get('is_ubo', False)
+                        # Create sponsor record
+                        sponsor_data = {
+                            'legal_name': form_data.get('legal_name'),
+                            'trading_name': form_data.get('trading_name', ''),
+                            'entity_type': form_data.get('entity_type'),
+                            'jurisdiction': form_data.get('jurisdiction'),
+                            'registration_number': form_data.get('registration_number'),
+                            'date_incorporated': form_data.get('date_of_incorporation'),
+                            'registered_address': form_data.get('registered_address'),
+                            'business_address': form_data.get('business_address', ''),
+                            'business_activities': form_data.get('principal_business_activities'),
+                            'source_of_wealth': form_data.get('source_of_wealth', ''),
+                            'source_of_funds': form_data.get('source_of_funds', ''),
+                            'regulated_status': form_data.get('regulatory_status'),
+                            'cdd_status': 'in_progress'
                         }
-                        sheets_db.create_person_role(person_role_data)
-                        logger.info(f"Phase 1: Created person {person_id} with role for sponsor {sponsor_id}")
+                        sponsor_id = sheets_db.create_sponsor(sponsor_data)
+                        logger.info(f"Phase 1 (background): Created sponsor {sponsor_id} in Sheets")
 
-                    # Update session with sponsor/fund names for subsequent phases
-                    session['current_sponsor'] = form_data.get('legal_name')
-                    session['current_fund'] = form_data.get('fund_name')
+                        # Create person records for sponsor principals (directors/UBOs)
+                        for principal in sponsor_principals:
+                            person_data = {
+                                'full_name': principal.get('full_name'),
+                                'former_names': principal.get('former_names', ''),
+                                'nationality': principal.get('nationality'),
+                                'dob': principal.get('dob'),
+                                'country_of_residence': principal.get('country_of_residence'),
+                                'residential_address': principal.get('residential_address'),
+                                'pep_status': 'unknown',
+                                'id_verified': False
+                            }
+                            person_id = sheets_db.create_person(person_data)
 
-                elif phase == 2:
-                    # Phase 2 (Fund): Create/update onboarding record with fund details
-                    onboarding_data = {
-                        'enquiry_id': session.get('current_enquiry_id'),
-                        'sponsor_id': session.get('current_sponsor_id'),
-                        'fund_name': form_data.get('fund_name') or fund_name,
-                        'current_phase': phase,
-                        'status': 'in_progress',
-                        'is_existing_sponsor': form_data.get('is_existing_sponsor', False)
-                    }
-                    if onboarding_id == 'NEW':
-                        new_id = sheets_db.create_onboarding(onboarding_data)
-                        session['current_onboarding_id'] = new_id
-                    else:
-                        sheets_db.update_onboarding(onboarding_id, onboarding_data)
-                    logger.info(f"Phase 2: Updated onboarding (Fund) in Sheets")
+                            # Create person role linking person to sponsor
+                            person_role_data = {
+                                'person_id': person_id,
+                                'entity_id': sponsor_id,
+                                'entity_type': 'Sponsor',
+                                'role': principal.get('role'),
+                                'ownership_pct': principal.get('ownership_pct'),
+                                'is_ubo': principal.get('is_ubo', False)
+                            }
+                            sheets_db.create_person_role(person_role_data)
+                            logger.info(f"Phase 1 (background): Created sponsor principal {person_id}")
 
-                # Update onboarding phase for phases 3+
-                if phase >= 3 and onboarding_id != 'NEW':
-                    sheets_db.update_onboarding(onboarding_id, {'current_phase': phase})
+                        # Create person records for GP directors
+                        for director in gp_directors:
+                            person_data = {
+                                'full_name': director.get('full_name'),
+                                'former_names': director.get('former_names', ''),
+                                'nationality': director.get('nationality'),
+                                'dob': director.get('dob'),
+                                'country_of_residence': director.get('country_of_residence'),
+                                'residential_address': director.get('residential_address'),
+                                'pep_status': 'unknown',
+                                'id_verified': False
+                            }
+                            person_id = sheets_db.create_person(person_data)
 
-            except Exception as e:
-                logger.error(f"Error saving phase {phase} to Sheets: {e}")
+                            # Create person role linking person to GP
+                            person_role_data = {
+                                'person_id': person_id,
+                                'entity_id': sponsor_id,  # Will be updated to GP entity when created
+                                'entity_type': 'GP',
+                                'role': director.get('position', 'director'),
+                                'ownership_pct': None,
+                                'is_ubo': False
+                            }
+                            sheets_db.create_person_role(person_role_data)
+                            logger.info(f"Phase 1 (background): Created GP director {person_id}")
+
+                        logger.info(f"Phase 1 (background): Completed all Sheets saves")
+
+                    elif phase == 2:
+                        # Phase 2 (Fund): Create/update onboarding record with fund details
+                        onboarding_data = {
+                            'fund_name': form_data.get('fund_name') or fund_name,
+                            'current_phase': phase,
+                            'status': 'in_progress',
+                            'is_existing_sponsor': form_data.get('is_existing_sponsor', False)
+                        }
+                        if onboarding_id != 'NEW':
+                            sheets_db.update_onboarding(onboarding_id, onboarding_data)
+                        logger.info(f"Phase 2 (background): Updated onboarding in Sheets")
+
+                    # Update onboarding phase for phases 3+
+                    if phase >= 3 and onboarding_id != 'NEW':
+                        sheets_db.update_onboarding(onboarding_id, {'current_phase': phase})
+                        logger.info(f"Phase {phase} (background): Updated phase in Sheets")
+
+                except Exception as e:
+                    logger.error(f"Error saving phase {phase} to Sheets (background): {e}")
+
+            # Run Sheets operations in background thread
+            run_in_background(save_phase_to_sheets)
+
+            # Store essential session data synchronously (before redirect)
+            if phase == 1:
+                session['initial_investors'] = json.loads(form_data.get('investors_json', '[]'))
+                session['current_sponsor'] = form_data.get('legal_name')
+                session['current_fund'] = form_data.get('fund_name')
 
         # On phase 1, ensure folder structure is created
         if phase == 1 and sponsor_name != 'Unknown Sponsor':
             ensure_folder_structure(sponsor_name, fund_name)
+
+            # Handle document uploads for Phase 1 (Enquiry)
+            doc_fields = [
+                'doc_certificate_of_incorporation',
+                'doc_partnership_agreement',
+                'doc_structure_chart',
+                'doc_ppm',
+                'doc_id_documents',
+                'doc_other'
+            ]
+            uploaded_docs = []
+            for field_name in doc_fields:
+                if field_name in request.files:
+                    files = request.files.getlist(field_name)
+                    for file in files:
+                        if file and file.filename:
+                            try:
+                                from services.documents import upload_document
+                                doc_type = field_name.replace('doc_', '').replace('_', ' ').title()
+                                result = upload_document(
+                                    file,
+                                    onboarding_id if onboarding_id != 'NEW' else 'pending',
+                                    doc_type,
+                                    uploaded_by=get_current_user()['name']
+                                )
+                                if result.get('status') == 'success':
+                                    uploaded_docs.append(file.filename)
+                                    logger.info(f"Uploaded document: {file.filename} ({doc_type})")
+                            except Exception as e:
+                                logger.error(f"Error uploading {file.filename}: {e}")
+
+            if uploaded_docs:
+                flash(f'Uploaded {len(uploaded_docs)} document(s) successfully.', 'success')
 
         if action == 'save':
             # Save draft - stay on current phase
@@ -609,9 +879,27 @@ def onboarding_phase(onboarding_id, phase):
     enquiry_id = request.args.get('enquiry_id') or session.get('current_enquiry_id')
     enquiry = None
     if enquiry_id:
-        enquiry = sheets_db.get_enquiry(enquiry_id)
-        if not enquiry:
-            enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+        # Try to get from Sheets first
+        sheets_enquiry = sheets_db.get_enquiry(enquiry_id)
+        mock_enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+
+        if sheets_enquiry:
+            enquiry = sheets_enquiry
+            # Merge all missing fields from MOCK_ENQUIRIES into Sheets data
+            # (Sheets may not have all fields, especially nested ones like principals)
+            if mock_enquiry:
+                # Merge nested arrays (stored in separate Sheets tables)
+                for array_key in ['principals', 'gp_directors', 'initial_investors']:
+                    if array_key not in enquiry or not enquiry.get(array_key):
+                        enquiry[array_key] = mock_enquiry.get(array_key, [])
+
+                # Merge all other missing scalar fields
+                for key, value in mock_enquiry.items():
+                    if key not in enquiry or not enquiry.get(key):
+                        enquiry[key] = value
+        else:
+            enquiry = mock_enquiry
+
         # Update session with enquiry_id for subsequent phases
         session['current_enquiry_id'] = enquiry_id
     uploaded = request.args.get('uploaded') == '1'  # Flag if data came from uploaded document
@@ -684,15 +972,13 @@ def enquiry_form():
 @app.route('/enquiry/submit', methods=['POST'])
 def submit_enquiry():
     """Handle enquiry form submission"""
-    from services.gdrive_audit import save_form_data, ensure_folder_structure
-
     # Extract form data
     form_data = {key: value for key, value in request.form.items()}
     sponsor_name = form_data.get('sponsor_name', 'Unknown Sponsor')
     fund_name = form_data.get('fund_name', 'Unknown Fund')
 
-    # Create folder structure and save enquiry to audit trail
-    if sponsor_name != 'Unknown Sponsor':
+    # Create folder structure and save enquiry to audit trail (skip in demo mode)
+    if not DEMO_MODE and sponsor_name != 'Unknown Sponsor':
         ensure_folder_structure(sponsor_name, fund_name)
         audit_result = save_form_data(form_data, 1, sponsor_name, fund_name)
         logger.info(f"Enquiry saved to audit trail: {audit_result.get('status')}")
@@ -1163,8 +1449,6 @@ def api_sheets_status():
 @login_required
 def api_audit_save():
     """API: Manually save document/data to audit trail"""
-    from services.gdrive_audit import save_form_data, save_api_response
-
     data = request.get_json()
     doc_type = data.get('type', 'form')  # 'form' or 'api'
     sponsor_name = data.get('sponsor_name')
@@ -1191,8 +1475,6 @@ def api_audit_save():
 @login_required
 def api_audit_create_folder():
     """API: Create folder structure for a new onboarding"""
-    from services.gdrive_audit import ensure_folder_structure
-
     data = request.get_json()
     sponsor_name = data.get('sponsor_name')
     fund_name = data.get('fund_name')
@@ -1228,6 +1510,51 @@ def api_onboarding_detail(onboarding_id):
         onboarding['screenings'] = sheets_db.get_screenings(onboarding_id)
         onboarding['risk_assessment'] = sheets_db.get_risk_assessment(onboarding_id)
     return jsonify({'onboarding': onboarding or {}, 'status': 'ok'})
+
+
+@app.route('/api/onboarding/<onboarding_id>', methods=['DELETE'])
+@login_required
+def api_delete_onboarding(onboarding_id):
+    """API: Delete an onboarding"""
+    user = get_current_user()
+
+    # Check if onboarding exists
+    onboarding = sheets_db.get_onboarding(onboarding_id)
+    if not onboarding:
+        return jsonify({'status': 'error', 'message': 'Onboarding not found'}), 404
+
+    # Only allow deletion by the assigned user, admin, or if still in early phases
+    is_owner = onboarding.get('assigned_to') == user['name']
+    is_admin = user['role'] == 'admin'
+    is_early_phase = onboarding.get('current_phase', 1) <= 3
+    is_approved = onboarding.get('status') == 'approved'
+
+    if is_approved and not is_admin:
+        return jsonify({
+            'status': 'error',
+            'message': 'Cannot delete approved onboardings. Contact admin.'
+        }), 403
+
+    if not (is_owner or is_admin or is_early_phase):
+        return jsonify({
+            'status': 'error',
+            'message': 'You do not have permission to delete this onboarding'
+        }), 403
+
+    # Perform deletion
+    success = sheets_db.delete_onboarding(onboarding_id)
+
+    if success:
+        logger.info(f"Onboarding {onboarding_id} deleted by {user['name']}")
+        return jsonify({
+            'status': 'ok',
+            'message': f'Onboarding {onboarding_id} has been deleted'
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to delete onboarding'
+        }), 500
 
 
 @app.route('/api/onboarding/<onboarding_id>/approve', methods=['POST'])
@@ -1674,6 +2001,209 @@ def api_overdue_onboardings():
     })
 
 
+# ========== KYC/CDD API Routes ==========
+
+@app.route('/api/kyc/<onboarding_id>/checklist', methods=['GET'])
+@login_required
+def api_kyc_checklist(onboarding_id):
+    """API: Get KYC document checklist for an onboarding"""
+    from services.kyc_checklist import generate_checklist, get_checklist_progress
+
+    # Get enquiry data
+    enquiry_id = request.args.get('enquiry_id') or session.get('current_enquiry_id')
+    enquiry = None
+
+    if enquiry_id:
+        enquiry = sheets_db.get_enquiry(enquiry_id)
+        if not enquiry:
+            enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+
+    if not enquiry:
+        # Use first mock enquiry as fallback for demo
+        enquiry = MOCK_ENQUIRIES.get('ENQ-001')
+
+    # Get risk assessment from session or default
+    risk_assessment = session.get('risk_assessment', {})
+
+    # Generate checklist
+    checklist = generate_checklist(enquiry, risk_assessment)
+    checklist['onboarding_id'] = onboarding_id
+
+    # Get progress
+    progress = get_checklist_progress(checklist)
+
+    return jsonify({
+        'status': 'ok',
+        'checklist': checklist,
+        'progress': progress
+    })
+
+
+@app.route('/api/kyc/<onboarding_id>/upload', methods=['POST'])
+@login_required
+def api_kyc_upload(onboarding_id):
+    """API: Upload and analyze KYC documents"""
+    from services.document_review import analyze_batch
+    from services.kyc_checklist import generate_checklist
+
+    if 'files' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No files uploaded'}), 400
+
+    files = request.files.getlist('files')
+    if not files or all(f.filename == '' for f in files):
+        return jsonify({'status': 'error', 'message': 'No files selected'}), 400
+
+    # Get enquiry data for key parties
+    enquiry_id = request.form.get('enquiry_id') or session.get('current_enquiry_id')
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id) or MOCK_ENQUIRIES.get('ENQ-001')
+
+    key_parties = []
+    for i, p in enumerate(enquiry.get('principals', [])):
+        key_parties.append({
+            'person_id': f'principal_{i}',
+            'name': p.get('full_name') or p.get('name')
+        })
+
+    sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor')
+
+    # Process each file
+    documents = []
+    for file in files:
+        if file and file.filename:
+            content = file.read()
+            documents.append({
+                'content': content,
+                'filename': file.filename,
+                'mime_type': file.content_type or 'application/octet-stream'
+            })
+
+    # Analyze all documents
+    results = analyze_batch(documents, key_parties, sponsor_name)
+
+    # Store results in session for now (in production, save to DB)
+    if 'kyc_documents' not in session:
+        session['kyc_documents'] = {}
+
+    processed_results = []
+    for i, result in enumerate(results):
+        doc_id = f"DOC-{datetime.now().strftime('%Y%m%d%H%M%S')}-{i:03d}"
+        doc_record = {
+            'document_id': doc_id,
+            'onboarding_id': onboarding_id,
+            'filename': result['filename'],
+            'analysis': result['analysis'],
+            'suggested_assignment': result['suggested_assignment'],
+            'uploaded_at': datetime.now().isoformat(),
+            'uploaded_by': get_current_user()['name']
+        }
+        session['kyc_documents'][doc_id] = doc_record
+        processed_results.append(doc_record)
+
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': f'Analyzed {len(results)} documents',
+        'documents': processed_results
+    })
+
+
+@app.route('/api/kyc/<onboarding_id>/document/<doc_id>/reassign', methods=['POST'])
+@login_required
+def api_kyc_reassign(onboarding_id, doc_id):
+    """API: Reassign a document to a different checklist slot"""
+    data = request.get_json()
+
+    assignment_type = data.get('type')  # 'sponsor' or 'key_party'
+    document_type = data.get('document_type')
+    person_id = data.get('person_id')  # For key_party assignments
+
+    # Get document from session
+    doc = session.get('kyc_documents', {}).get(doc_id)
+    if not doc:
+        return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+
+    # Update assignment
+    doc['suggested_assignment'] = {
+        'type': assignment_type,
+        'document_type': document_type,
+        'person_id': person_id,
+        'confidence': 1.0,  # Manual assignment = 100% confidence
+        'manually_assigned': True
+    }
+
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'Document reassigned',
+        'document': doc
+    })
+
+
+@app.route('/api/kyc/<onboarding_id>/document/<doc_id>/override', methods=['POST'])
+@login_required
+def api_kyc_override(onboarding_id, doc_id):
+    """API: Override a warning on a document"""
+    data = request.get_json()
+    reason = data.get('reason')
+
+    if not reason:
+        return jsonify({'status': 'error', 'message': 'Override reason required'}), 400
+
+    # Get document from session
+    doc = session.get('kyc_documents', {}).get(doc_id)
+    if not doc:
+        return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+
+    # Apply override
+    doc['override'] = {
+        'applied': True,
+        'reason': reason,
+        'by': get_current_user()['name'],
+        'at': datetime.now().isoformat()
+    }
+
+    # Update overall status
+    doc['analysis']['overall_status'] = 'pass'
+
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'Override applied',
+        'document': doc
+    })
+
+
+@app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
+@login_required
+def api_kyc_signoff(onboarding_id):
+    """API: BD sign-off on KYC documentation"""
+    from services.kyc_checklist import get_checklist_progress
+
+    # Check all documents are complete
+    docs = session.get('kyc_documents', {})
+
+    # In production, would verify against checklist
+    # For now, just mark as signed off
+
+    session['kyc_signed_off'] = {
+        'onboarding_id': onboarding_id,
+        'signed_off_by': get_current_user()['name'],
+        'signed_off_at': datetime.now().isoformat(),
+        'document_count': len(docs)
+    }
+
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'KYC documentation signed off',
+        'signoff': session['kyc_signed_off']
+    })
+
+
 # ========== Helper Functions ==========
 
 def get_phases():
@@ -1682,7 +2212,7 @@ def get_phases():
         {'num': 1, 'name': 'Enquiry', 'icon': 'bi-clipboard-check', 'description': 'Merged enquiry, sponsor, and principals'},
         {'num': 2, 'name': 'Fund', 'icon': 'bi-diagram-3', 'description': 'Fund vehicles and GP setup'},
         {'num': 3, 'name': 'Screening', 'icon': 'bi-search', 'description': 'PEP, Sanctions, Risk assessment'},
-        {'num': 4, 'name': 'EDD', 'icon': 'bi-shield-check', 'description': 'Enhanced due diligence (if required)'},
+        {'num': 4, 'name': 'KYC & CDD', 'icon': 'bi-file-earmark-check', 'description': 'Document collection and AI review'},
         {'num': 5, 'name': 'Approval', 'icon': 'bi-check-circle', 'description': 'MLRO and Board sign-off'},
         {'num': 6, 'name': 'Commercial', 'icon': 'bi-currency-pound', 'description': 'Engagement letter execution'},
         {'num': 7, 'name': 'Complete', 'icon': 'bi-flag', 'description': 'Onboarding finalization'}
@@ -1693,13 +2223,29 @@ def get_phases():
 
 @app.errorhandler(404)
 def not_found(e):
+    # Return JSON for API endpoints
+    if request.path.startswith('/api/'):
+        return jsonify({'status': 'error', 'message': 'Endpoint not found'}), 404
     return render_template('errors/404.html'), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
     logger.error(f'Server error: {e}')
+    # Return JSON for API endpoints
+    if request.path.startswith('/api/'):
+        return jsonify({'status': 'error', 'message': 'Internal server error', 'details': str(e)}), 500
     return render_template('errors/500.html'), 500
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Catch-all exception handler for API endpoints"""
+    logger.error(f'Unhandled exception: {e}', exc_info=True)
+    if request.path.startswith('/api/'):
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    # For non-API routes, re-raise to trigger the 500 handler
+    raise e
 
 
 # ========== Startup ==========
