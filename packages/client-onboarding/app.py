@@ -887,12 +887,17 @@ def onboarding_phase(onboarding_id, phase):
                     if array_key not in enquiry or not enquiry.get(array_key):
                         enquiry[array_key] = mock_enquiry.get(array_key, [])
 
-                # Merge all other missing scalar fields
+                # Merge all other missing scalar fields (including regulatory_status)
                 for key, value in mock_enquiry.items():
-                    if key not in enquiry or not enquiry.get(key):
+                    # Use mock value if key missing, empty string, or None
+                    if key not in enquiry or enquiry.get(key) in (None, '', []):
                         enquiry[key] = value
         else:
             enquiry = mock_enquiry
+
+        # Log enquiry regulatory_status for debugging
+        if enquiry:
+            logger.info(f"Enquiry {enquiry_id} loaded - regulatory_status: '{enquiry.get('regulatory_status')}', sponsor: '{enquiry.get('sponsor_name')}'")
 
         # Update session with enquiry_id for subsequent phases
         session['current_enquiry_id'] = enquiry_id
