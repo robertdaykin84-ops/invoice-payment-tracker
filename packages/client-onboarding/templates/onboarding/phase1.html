@@ -438,7 +438,153 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize on page load
         toggleRegulatedFields();
     }
+
+    // Auto-check UBO if ownership >= 25%
+    const ownershipInput = document.getElementById('principalOwnership');
+    const uboCheckbox = document.getElementById('principalIsUbo');
+
+    if (ownershipInput && uboCheckbox) {
+        ownershipInput.addEventListener('input', function() {
+            const ownership = parseFloat(this.value) || 0;
+            if (ownership >= 25) {
+                uboCheckbox.checked = true;
+            }
+        });
+    }
 });
+
+// Principals array to store added principals
+let principals = [];
+
+function addPrincipal() {
+    // Get form values
+    const fullName = document.getElementById('principalFullName').value.trim();
+    const formerNames = document.getElementById('principalFormerNames').value.trim();
+    const dob = document.getElementById('principalDob').value;
+    const nationality = document.getElementById('principalNationality').value;
+    const residenceCountry = document.getElementById('principalResidenceCountry').value;
+    const residentialAddress = document.getElementById('principalResidentialAddress').value.trim();
+    const role = document.getElementById('principalRole').value;
+    const ownership = document.getElementById('principalOwnership').value;
+    const isUbo = document.getElementById('principalIsUbo').checked;
+
+    // Validate required fields
+    if (!fullName || !dob || !nationality || !residenceCountry || !residentialAddress || !role) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    // Create principal object
+    const principal = {
+        full_name: fullName,
+        former_names: formerNames,
+        dob: dob,
+        nationality: nationality,
+        country_of_residence: residenceCountry,
+        residential_address: residentialAddress,
+        role: role,
+        ownership_pct: ownership ? parseFloat(ownership) : null,
+        is_ubo: isUbo
+    };
+
+    // Add to array
+    principals.push(principal);
+
+    // Update table and hidden input
+    renderPrincipalsTable();
+    updatePrincipalsJson();
+
+    // Clear form and close modal
+    clearPrincipalForm();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('principalModal'));
+    modal.hide();
+}
+
+function removePrincipal(index) {
+    if (confirm('Are you sure you want to remove this principal?')) {
+        principals.splice(index, 1);
+        renderPrincipalsTable();
+        updatePrincipalsJson();
+    }
+}
+
+function renderPrincipalsTable() {
+    const tbody = document.getElementById('principalsTableBody');
+    const noDataRow = document.getElementById('noPrincipalsRow');
+
+    // Clear existing rows (except the no-data placeholder)
+    tbody.innerHTML = '';
+
+    if (principals.length === 0) {
+        // Show placeholder
+        tbody.innerHTML = `
+            <tr id="noPrincipalsRow">
+                <td colspan="5" class="text-center text-muted py-3">
+                    No principals added yet. Click "Add Principal" to begin.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Render each principal
+    principals.forEach((principal, index) => {
+        const roleDisplay = formatRole(principal.role);
+        const ownershipDisplay = principal.ownership_pct !== null ? `${principal.ownership_pct}%` : '-';
+        const uboDisplay = principal.is_ubo ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <strong>${escapeHtml(principal.full_name)}</strong>
+                ${principal.former_names ? `<small class="d-block text-muted">(${escapeHtml(principal.former_names)})</small>` : ''}
+            </td>
+            <td>${roleDisplay}</td>
+            <td>${ownershipDisplay}</td>
+            <td>${uboDisplay}</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePrincipal(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function formatRole(role) {
+    const roleLabels = {
+        'director': 'Director',
+        'partner': 'Partner',
+        'shareholder': 'Shareholder',
+        'ubo': 'UBO',
+        'designated_member': 'Designated Member',
+        'gp': 'General Partner'
+    };
+    return roleLabels[role] || role;
+}
+
+function updatePrincipalsJson() {
+    document.getElementById('principalsJson').value = JSON.stringify(principals);
+}
+
+function clearPrincipalForm() {
+    document.getElementById('principalFullName').value = '';
+    document.getElementById('principalFormerNames').value = '';
+    document.getElementById('principalDob').value = '';
+    document.getElementById('principalNationality').value = '';
+    document.getElementById('principalResidenceCountry').value = '';
+    document.getElementById('principalResidentialAddress').value = '';
+    document.getElementById('principalRole').value = '';
+    document.getElementById('principalOwnership').value = '';
+    document.getElementById('principalIsUbo').checked = false;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>
 
 <!-- Principal Modal -->
