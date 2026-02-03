@@ -35,22 +35,32 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-clipboard-check me-2"></i>
-                Client Enquiry Form
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}">
-                    <!-- Section 1: Sponsor Entity Details -->
-                    <h6 class="text-uppercase text-muted small mb-3">Sponsor Entity Details</h6>
+        <form id="enquiryForm" method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}" enctype="multipart/form-data"
+              data-loading-message="Saving Enquiry..." data-loading-submessage="Uploading documents and saving sponsor details">
 
-                    <div class="row g-3 mb-4">
+            <!-- ============================================================ -->
+            <!-- PART A: SPONSOR DETAILS -->
+            <!-- ============================================================ -->
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-building me-2"></i>
+                    <strong>PART A: SPONSOR DETAILS</strong>
+                </div>
+            </div>
+
+            <!-- Section 1: Sponsor Entity Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>
+                    1. Entity Information
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-8">
                             <label class="form-label">Legal Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="legal_name" required
                                    placeholder="e.g., Granite Capital Partners LLP"
-                                   value="{{ enquiry.legal_name if enquiry else '' }}">
+                                   value="{{ enquiry.sponsor_name if enquiry else '' }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Trading Name</label>
@@ -61,7 +71,7 @@
                     </div>
 
                     <!-- Entity Type Radio Button Cards -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label">Entity Type <span class="text-danger">*</span></label>
                         <div class="row g-2">
                             <div class="col-md-4">
@@ -88,34 +98,10 @@
                                     <small class="d-block text-muted">Limited Partnership</small>
                                 </label>
                             </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="entity_type" id="type_trust" value="trust" {% if enquiry and enquiry.entity_type == 'trust' %}checked{% endif %}>
-                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_trust">
-                                    <i class="bi bi-shield-check me-2"></i>
-                                    <strong>Trust</strong>
-                                    <small class="d-block text-muted">Trust structure</small>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="entity_type" id="type_foundation" value="foundation" {% if enquiry and enquiry.entity_type == 'foundation' %}checked{% endif %}>
-                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_foundation">
-                                    <i class="bi bi-bank me-2"></i>
-                                    <strong>Foundation</strong>
-                                    <small class="d-block text-muted">Foundation entity</small>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="entity_type" id="type_other" value="other" {% if enquiry and enquiry.entity_type == 'other' %}checked{% endif %}>
-                                <label class="btn btn-outline-primary w-100 text-start p-3" for="type_other">
-                                    <i class="bi bi-three-dots me-2"></i>
-                                    <strong>Other</strong>
-                                    <small class="d-block text-muted">Other entity type</small>
-                                </label>
-                            </div>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Jurisdiction <span class="text-danger">*</span></label>
                             <select class="form-select" name="jurisdiction" required>
@@ -142,92 +128,176 @@
                                    value="{{ enquiry.date_of_incorporation if enquiry else '' }}">
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="row g-3 mb-4">
+            <!-- Section 2: Addresses -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    2. Addresses
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Registered Address <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="registered_address" rows="2" required
-                                      placeholder="Full registered address...">{{ enquiry.registered_address if enquiry else '' }}</textarea>
+                            <textarea class="form-control" name="registered_address" rows="3" required
+                                      placeholder="Full registered address including postcode...">{{ enquiry.registered_address if enquiry else '' }}</textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Principal Place of Business</label>
+                            <label class="form-label">Business Address (if different)</label>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="sameAsRegistered" name="same_as_registered">
+                                <input class="form-check-input" type="checkbox" id="sameAsRegistered" name="same_as_registered"
+                                       {% if enquiry and enquiry.registered_address == enquiry.business_address %}checked{% endif %}>
                                 <label class="form-check-label small" for="sameAsRegistered">
                                     Same as registered address
                                 </label>
                             </div>
-                            <textarea class="form-control" name="principal_place_of_business" rows="2" id="principalPlaceOfBusiness"
-                                      placeholder="Principal place of business...">{{ enquiry.principal_place_of_business if enquiry else '' }}</textarea>
+                            <textarea class="form-control" name="business_address" rows="3" id="businessAddress"
+                                      placeholder="Principal place of business...">{{ enquiry.business_address if enquiry else '' }}</textarea>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr class="my-4">
-
-                    <!-- Section 2: Regulatory Status -->
-                    <h6 class="text-uppercase text-muted small mb-3">Regulatory Status</h6>
-
-                    <div class="row g-3 mb-4">
+            <!-- Section 3: Regulatory Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-shield-check me-2"></i>
+                    3. Regulatory Status
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Regulatory Status <span class="text-danger">*</span></label>
                             <select class="form-select" name="regulatory_status" id="regulatoryStatus" required>
                                 <option value="">Select status...</option>
-                                <option value="regulated" {% if enquiry and enquiry.regulatory_status == 'regulated' %}selected{% endif %}>Regulated</option>
-                                <option value="not_regulated" {% if enquiry and enquiry.regulatory_status == 'not_regulated' %}selected{% endif %}>Not Regulated</option>
-                                <option value="exempt" {% if enquiry and enquiry.regulatory_status == 'exempt' %}selected{% endif %}>Exempt</option>
-                                <option value="pending_registration" {% if enquiry and enquiry.regulatory_status == 'pending_registration' %}selected{% endif %}>Pending Registration</option>
+                                <option value="regulated" {% if enquiry and enquiry.get('regulatory_status') == 'regulated' %}selected{% endif %}>Regulated</option>
+                                <option value="not_regulated" {% if enquiry and enquiry.get('regulatory_status') == 'not_regulated' %}selected{% endif %}>Not Regulated</option>
+                                <option value="exempt" {% if enquiry and enquiry.get('regulatory_status') == 'exempt' %}selected{% endif %}>Exempt</option>
+                                <option value="pending_registration" {% if enquiry and enquiry.get('regulatory_status') == 'pending_registration' %}selected{% endif %}>Pending Registration</option>
                             </select>
                         </div>
-                        <div id="regulated-fields" style="display: none;" class="col-md-8">
+                        <div id="regulated-fields" {% if not enquiry or enquiry.get('regulatory_status') != 'regulated' %}style="display: none;"{% endif %} class="col-md-8">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Regulator <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="regulator" id="regulator">
+                                    <select class="form-select" name="regulator" id="regulator" {% if enquiry and enquiry.get('regulatory_status') == 'regulated' %}required{% endif %}>
                                         <option value="">Select regulator...</option>
-                                        <option value="FCA" {% if enquiry and enquiry.regulator == 'FCA' %}selected{% endif %}>FCA</option>
-                                        <option value="JFSC" {% if enquiry and enquiry.regulator == 'JFSC' %}selected{% endif %}>JFSC</option>
-                                        <option value="GFSC" {% if enquiry and enquiry.regulator == 'GFSC' %}selected{% endif %}>GFSC</option>
-                                        <option value="CIMA" {% if enquiry and enquiry.regulator == 'CIMA' %}selected{% endif %}>CIMA</option>
-                                        <option value="SEC" {% if enquiry and enquiry.regulator == 'SEC' %}selected{% endif %}>SEC</option>
-                                        <option value="CSSF" {% if enquiry and enquiry.regulator == 'CSSF' %}selected{% endif %}>CSSF</option>
-                                        <option value="CBI" {% if enquiry and enquiry.regulator == 'CBI' %}selected{% endif %}>CBI</option>
-                                        <option value="Other" {% if enquiry and enquiry.regulator == 'Other' %}selected{% endif %}>Other</option>
+                                        <option value="FCA" {% if enquiry and enquiry.get('regulator') == 'FCA' %}selected{% endif %}>FCA</option>
+                                        <option value="JFSC" {% if enquiry and enquiry.get('regulator') == 'JFSC' %}selected{% endif %}>JFSC</option>
+                                        <option value="GFSC" {% if enquiry and enquiry.get('regulator') == 'GFSC' %}selected{% endif %}>GFSC</option>
+                                        <option value="CIMA" {% if enquiry and enquiry.get('regulator') == 'CIMA' %}selected{% endif %}>CIMA</option>
+                                        <option value="SEC" {% if enquiry and enquiry.get('regulator') == 'SEC' %}selected{% endif %}>SEC</option>
+                                        <option value="CSSF" {% if enquiry and enquiry.get('regulator') == 'CSSF' %}selected{% endif %}>CSSF</option>
+                                        <option value="CBI" {% if enquiry and enquiry.get('regulator') == 'CBI' %}selected{% endif %}>CBI</option>
+                                        <option value="Other" {% if enquiry and enquiry.get('regulator') == 'Other' %}selected{% endif %}>Other</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">License/Registration Number <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="license_number" id="licenseNumber"
                                            placeholder="e.g., FRN 123456"
-                                           value="{{ enquiry.license_number if enquiry else '' }}">
+                                           value="{{ enquiry.get('license_number', '') if enquiry else '' }}"
+                                           {% if enquiry and enquiry.get('regulatory_status') == 'regulated' %}required{% endif %}>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr class="my-4">
-
-                    <!-- Section 3: Source of Wealth -->
-                    <h6 class="text-uppercase text-muted small mb-3">Source of Wealth</h6>
-
-                    <div class="row g-3 mb-4">
+            <!-- Section 4: Source of Wealth & Source of Funds -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-cash-stack me-2"></i>
+                    4. Source of Wealth & Funds
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Principal Business Activities <span class="text-danger">*</span></label>
                             <textarea class="form-control" name="principal_business_activities" rows="2" required
-                                      placeholder="Describe the sponsor's primary business activities and revenue sources...">{{ enquiry.principal_business_activities if enquiry else '' }}</textarea>
+                                      placeholder="Describe the sponsor's primary business activities...">{{ enquiry.business_activities if enquiry else '' }}</textarea>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Source of Wealth Narrative <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="source_of_wealth_narrative" rows="3" required
-                                      placeholder="Describe how the sponsor accumulated its wealth/capital...">{{ enquiry.source_of_wealth_narrative if enquiry else '' }}</textarea>
+                        <div class="col-md-6">
+                            <label class="form-label">Source of Wealth <span class="text-danger">*</span></label>
+                            <small class="text-muted d-block mb-1">How did the sponsor accumulate its wealth/capital?</small>
+                            <textarea class="form-control" name="source_of_wealth" rows="3" required
+                                      placeholder="e.g., Management fees from previous funds, carried interest from exits, founder capital...">{{ enquiry.source_of_wealth if enquiry else '' }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Source of Funds <span class="text-danger">*</span></label>
+                            <small class="text-muted d-block mb-1">Where will the funds for investment activities come from?</small>
+                            <textarea class="form-control" name="source_of_funds" rows="3" required
+                                      placeholder="e.g., Institutional investors, pension funds, HNW individuals, family offices...">{{ enquiry.source_of_funds if enquiry else '' }}</textarea>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr class="my-4">
+            <!-- Section 5: Sponsor Directors & UBOs -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people me-2"></i>5. Sponsor Directors & UBOs</span>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#sponsorPrincipalModal">
+                        <i class="bi bi-plus-lg me-1"></i>Add Person
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Add all directors of the sponsor entity and ultimate beneficial owners (UBOs) with 25%+ ownership.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="sponsorPrincipalsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>DOB</th>
+                                    <th>Address</th>
+                                    <th>Role</th>
+                                    <th>Ownership %</th>
+                                    <th>UBO</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sponsorPrincipalsTableBody">
+                                <tr id="noSponsorPrincipalsRow">
+                                    <td colspan="7" class="text-center text-muted py-3">
+                                        No directors/UBOs added yet. Click "Add Person" to begin.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info small mb-0 mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>UBO Threshold:</strong> Any individual with 25% or more ownership is automatically flagged as a UBO.
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Section 4: Proposed Fund Structure -->
-                    <h6 class="text-uppercase text-muted small mb-3">Proposed Fund Structure</h6>
+            <!-- Hidden input to store sponsor principals JSON for form submission -->
+            <input type="hidden" name="sponsor_principals_json" id="sponsorPrincipalsJson" value="[]">
 
-                    <div class="row g-3 mb-4">
+            <!-- ============================================================ -->
+            <!-- PART B: FUND DETAILS -->
+            <!-- ============================================================ -->
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    <strong>PART B: FUND DETAILS</strong>
+                </div>
+            </div>
+
+            <!-- Section 6: Proposed Fund Structure -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    6. Fund Structure
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Fund Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="fund_name" required
@@ -248,84 +318,225 @@
                             <label class="form-label">Legal Structure <span class="text-danger">*</span></label>
                             <select class="form-select" name="fund_legal_structure" required>
                                 <option value="">Select structure...</option>
-                                <option value="lp" {% if enquiry and enquiry.fund_legal_structure == 'lp' %}selected{% endif %}>Limited Partnership</option>
-                                <option value="unit_trust" {% if enquiry and enquiry.fund_legal_structure == 'unit_trust' %}selected{% endif %}>Unit Trust</option>
-                                <option value="icc" {% if enquiry and enquiry.fund_legal_structure == 'icc' %}selected{% endif %}>ICC</option>
-                                <option value="pcc" {% if enquiry and enquiry.fund_legal_structure == 'pcc' %}selected{% endif %}>PCC</option>
-                                <option value="other" {% if enquiry and enquiry.fund_legal_structure == 'other' %}selected{% endif %}>Other</option>
+                                <option value="lp" {% if enquiry and enquiry.legal_structure == 'lp' %}selected{% endif %}>Limited Partnership</option>
+                                <option value="unit_trust" {% if enquiry and enquiry.legal_structure == 'unit_trust' %}selected{% endif %}>Unit Trust</option>
+                                <option value="icc" {% if enquiry and enquiry.legal_structure == 'icc' %}selected{% endif %}>ICC</option>
+                                <option value="pcc" {% if enquiry and enquiry.legal_structure == 'pcc' %}selected{% endif %}>PCC</option>
+                                <option value="other" {% if enquiry and enquiry.legal_structure == 'other' %}selected{% endif %}>Other</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Target Fund Size <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="target_fund_size" required
-                                       placeholder="e.g., 500000000"
-                                       value="{{ enquiry.target_fund_size if enquiry else '' }}">
+                                <input type="text" class="form-control" name="target_fund_size" required
+                                       placeholder="e.g., 500,000,000"
+                                       value="{{ enquiry.target_size if enquiry else '' }}">
                             </div>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Investment Strategy <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="investment_strategy" rows="3" required
+                            <textarea class="form-control" name="investment_strategy" rows="2" required
                                       placeholder="Brief description of investment focus and strategy...">{{ enquiry.investment_strategy if enquiry else '' }}</textarea>
                         </div>
                     </div>
-
-                    <hr class="my-4">
-
-                    <!-- Section 5: Principals & Beneficial Owners -->
-                    <h6 class="text-uppercase text-muted small mb-3">Principals & Beneficial Owners</h6>
-
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-people me-2"></i>Principals</span>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#principalModal">
-                                <i class="bi bi-plus-lg me-1"></i>Add Principal
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <p class="small text-muted mb-3">
-                                Add all directors, partners, shareholders (25%+), and ultimate beneficial owners (UBOs).
-                            </p>
-                            <div class="table-responsive">
-                                <table class="table table-sm" id="principalsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Role</th>
-                                            <th>Ownership %</th>
-                                            <th>UBO</th>
-                                            <th class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="principalsTableBody">
-                                        <tr id="noPrincipalsRow">
-                                            <td colspan="5" class="text-center text-muted py-3">
-                                                No principals added yet. Click "Add Principal" to begin.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="form-label">Target Investment Countries/Regions <span class="text-danger">*</span></label>
+                            <p class="small text-muted mb-2">Select all countries or regions where the fund intends to make investments.</p>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="uk" id="countryUK"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'uk' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryUK">United Kingdom</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="eu" id="countryEU"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'eu' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryEU">European Union</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="us" id="countryUS"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'us' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryUS">United States</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="canada" id="countryCanada"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'canada' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryCanada">Canada</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="asia_pacific" id="countryAsiaPacific"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'asia_pacific' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryAsiaPacific">Asia Pacific</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="middle_east" id="countryMiddleEast"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'middle_east' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryMiddleEast">Middle East</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="africa" id="countryAfrica"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'africa' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryAfrica">Africa</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="latin_america" id="countryLatinAmerica"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'latin_america' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryLatinAmerica">Latin America</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country high-risk-country" type="checkbox" name="target_countries" value="russia" id="countryRussia"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'russia' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryRussia"><span class="text-danger">Russia</span> <small class="text-danger">(High Risk)</small></label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country high-risk-country" type="checkbox" name="target_countries" value="china" id="countryChina"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'china' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryChina"><span class="text-danger">China</span> <small class="text-danger">(High Risk)</small></label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country high-risk-country" type="checkbox" name="target_countries" value="iran" id="countryIran"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'iran' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryIran"><span class="text-danger">Iran</span> <small class="text-danger">(High Risk)</small></label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country high-risk-country" type="checkbox" name="target_countries" value="north_korea" id="countryNorthKorea"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'north_korea' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryNorthKorea"><span class="text-danger">North Korea</span> <small class="text-danger">(High Risk)</small></label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="global" id="countryGlobal"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'global' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryGlobal">Global (All Regions)</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input target-country" type="checkbox" name="target_countries" value="other" id="countryOther"
+                                               {{ 'checked' if enquiry and enquiry.target_countries and 'other' in enquiry.target_countries }}>
+                                        <label class="form-check-label" for="countryOther">Other (specify below)</label>
+                                    </div>
+                                    <div class="mt-2" id="otherCountriesField" style="display: none;">
+                                        <input type="text" class="form-control form-control-sm" name="other_target_countries" id="otherTargetCountries"
+                                               placeholder="Specify other countries..."
+                                               value="{{ enquiry.other_target_countries if enquiry else '' }}">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="alert alert-info small mb-0 mt-3">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>UBO Threshold:</strong> Any individual with 25% or more ownership is automatically flagged as a UBO.
-                            </div>
+                            <input type="hidden" name="target_countries_json" id="targetCountriesJson" value="[]">
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Hidden input to store principals JSON for form submission -->
-                    <input type="hidden" name="principals_json" id="principalsJson" value="[]">
+            <!-- Section 7: Fund GP Directors -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-badge me-2"></i>7. Fund GP Directors</span>
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#gpDirectorModal">
+                        <i class="bi bi-plus-lg me-1"></i>Add GP Director
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Add all proposed directors of the Fund's General Partner (GP) entity.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="gpDirectorsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>DOB</th>
+                                    <th>Address</th>
+                                    <th>Nationality</th>
+                                    <th>Position</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gpDirectorsTableBody">
+                                <tr id="noGpDirectorsRow">
+                                    <td colspan="6" class="text-center text-muted py-3">
+                                        No GP directors added yet. Click "Add GP Director" to begin.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                    <hr class="my-4">
+            <!-- Hidden input to store GP directors JSON for form submission -->
+            <input type="hidden" name="gp_directors_json" id="gpDirectorsJson" value="[]">
 
-                    <!-- Section 6: Primary Contact -->
-                    <h6 class="text-uppercase text-muted small mb-3">Primary Contact</h6>
+            <!-- Section 8: Initial Investors -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-wallet2 me-2"></i>8. Initial/Seed Investors
+                        <span id="investorCommitmentBadge" class="badge bg-secondary ms-2">No investors</span>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#investorModal">
+                        <i class="bi bi-plus-lg me-1"></i>Add Investor
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Add known or expected initial investors and their anticipated commitment percentages. <strong>Total must equal 100%.</strong>
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="investorsTable">
+                            <thead>
+                                <tr>
+                                    <th>Investor Name</th>
+                                    <th>Type</th>
+                                    <th>Jurisdiction</th>
+                                    <th>Commitment %</th>
+                                    <th>Commitment Amount</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investorsTableBody">
+                                <tr id="noInvestorsRow">
+                                    <td colspan="6" class="text-center text-muted py-3">
+                                        No investors added yet. Click "Add Investor" to begin.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="row g-3 mb-4">
+            <!-- Hidden input to store investors JSON for form submission -->
+            <input type="hidden" name="investors_json" id="investorsJson" value="[]">
+
+            <!-- ============================================================ -->
+            <!-- PART C: CONTACT & DECLARATION -->
+            <!-- ============================================================ -->
+            <div class="card mb-4 border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    <strong>PART C: CONTACT & DECLARATION</strong>
+                </div>
+            </div>
+
+            <!-- Section 9: Primary Contact -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    9. Primary Contact
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Contact Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="contact_name" required
@@ -345,10 +556,19 @@
                                    value="{{ enquiry.contact_phone if enquiry else '' }}">
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="row g-3 mb-4">
+            <!-- Section 10: Referral Source -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-megaphone me-2"></i>
+                    10. Referral Source
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Enquiry Source</label>
+                            <label class="form-label">How did you hear about us?</label>
                             <select class="form-select" name="enquiry_source" id="enquirySource">
                                 <option value="">Select source...</option>
                                 <option value="referral" {% if enquiry and enquiry.enquiry_source == 'referral' %}selected{% endif %}>Referral</option>
@@ -359,82 +579,149 @@
                             </select>
                         </div>
                         <div class="col-md-8" id="referrerNameField" style="display: none;">
-                            <label class="form-label">Referrer Name <span class="text-danger">*</span></label>
+                            <label class="form-label">Referrer Name/Details <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="referrer_name" id="referrerName"
-                                   placeholder="Name of the referrer"
+                                   placeholder="Name of the referrer or event details"
                                    value="{{ enquiry.referrer_name if enquiry else '' }}">
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr class="my-4">
-
-                    <!-- Section 7: Supporting Documents -->
-                    <h6 class="text-uppercase text-muted small mb-3">Supporting Documents</h6>
-
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <p class="small text-muted mb-3">
-                                The following documents can be uploaded now or at a later stage during onboarding.
-                            </p>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="border rounded p-3 text-center">
-                                        <i class="bi bi-file-earmark-text fs-2 text-muted mb-2"></i>
-                                        <p class="small mb-2">Certificate of Incorporation</p>
-                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+            <!-- Section 11: Supporting Documents -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-paperclip me-2"></i>
+                    11. Supporting Documents
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Upload supporting documents. Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (max 10MB each).
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>Certificate of Incorporation</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="border rounded p-3 text-center">
-                                        <i class="bi bi-file-earmark-text fs-2 text-muted mb-2"></i>
-                                        <p class="small mb-2">Memorandum & Articles</p>
-                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+                                <input type="file" class="form-control form-control-sm" name="doc_certificate_of_incorporation"
+                                       accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" id="docCertIncorp">
+                                <div id="docCertIncorpStatus" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>M&A / Partnership Agreement</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="border rounded p-3 text-center">
-                                        <i class="bi bi-diagram-3 fs-2 text-muted mb-2"></i>
-                                        <p class="small mb-2">Structure Chart</p>
-                                        <span class="badge bg-light text-muted">Optional - Upload later</span>
+                                <input type="file" class="form-control form-control-sm" name="doc_partnership_agreement"
+                                       accept=".pdf,.doc,.docx" id="docPartnership">
+                                <div id="docPartnershipStatus" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-diagram-3 fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>Structure Chart</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
                                     </div>
                                 </div>
+                                <input type="file" class="form-control form-control-sm" name="doc_structure_chart"
+                                       accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx" id="docStructure">
+                                <div id="docStructureStatus" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-file-earmark-pdf fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>Fund PPM/IM (Draft)</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
+                                    </div>
+                                </div>
+                                <input type="file" class="form-control form-control-sm" name="doc_ppm"
+                                       accept=".pdf,.doc,.docx" id="docPPM">
+                                <div id="docPPMStatus" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-person-badge fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>ID Documents (Principals/UBOs)</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
+                                    </div>
+                                </div>
+                                <input type="file" class="form-control form-control-sm" name="doc_id_documents"
+                                       accept=".pdf,.png,.jpg,.jpeg" multiple id="docID">
+                                <small class="text-muted">Can select multiple files</small>
+                                <div id="docIDStatus" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-file-earmark-plus fs-4 text-primary me-2"></i>
+                                    <div>
+                                        <strong>Other Supporting Documents</strong>
+                                        <span class="badge bg-light text-muted ms-2">Optional</span>
+                                    </div>
+                                </div>
+                                <input type="file" class="form-control form-control-sm" name="doc_other"
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" multiple id="docOther">
+                                <small class="text-muted">Can select multiple files</small>
+                                <div id="docOtherStatus" class="small text-muted mt-1"></div>
                             </div>
                         </div>
                     </div>
-
-                    <hr class="my-4">
-
-                    <!-- Section 8: Declaration -->
-                    <h6 class="text-uppercase text-muted small mb-3">Declaration</h6>
-
-                    <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
-                            <label class="form-check-label" for="declaration">
-                                I confirm that the information provided is accurate and complete to the best of my knowledge.
-                                I understand that this information will be used for due diligence and regulatory compliance purposes.
-                                <span class="text-danger">*</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-lg me-1"></i> Cancel
-                        </a>
-                        <div>
-                            <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
-                                <i class="bi bi-save me-1"></i> Save Draft
-                            </button>
-                            <button type="submit" name="action" value="next" class="btn btn-primary">
-                                Continue <i class="bi bi-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- Section 12: Declaration -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-check2-square me-2"></i>
+                    12. Declaration
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
+                        <label class="form-check-label" for="declaration">
+                            I confirm that the information provided is accurate and complete to the best of my knowledge.
+                            I understand that this information will be used for due diligence and regulatory compliance purposes.
+                            <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <div>
+                    <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-save me-1"></i> Save Draft
+                    </button>
+                    <button type="submit" name="action" value="next" class="btn btn-primary">
+                        Continue <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- Sidebar -->
@@ -447,14 +734,20 @@
             </div>
             <div class="card-body">
                 <p class="small text-muted mb-3">
-                    This form captures the essential information about the sponsor entity to begin the client onboarding process.
+                    This form captures comprehensive information about the sponsor and proposed fund.
                 </p>
-                <h6 class="small fw-bold">Required Information:</h6>
+                <h6 class="small fw-bold">Part A - Sponsor:</h6>
+                <ul class="small text-muted mb-2">
+                    <li>Legal name and entity details</li>
+                    <li>Registered & business addresses</li>
+                    <li>Source of Wealth & Funds</li>
+                    <li>Directors and UBOs (25%+ owners)</li>
+                </ul>
+                <h6 class="small fw-bold">Part B - Fund:</h6>
                 <ul class="small text-muted mb-0">
-                    <li>Legal name and entity type</li>
-                    <li>Jurisdiction of incorporation</li>
-                    <li>Registration details</li>
-                    <li>Registered address</li>
+                    <li>Fund structure and strategy</li>
+                    <li>GP Directors</li>
+                    <li>Initial investors</li>
                 </ul>
             </div>
         </div>
@@ -488,27 +781,274 @@
     </div>
 </div>
 
+<!-- Sponsor Principal Modal -->
+<div class="modal fade" id="sponsorPrincipalModal" tabindex="-1" aria-labelledby="sponsorPrincipalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sponsorPrincipalModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Add Sponsor Director/UBO
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Legal Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sponsorPrincipalFullName" required
+                               placeholder="As appears on ID">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Former Names</label>
+                        <input type="text" class="form-control" id="sponsorPrincipalFormerNames"
+                               placeholder="Maiden name, previous names">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="sponsorPrincipalDob" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nationality <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sponsorPrincipalNationality" required>
+                            <option value="">Select nationality...</option>
+                            <option value="British">British</option>
+                            <option value="American">American</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Irish">Irish</option>
+                            <option value="Norwegian">Norwegian</option>
+                            <option value="Swedish">Swedish</option>
+                            <option value="Swiss">Swiss</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Country of Residence <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sponsorPrincipalResidenceCountry" required>
+                            <option value="">Select country...</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="USA">United States</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                            <option value="Ireland">Ireland</option>
+                            <option value="Jersey">Jersey</option>
+                            <option value="Guernsey">Guernsey</option>
+                            <option value="Norway">Norway</option>
+                            <option value="Sweden">Sweden</option>
+                            <option value="Switzerland">Switzerland</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Residential Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="sponsorPrincipalResidentialAddress" rows="2" required
+                                  placeholder="Full residential address including postcode..."></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sponsorPrincipalRole" required>
+                            <option value="">Select role...</option>
+                            <option value="controller">Controller</option>
+                            <option value="ubo">UBO (Ultimate Beneficial Owner)</option>
+                            <option value="both">Both (Controller & UBO)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ownership %</label>
+                        <input type="number" class="form-control" id="sponsorPrincipalOwnership" min="0" max="100" step="0.01"
+                               placeholder="0-100">
+                        <small class="text-muted">Required for UBO roles</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addSponsorPrincipal()">
+                    <i class="bi bi-plus-lg me-1"></i>Add Person
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GP Director Modal -->
+<div class="modal fade" id="gpDirectorModal" tabindex="-1" aria-labelledby="gpDirectorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gpDirectorModalLabel">
+                    <i class="bi bi-person-badge me-2"></i>Add GP Director
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Legal Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="gpDirectorFullName" required
+                               placeholder="As appears on ID">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Former Names</label>
+                        <input type="text" class="form-control" id="gpDirectorFormerNames"
+                               placeholder="Maiden name, previous names">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="gpDirectorDob" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nationality <span class="text-danger">*</span></label>
+                        <select class="form-select" id="gpDirectorNationality" required>
+                            <option value="">Select nationality...</option>
+                            <option value="British">British</option>
+                            <option value="American">American</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Irish">Irish</option>
+                            <option value="Norwegian">Norwegian</option>
+                            <option value="Swedish">Swedish</option>
+                            <option value="Swiss">Swiss</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Country of Residence <span class="text-danger">*</span></label>
+                        <select class="form-select" id="gpDirectorResidenceCountry" required>
+                            <option value="">Select country...</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="USA">United States</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                            <option value="Ireland">Ireland</option>
+                            <option value="Jersey">Jersey</option>
+                            <option value="Guernsey">Guernsey</option>
+                            <option value="Norway">Norway</option>
+                            <option value="Sweden">Sweden</option>
+                            <option value="Switzerland">Switzerland</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Residential Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="gpDirectorResidentialAddress" rows="2" required
+                                  placeholder="Full residential address including postcode..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Position <span class="text-danger">*</span></label>
+                        <select class="form-select" id="gpDirectorPosition" required>
+                            <option value="">Select position...</option>
+                            <option value="director">Director</option>
+                            <option value="chairman">Chairman</option>
+                            <option value="independent_director">Independent Director</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="addGpDirector()">
+                    <i class="bi bi-plus-lg me-1"></i>Add GP Director
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Investor Modal -->
+<div class="modal fade" id="investorModal" tabindex="-1" aria-labelledby="investorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="investorModalLabel">
+                    <i class="bi bi-wallet2 me-2"></i>Add Initial Investor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Investor Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="investorName" required
+                               placeholder="Name of investor entity or individual">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Investor Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="investorType" required>
+                            <option value="">Select type...</option>
+                            <option value="institutional">Institutional Investor</option>
+                            <option value="pension_fund">Pension Fund</option>
+                            <option value="family_office">Family Office</option>
+                            <option value="hnw">High Net Worth Individual</option>
+                            <option value="fund_of_funds">Fund of Funds</option>
+                            <option value="sponsor_affiliate">Sponsor/Affiliate</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Jurisdiction <span class="text-danger">*</span></label>
+                        <select class="form-select" id="investorJurisdiction" required>
+                            <option value="">Select jurisdiction...</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="USA">United States</option>
+                            <option value="EU">European Union</option>
+                            <option value="Switzerland">Switzerland</option>
+                            <option value="Middle East">Middle East</option>
+                            <option value="Asia">Asia</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Commitment % <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="investorCommitmentPct" min="0" max="100" step="0.01" required
+                               placeholder="Expected % of total fund">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Commitment Amount ($)</label>
+                        <input type="text" class="form-control" id="investorCommitmentAmount"
+                               placeholder="e.g., 50,000,000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="addInvestor()">
+                    <i class="bi bi-plus-lg me-1"></i>Add Investor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Same as Registered checkbox
     const sameAsRegisteredCheckbox = document.getElementById('sameAsRegistered');
-    const principalPlaceOfBusiness = document.getElementById('principalPlaceOfBusiness');
+    const businessAddress = document.getElementById('businessAddress');
     const registeredAddress = document.querySelector('textarea[name="registered_address"]');
 
-    if (sameAsRegisteredCheckbox && principalPlaceOfBusiness && registeredAddress) {
+    if (sameAsRegisteredCheckbox && businessAddress && registeredAddress) {
         sameAsRegisteredCheckbox.addEventListener('change', function() {
             if (this.checked) {
-                principalPlaceOfBusiness.value = registeredAddress.value;
-                principalPlaceOfBusiness.disabled = true;
+                businessAddress.value = registeredAddress.value;
+                businessAddress.disabled = true;
             } else {
-                principalPlaceOfBusiness.disabled = false;
+                businessAddress.disabled = false;
             }
         });
 
         registeredAddress.addEventListener('input', function() {
             if (sameAsRegisteredCheckbox.checked) {
-                principalPlaceOfBusiness.value = this.value;
+                businessAddress.value = this.value;
             }
         });
+
+        // Initialize on page load
+        if (sameAsRegisteredCheckbox.checked) {
+            businessAddress.disabled = true;
+        }
     }
 
     // Regulatory Status conditional fields
@@ -526,26 +1066,23 @@ document.addEventListener('DOMContentLoaded', function() {
             regulatedFields.style.display = 'none';
             regulatorSelect.required = false;
             licenseNumberInput.required = false;
-            regulatorSelect.value = '';
-            licenseNumberInput.value = '';
         }
     }
 
     if (regulatoryStatusSelect && regulatedFields) {
         regulatoryStatusSelect.addEventListener('change', toggleRegulatedFields);
-        // Initialize on page load
         toggleRegulatedFields();
     }
 
     // Auto-check UBO if ownership >= 25%
-    const ownershipInput = document.getElementById('principalOwnership');
-    const uboCheckbox = document.getElementById('principalIsUbo');
+    const sponsorOwnershipInput = document.getElementById('sponsorPrincipalOwnership');
+    const sponsorUboCheckbox = document.getElementById('sponsorPrincipalIsUbo');
 
-    if (ownershipInput && uboCheckbox) {
-        ownershipInput.addEventListener('input', function() {
+    if (sponsorOwnershipInput && sponsorUboCheckbox) {
+        sponsorOwnershipInput.addEventListener('input', function() {
             const ownership = parseFloat(this.value) || 0;
             if (ownership >= 25) {
-                uboCheckbox.checked = true;
+                sponsorUboCheckbox.checked = true;
             }
         });
     }
@@ -556,46 +1093,102 @@ document.addEventListener('DOMContentLoaded', function() {
     const referrerNameInput = document.getElementById('referrerName');
 
     function toggleReferrerField() {
-        if (enquirySourceSelect.value === 'referral') {
+        if (['referral', 'event', 'other'].includes(enquirySourceSelect.value)) {
             referrerNameField.style.display = '';
             referrerNameInput.required = true;
         } else {
             referrerNameField.style.display = 'none';
             referrerNameInput.required = false;
-            referrerNameInput.value = '';
         }
     }
 
     if (enquirySourceSelect && referrerNameField) {
         enquirySourceSelect.addEventListener('change', toggleReferrerField);
-        // Initialize on page load
         toggleReferrerField();
+    }
+
+    // Load existing principals from enquiry data if available
+    {% if enquiry and enquiry.principals %}
+    const existingPrincipals = {{ enquiry.principals | tojson | safe }};
+    if (existingPrincipals && existingPrincipals.length > 0) {
+        existingPrincipals.forEach(function(p) {
+            // Map legacy format to new format
+            let role = (p.role || 'director').toLowerCase().replace(' ', '_');
+            // Map legacy role names to new format
+            const roleMappings = {
+                'partner': 'both',
+                'director_ubo': 'both',
+                'controller_ubo': 'both'
+            };
+            role = roleMappings[role] || role;
+
+            sponsorPrincipals.push({
+                full_name: p.name || p.full_name,
+                former_names: p.former_names || '',
+                dob: p.dob || '',
+                nationality: p.nationality || '',
+                country_of_residence: p.country_of_residence || '',
+                residential_address: p.residential_address || p.address || '',
+                role: role,
+                ownership_pct: parseFloat(p.ownership || p.ownership_pct || '0'),
+                is_ubo: p.is_ubo || (parseFloat(p.ownership || p.ownership_pct || '0') >= 25)
+            });
+        });
+        renderSponsorPrincipalsTable();
+        updateSponsorPrincipalsJson();
+    }
+    {% endif %}
+
+    // Form submission validation
+    const enquiryForm = document.getElementById('enquiryForm');
+    if (enquiryForm) {
+        enquiryForm.addEventListener('submit', function(e) {
+            // Validate investor commitment total
+            if (typeof investors !== 'undefined' && investors.length > 0) {
+                const total = investors.reduce((sum, inv) => sum + (inv.commitment_pct || 0), 0);
+                if (Math.abs(total - 100) > 0.01) {
+                    e.preventDefault();
+                    alert(`Investor commitments must total 100%. Current total: ${total.toFixed(2)}%`);
+                    // Scroll to investors section
+                    document.getElementById('investorsTable').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 });
 
-// Principals array to store added principals
-let principals = [];
+// ============================================================
+// SPONSOR PRINCIPALS MANAGEMENT
+// ============================================================
+let sponsorPrincipals = [];
 
-function addPrincipal() {
-    // Get form values
-    const fullName = document.getElementById('principalFullName').value.trim();
-    const formerNames = document.getElementById('principalFormerNames').value.trim();
-    const dob = document.getElementById('principalDob').value;
-    const nationality = document.getElementById('principalNationality').value;
-    const residenceCountry = document.getElementById('principalResidenceCountry').value;
-    const residentialAddress = document.getElementById('principalResidentialAddress').value.trim();
-    const role = document.getElementById('principalRole').value;
-    const ownership = document.getElementById('principalOwnership').value;
-    const isUbo = document.getElementById('principalIsUbo').checked;
+function addSponsorPrincipal() {
+    const fullName = document.getElementById('sponsorPrincipalFullName').value.trim();
+    const formerNames = document.getElementById('sponsorPrincipalFormerNames').value.trim();
+    const dob = document.getElementById('sponsorPrincipalDob').value;
+    const nationality = document.getElementById('sponsorPrincipalNationality').value;
+    const residenceCountry = document.getElementById('sponsorPrincipalResidenceCountry').value;
+    const residentialAddress = document.getElementById('sponsorPrincipalResidentialAddress').value.trim();
+    const role = document.getElementById('sponsorPrincipalRole').value;
+    const ownership = document.getElementById('sponsorPrincipalOwnership').value;
 
-    // Validate required fields
+    // Determine if UBO from role selection
+    const isUbo = (role === 'ubo' || role === 'both');
+
     if (!fullName || !dob || !nationality || !residenceCountry || !residentialAddress || !role) {
         alert('Please fill in all required fields.');
         return;
     }
 
-    // Create principal object
-    const principal = {
+    // Validate ownership percentage for UBO roles
+    if (isUbo && (!ownership || parseFloat(ownership) <= 0)) {
+        alert('Ownership percentage is required for UBO roles.');
+        return;
+    }
+
+    sponsorPrincipals.push({
         full_name: fullName,
         former_names: formerNames,
         dob: dob,
@@ -604,66 +1197,55 @@ function addPrincipal() {
         residential_address: residentialAddress,
         role: role,
         ownership_pct: ownership ? parseFloat(ownership) : null,
-        is_ubo: isUbo
-    };
+        is_ubo: isUbo,
+        entity_type: 'sponsor'
+    });
 
-    // Add to array
-    principals.push(principal);
-
-    // Update table and hidden input
-    renderPrincipalsTable();
-    updatePrincipalsJson();
-
-    // Clear form and close modal
-    clearPrincipalForm();
-    const modal = bootstrap.Modal.getInstance(document.getElementById('principalModal'));
-    modal.hide();
+    renderSponsorPrincipalsTable();
+    updateSponsorPrincipalsJson();
+    clearSponsorPrincipalForm();
+    bootstrap.Modal.getInstance(document.getElementById('sponsorPrincipalModal')).hide();
 }
 
-function removePrincipal(index) {
-    if (confirm('Are you sure you want to remove this principal?')) {
-        principals.splice(index, 1);
-        renderPrincipalsTable();
-        updatePrincipalsJson();
+function removeSponsorPrincipal(index) {
+    if (confirm('Remove this person?')) {
+        sponsorPrincipals.splice(index, 1);
+        renderSponsorPrincipalsTable();
+        updateSponsorPrincipalsJson();
     }
 }
 
-function renderPrincipalsTable() {
-    const tbody = document.getElementById('principalsTableBody');
-    const noDataRow = document.getElementById('noPrincipalsRow');
-
-    // Clear existing rows (except the no-data placeholder)
+function renderSponsorPrincipalsTable() {
+    const tbody = document.getElementById('sponsorPrincipalsTableBody');
     tbody.innerHTML = '';
 
-    if (principals.length === 0) {
-        // Show placeholder
+    if (sponsorPrincipals.length === 0) {
         tbody.innerHTML = `
-            <tr id="noPrincipalsRow">
-                <td colspan="5" class="text-center text-muted py-3">
-                    No principals added yet. Click "Add Principal" to begin.
+            <tr id="noSponsorPrincipalsRow">
+                <td colspan="7" class="text-center text-muted py-3">
+                    No directors/UBOs added yet. Click "Add Person" to begin.
                 </td>
             </tr>
         `;
         return;
     }
 
-    // Render each principal
-    principals.forEach((principal, index) => {
-        const roleDisplay = formatRole(principal.role);
-        const ownershipDisplay = principal.ownership_pct !== null ? `${principal.ownership_pct}%` : '-';
-        const uboDisplay = principal.is_ubo ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>';
-
+    sponsorPrincipals.forEach((p, index) => {
+        const roleLabels = {
+            'controller': 'Controller',
+            'ubo': 'UBO',
+            'both': 'Controller & UBO'
+        };
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>
-                <strong>${escapeHtml(principal.full_name)}</strong>
-                ${principal.former_names ? `<small class="d-block text-muted">(${escapeHtml(principal.former_names)})</small>` : ''}
-            </td>
-            <td>${roleDisplay}</td>
-            <td>${ownershipDisplay}</td>
-            <td>${uboDisplay}</td>
+            <td><strong>${escapeHtml(p.full_name)}</strong></td>
+            <td><small>${p.dob || '-'}</small></td>
+            <td><small>${escapeHtml(p.residential_address.substring(0, 30))}...</small></td>
+            <td>${roleLabels[p.role] || p.role}</td>
+            <td>${p.ownership_pct !== null ? p.ownership_pct + '%' : '-'}</td>
+            <td>${p.is_ubo ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
             <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePrincipal(${index})">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSponsorPrincipal(${index})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -672,138 +1254,407 @@ function renderPrincipalsTable() {
     });
 }
 
-function formatRole(role) {
-    const roleLabels = {
-        'director': 'Director',
-        'partner': 'Partner',
-        'shareholder': 'Shareholder',
-        'ubo': 'UBO',
-        'designated_member': 'Designated Member',
-        'gp': 'General Partner'
-    };
-    return roleLabels[role] || role;
+function updateSponsorPrincipalsJson() {
+    document.getElementById('sponsorPrincipalsJson').value = JSON.stringify(sponsorPrincipals);
 }
 
-function updatePrincipalsJson() {
-    document.getElementById('principalsJson').value = JSON.stringify(principals);
+function clearSponsorPrincipalForm() {
+    document.getElementById('sponsorPrincipalFullName').value = '';
+    document.getElementById('sponsorPrincipalFormerNames').value = '';
+    document.getElementById('sponsorPrincipalDob').value = '';
+    document.getElementById('sponsorPrincipalNationality').value = '';
+    document.getElementById('sponsorPrincipalResidenceCountry').value = '';
+    document.getElementById('sponsorPrincipalResidentialAddress').value = '';
+    document.getElementById('sponsorPrincipalRole').value = '';
+    document.getElementById('sponsorPrincipalOwnership').value = '';
 }
 
-function clearPrincipalForm() {
-    document.getElementById('principalFullName').value = '';
-    document.getElementById('principalFormerNames').value = '';
-    document.getElementById('principalDob').value = '';
-    document.getElementById('principalNationality').value = '';
-    document.getElementById('principalResidenceCountry').value = '';
-    document.getElementById('principalResidentialAddress').value = '';
-    document.getElementById('principalRole').value = '';
-    document.getElementById('principalOwnership').value = '';
-    document.getElementById('principalIsUbo').checked = false;
+// ============================================================
+// GP DIRECTORS MANAGEMENT
+// ============================================================
+let gpDirectors = [];
+
+// Auto-populate GP directors from enquiry data if available
+{% if enquiry and enquiry.gp_directors %}
+const existingGpDirectors = {{ enquiry.gp_directors | tojson | safe }};
+if (existingGpDirectors && existingGpDirectors.length > 0) {
+    existingGpDirectors.forEach(function(d) {
+        gpDirectors.push({
+            full_name: d.full_name || d.name,
+            former_names: d.former_names || '',
+            dob: d.dob || '',
+            nationality: d.nationality || '',
+            country_of_residence: d.country_of_residence || '',
+            residential_address: d.residential_address || d.address || '',
+            position: d.position || 'director',
+            entity_type: 'gp'
+        });
+    });
+    // Render after DOM is ready
+    setTimeout(function() {
+        renderGpDirectorsTable();
+        updateGpDirectorsJson();
+    }, 0);
+}
+{% endif %}
+
+function addGpDirector() {
+    const fullName = document.getElementById('gpDirectorFullName').value.trim();
+    const formerNames = document.getElementById('gpDirectorFormerNames').value.trim();
+    const dob = document.getElementById('gpDirectorDob').value;
+    const nationality = document.getElementById('gpDirectorNationality').value;
+    const residenceCountry = document.getElementById('gpDirectorResidenceCountry').value;
+    const residentialAddress = document.getElementById('gpDirectorResidentialAddress').value.trim();
+    const position = document.getElementById('gpDirectorPosition').value;
+
+    if (!fullName || !dob || !nationality || !residenceCountry || !residentialAddress || !position) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    gpDirectors.push({
+        full_name: fullName,
+        former_names: formerNames,
+        dob: dob,
+        nationality: nationality,
+        country_of_residence: residenceCountry,
+        residential_address: residentialAddress,
+        position: position,
+        entity_type: 'gp'
+    });
+
+    renderGpDirectorsTable();
+    updateGpDirectorsJson();
+    clearGpDirectorForm();
+    bootstrap.Modal.getInstance(document.getElementById('gpDirectorModal')).hide();
 }
 
+function removeGpDirector(index) {
+    if (confirm('Remove this GP director?')) {
+        gpDirectors.splice(index, 1);
+        renderGpDirectorsTable();
+        updateGpDirectorsJson();
+    }
+}
+
+function renderGpDirectorsTable() {
+    const tbody = document.getElementById('gpDirectorsTableBody');
+    tbody.innerHTML = '';
+
+    if (gpDirectors.length === 0) {
+        tbody.innerHTML = `
+            <tr id="noGpDirectorsRow">
+                <td colspan="6" class="text-center text-muted py-3">
+                    No GP directors added yet. Click "Add GP Director" to begin.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    gpDirectors.forEach((d, index) => {
+        const positionLabels = {
+            'director': 'Director',
+            'chairman': 'Chairman',
+            'independent_director': 'Independent Director'
+        };
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${escapeHtml(d.full_name)}</strong></td>
+            <td><small>${d.dob || '-'}</small></td>
+            <td><small>${escapeHtml(d.residential_address.substring(0, 30))}...</small></td>
+            <td>${d.nationality}</td>
+            <td>${positionLabels[d.position] || d.position}</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGpDirector(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateGpDirectorsJson() {
+    document.getElementById('gpDirectorsJson').value = JSON.stringify(gpDirectors);
+}
+
+function clearGpDirectorForm() {
+    document.getElementById('gpDirectorFullName').value = '';
+    document.getElementById('gpDirectorFormerNames').value = '';
+    document.getElementById('gpDirectorDob').value = '';
+    document.getElementById('gpDirectorNationality').value = '';
+    document.getElementById('gpDirectorResidenceCountry').value = '';
+    document.getElementById('gpDirectorResidentialAddress').value = '';
+    document.getElementById('gpDirectorPosition').value = '';
+}
+
+// ============================================================
+// INVESTORS MANAGEMENT
+// ============================================================
+let investors = [];
+
+// Auto-populate investors from enquiry data if available
+{% if enquiry and enquiry.initial_investors %}
+const existingInvestors = {{ enquiry.initial_investors | tojson | safe }};
+if (existingInvestors && existingInvestors.length > 0) {
+    existingInvestors.forEach(function(inv) {
+        investors.push({
+            name: inv.name,
+            type: inv.type || 'institutional',
+            jurisdiction: inv.jurisdiction || '',
+            commitment_pct: parseFloat(inv.commitment_pct || '0'),
+            commitment_amount: inv.commitment_amount || ''
+        });
+    });
+    // Render after DOM is ready
+    setTimeout(function() {
+        renderInvestorsTable();
+        updateInvestorsJson();
+    }, 0);
+}
+{% endif %}
+
+function getTotalInvestorCommitment() {
+    return investors.reduce((sum, inv) => sum + (inv.commitment_pct || 0), 0);
+}
+
+function addInvestor() {
+    const name = document.getElementById('investorName').value.trim();
+    const type = document.getElementById('investorType').value;
+    const jurisdiction = document.getElementById('investorJurisdiction').value;
+    const commitmentPct = document.getElementById('investorCommitmentPct').value;
+    const commitmentAmount = document.getElementById('investorCommitmentAmount').value.trim();
+
+    if (!name || !type || !jurisdiction || !commitmentPct) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    const newCommitment = parseFloat(commitmentPct);
+    const currentTotal = getTotalInvestorCommitment();
+    const newTotal = currentTotal + newCommitment;
+
+    if (newTotal > 100) {
+        alert(`Total commitment cannot exceed 100%. Current total: ${currentTotal.toFixed(2)}%. Adding ${newCommitment}% would make it ${newTotal.toFixed(2)}%.`);
+        return;
+    }
+
+    investors.push({
+        name: name,
+        type: type,
+        jurisdiction: jurisdiction,
+        commitment_pct: newCommitment,
+        commitment_amount: commitmentAmount
+    });
+
+    renderInvestorsTable();
+    updateInvestorsJson();
+    clearInvestorForm();
+    bootstrap.Modal.getInstance(document.getElementById('investorModal')).hide();
+}
+
+function removeInvestor(index) {
+    if (confirm('Remove this investor?')) {
+        investors.splice(index, 1);
+        renderInvestorsTable();
+        updateInvestorsJson();
+    }
+}
+
+function renderInvestorsTable() {
+    const tbody = document.getElementById('investorsTableBody');
+    tbody.innerHTML = '';
+
+    if (investors.length === 0) {
+        tbody.innerHTML = `
+            <tr id="noInvestorsRow">
+                <td colspan="6" class="text-center text-muted py-3">
+                    No investors added yet. Click "Add Investor" to begin.
+                </td>
+            </tr>
+        `;
+        updateInvestorTotalDisplay();
+        return;
+    }
+
+    investors.forEach((inv, index) => {
+        const typeLabels = {
+            'institutional': 'Institutional',
+            'pension_fund': 'Pension Fund',
+            'family_office': 'Family Office',
+            'hnw': 'HNW Individual',
+            'fund_of_funds': 'Fund of Funds',
+            'sponsor_affiliate': 'Sponsor/Affiliate',
+            'other': 'Other'
+        };
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${escapeHtml(inv.name)}</strong></td>
+            <td>${typeLabels[inv.type] || inv.type}</td>
+            <td>${inv.jurisdiction}</td>
+            <td>${inv.commitment_pct}%</td>
+            <td>${inv.commitment_amount ? '$' + inv.commitment_amount : '-'}</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeInvestor(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Add total row
+    const total = getTotalInvestorCommitment();
+    const isValid = Math.abs(total - 100) < 0.01; // Allow for floating point imprecision
+    const totalRow = document.createElement('tr');
+    totalRow.className = isValid ? 'table-success' : 'table-warning';
+    totalRow.innerHTML = `
+        <td colspan="3" class="text-end"><strong>Total Commitment:</strong></td>
+        <td><strong>${total.toFixed(2)}%</strong></td>
+        <td colspan="2">
+            ${isValid
+                ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Valid (100%)</span>'
+                : '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>Must equal 100%</span>'
+            }
+        </td>
+    `;
+    tbody.appendChild(totalRow);
+
+    updateInvestorTotalDisplay();
+}
+
+function updateInvestorTotalDisplay() {
+    const total = getTotalInvestorCommitment();
+    const isValid = Math.abs(total - 100) < 0.01;
+    const badge = document.getElementById('investorCommitmentBadge');
+    if (badge) {
+        if (investors.length === 0) {
+            badge.className = 'badge bg-secondary';
+            badge.innerHTML = 'No investors';
+        } else if (isValid) {
+            badge.className = 'badge bg-success';
+            badge.innerHTML = '<i class="bi bi-check-circle me-1"></i>100%';
+        } else {
+            badge.className = 'badge bg-warning text-dark';
+            badge.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>${total.toFixed(1)}%`;
+        }
+    }
+}
+
+function updateInvestorsJson() {
+    document.getElementById('investorsJson').value = JSON.stringify(investors);
+}
+
+function clearInvestorForm() {
+    document.getElementById('investorName').value = '';
+    document.getElementById('investorType').value = '';
+    document.getElementById('investorJurisdiction').value = '';
+    document.getElementById('investorCommitmentPct').value = '';
+    document.getElementById('investorCommitmentAmount').value = '';
+}
+
+// ============================================================
+// TARGET COUNTRIES MANAGEMENT
+// ============================================================
+function initTargetCountries() {
+    const otherCheckbox = document.getElementById('countryOther');
+    const otherField = document.getElementById('otherCountriesField');
+    const targetCountryCheckboxes = document.querySelectorAll('.target-country');
+
+    // Show/hide "Other" text field
+    if (otherCheckbox && otherField) {
+        otherCheckbox.addEventListener('change', function() {
+            otherField.style.display = this.checked ? '' : 'none';
+        });
+        // Initialize on page load
+        if (otherCheckbox.checked) {
+            otherField.style.display = '';
+        }
+    }
+
+    // Update hidden JSON when any checkbox changes
+    targetCountryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateTargetCountriesJson);
+    });
+
+    // Initialize JSON on page load
+    updateTargetCountriesJson();
+}
+
+function updateTargetCountriesJson() {
+    const selectedCountries = [];
+    const checkboxes = document.querySelectorAll('.target-country:checked');
+    checkboxes.forEach(cb => selectedCountries.push(cb.value));
+
+    document.getElementById('targetCountriesJson').value = JSON.stringify(selectedCountries);
+
+    // Check if any high-risk countries are selected
+    const highRiskSelected = document.querySelectorAll('.high-risk-country:checked');
+    if (highRiskSelected.length > 0) {
+        console.log('High-risk countries selected:', Array.from(highRiskSelected).map(cb => cb.value));
+    }
+}
+
+function getSelectedHighRiskCountries() {
+    const highRiskSelected = document.querySelectorAll('.high-risk-country:checked');
+    return Array.from(highRiskSelected).map(cb => cb.value);
+}
+
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initTargetCountries);
+
+// ============================================================
+// DOCUMENT UPLOAD HANDLING
+// ============================================================
+function initDocumentUploads() {
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const statusDiv = document.getElementById(this.id + 'Status');
+            if (!statusDiv) return;
+
+            if (this.files.length === 0) {
+                statusDiv.innerHTML = '';
+                return;
+            }
+
+            let messages = [];
+            let hasError = false;
+
+            Array.from(this.files).forEach(file => {
+                if (file.size > maxFileSize) {
+                    messages.push(`<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${file.name} exceeds 10MB limit</span>`);
+                    hasError = true;
+                } else {
+                    const sizeKB = (file.size / 1024).toFixed(1);
+                    messages.push(`<span class="text-success"><i class="bi bi-check-circle"></i> ${file.name} (${sizeKB} KB)</span>`);
+                }
+            });
+
+            statusDiv.innerHTML = messages.join('<br>');
+
+            if (hasError) {
+                this.value = ''; // Clear invalid files
+                setTimeout(() => {
+                    alert('One or more files exceed the 10MB size limit. Please select smaller files.');
+                }, 100);
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initDocumentUploads);
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 </script>
-
-<!-- Principal Modal -->
-<div class="modal fade" id="principalModal" tabindex="-1" aria-labelledby="principalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="principalModalLabel">
-                    <i class="bi bi-person-plus me-2"></i>Add Principal
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Full Legal Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="principalFullName" required
-                               placeholder="As appears on ID">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Former Names</label>
-                        <input type="text" class="form-control" id="principalFormerNames"
-                               placeholder="Maiden name, previous names">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="principalDob" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nationality <span class="text-danger">*</span></label>
-                        <select class="form-select" id="principalNationality" required>
-                            <option value="">Select nationality...</option>
-                            <option value="British">British</option>
-                            <option value="American">American</option>
-                            <option value="French">French</option>
-                            <option value="German">German</option>
-                            <option value="Irish">Irish</option>
-                            <option value="Norwegian">Norwegian</option>
-                            <option value="Swedish">Swedish</option>
-                            <option value="Swiss">Swiss</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Country of Residence <span class="text-danger">*</span></label>
-                        <select class="form-select" id="principalResidenceCountry" required>
-                            <option value="">Select country...</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="USA">United States</option>
-                            <option value="France">France</option>
-                            <option value="Germany">Germany</option>
-                            <option value="Ireland">Ireland</option>
-                            <option value="Jersey">Jersey</option>
-                            <option value="Guernsey">Guernsey</option>
-                            <option value="Norway">Norway</option>
-                            <option value="Sweden">Sweden</option>
-                            <option value="Switzerland">Switzerland</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Residential Address <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="principalResidentialAddress" rows="2" required
-                                  placeholder="Full residential address..."></textarea>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Role <span class="text-danger">*</span></label>
-                        <select class="form-select" id="principalRole" required>
-                            <option value="">Select role...</option>
-                            <option value="director">Director</option>
-                            <option value="partner">Partner</option>
-                            <option value="shareholder">Shareholder</option>
-                            <option value="ubo">UBO</option>
-                            <option value="designated_member">Designated Member</option>
-                            <option value="gp">General Partner</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Ownership %</label>
-                        <input type="number" class="form-control" id="principalOwnership" min="0" max="100" step="0.01"
-                               placeholder="0-100">
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="principalIsUbo">
-                            <label class="form-check-label" for="principalIsUbo">
-                                Is Ultimate Beneficial Owner (UBO)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="addPrincipal()">
-                    <i class="bi bi-plus-lg me-1"></i>Add Principal
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
