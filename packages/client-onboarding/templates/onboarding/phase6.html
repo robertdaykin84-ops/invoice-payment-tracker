@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 7: Commercial{% endblock %}
+{% block title %}Phase 6: Commercial{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,7 +8,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 7: Commercial</li>
+                <li class="breadcrumb-item active">Phase 6: Commercial</li>
             </ol>
         </nav>
         <h1 class="h3 mb-1">Commercial Terms</h1>
@@ -222,14 +222,14 @@
 
         <!-- Form Actions -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=6) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Phase 6
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=5) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 5
             </a>
             <div>
                 <button class="btn btn-outline-primary me-2" type="button">
                     <i class="bi bi-save me-1"></i> Save Draft
                 </button>
-                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=8) }}" class="btn btn-primary">
+                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=7) }}" class="btn btn-primary">
                     Complete Onboarding <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -241,7 +241,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-check2-square me-2"></i>
-                Phase 7 Checklist
+                Phase 6 Checklist
             </div>
             <div class="card-body">
                 <ul class="list-unstyled mb-0">

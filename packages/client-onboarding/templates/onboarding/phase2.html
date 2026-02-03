@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 3: Fund Structure{% endblock %}
+{% block title %}Phase 2: Fund Structure{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,7 +8,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 3: Fund Structure</li>
+                <li class="breadcrumb-item active">Phase 2: Fund Structure</li>
             </ol>
         </nav>
         <h1 class="h3 mb-1">Fund Structure Setup</h1>
@@ -281,15 +281,15 @@
 
         <!-- Form Actions -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=2) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Phase 2
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 1
             </a>
             <div>
                 <button type="submit" form="fundForm" name="action" value="save" class="btn btn-outline-primary me-2">
                     <i class="bi bi-save me-1"></i> Save Draft
                 </button>
                 <button type="submit" form="fundForm" name="action" value="next" class="btn btn-primary">
-                    Continue to Phase 4 <i class="bi bi-arrow-right ms-1"></i>
+                    Continue to Phase 3 <i class="bi bi-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -300,7 +300,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-check2-square me-2"></i>
-                Phase 3 Checklist
+                Phase 2 Checklist
             </div>
             <div class="card-body">
                 <ul class="list-unstyled mb-0">

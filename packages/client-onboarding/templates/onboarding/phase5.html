@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 6: Approval{% endblock %}
+{% block title %}Phase 5: Approval{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,7 +8,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 6: Approval</li>
+                <li class="breadcrumb-item active">Phase 5: Approval</li>
             </ol>
         </nav>
         <h1 class="h3 mb-1">Approval</h1>
@@ -220,15 +220,15 @@
 
         <!-- Form Actions -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=4) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Phase 4
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=3) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
             </a>
             <div>
-                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=7) }}"
+                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=6) }}"
                    class="btn btn-primary me-2 {% if not session.get('approval_status') == 'approved' %}disabled{% endif %}"
                    id="btn-continue"
                    {% if not session.get('approval_status') == 'approved' %}aria-disabled="true"{% endif %}>
-                    Continue to Phase 7 <i class="bi bi-arrow-right ms-1"></i>
+                    Continue to Phase 6 <i class="bi bi-arrow-right ms-1"></i>
                 </a>
                 <small class="text-muted d-block text-end mt-1" id="approval-status-text">
                     {% if session.get('approval_status') == 'approved' %}
@@ -246,7 +246,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-check2-square me-2"></i>
-                Phase 6 Checklist
+                Phase 5 Checklist
             </div>
             <div class="card-body">
                 <ul class="list-unstyled mb-0">
