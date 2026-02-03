@@ -294,8 +294,20 @@ const onboardingId = '{{ onboarding_id }}';
 const enquiryId = '{{ enquiry.id if enquiry else "" }}';
 let uploadedDocuments = [];
 let checklist = null;
+let docDetailModal = null;
+let overrideModal = null;
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Cache Bootstrap modal instances
+    docDetailModal = new bootstrap.Modal(document.getElementById('docDetailModal'));
+    overrideModal = new bootstrap.Modal(document.getElementById('overrideModal'));
+
     // Load checklist
     loadChecklist();
 
@@ -349,7 +361,7 @@ function handleFiles(files) {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
         li.innerHTML = `
-            <span><i class="bi bi-file-earmark me-2"></i>${file.name}</span>
+            <span><i class="bi bi-file-earmark me-2"></i>${escapeHtml(file.name)}</span>
             <span class="badge bg-secondary">${(file.size / 1024).toFixed(1)} KB</span>
         `;
         fileList.appendChild(li);
@@ -362,6 +374,9 @@ function handleFiles(files) {
 async function loadChecklist() {
     try {
         const response = await fetch(`/api/kyc/${onboardingId}/checklist?enquiry_id=${enquiryId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
         const data = await response.json();
 
         if (data.status === 'ok') {
@@ -441,6 +456,9 @@ async function uploadFiles() {
             body: formData
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
         const data = await response.json();
 
         clearInterval(progressInterval);
@@ -521,8 +539,8 @@ function renderDocumentList(containerId, docs) {
         item.innerHTML = `
             <div>
                 <i class="bi ${statusIcon} me-2"></i>
-                <strong>${doc.analysis.detected_type || 'Unknown'}</strong>
-                <small class="text-muted ms-2">${doc.filename}</small>
+                <strong>${escapeHtml(doc.analysis.detected_type || 'Unknown')}</strong>
+                <small class="text-muted ms-2">${escapeHtml(doc.filename)}</small>
                 <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
             </div>
             <div>
@@ -548,7 +566,7 @@ function renderKeyPartyDocs(keyPartyDocs) {
         card.className = 'card mb-4';
         card.innerHTML = `
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-person me-2"></i>${party.name} <small class="text-muted">(${party.role})</small></span>
+                <span><i class="bi bi-person me-2"></i>${escapeHtml(party.name)} <small class="text-muted">(${escapeHtml(party.role)})</small></span>
                 <span class="badge bg-secondary">${docs.length} uploaded</span>
             </div>
             <div class="card-body p-0">
@@ -602,21 +620,21 @@ function viewDocument(docId) {
             <div class="check-item">
                 <i class="bi ${icon}"></i>
                 <strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
-                <span>${check.detail}</span>
+                <span>${escapeHtml(check.detail)}</span>
             </div>
         `;
     });
 
     content.innerHTML = `
-        <h6>${doc.filename}</h6>
-        <p class="text-muted">Detected Type: ${doc.analysis.detected_type}</p>
+        <h6>${escapeHtml(doc.filename)}</h6>
+        <p class="text-muted">Detected Type: ${escapeHtml(doc.analysis.detected_type)}</p>
         <hr>
         <h6>AI Review Results</h6>
         ${checksHtml}
         ${doc.override ? `
             <div class="alert alert-info mt-3">
-                <strong>Override Applied:</strong> ${doc.override.reason}<br>
-                <small>By ${doc.override.by} at ${doc.override.at}</small>
+                <strong>Override Applied:</strong> ${escapeHtml(doc.override.reason)}<br>
+                <small>By ${escapeHtml(doc.override.by)} at ${escapeHtml(doc.override.at)}</small>
             </div>
         ` : ''}
     `;
@@ -629,13 +647,12 @@ function viewDocument(docId) {
         overrideBtn.classList.add('d-none');
     }
 
-    new bootstrap.Modal(modal).show();
+    docDetailModal.show();
 }
 
 function showOverrideModal(docId) {
-    bootstrap.Modal.getInstance(document.getElementById('docDetailModal')).hide();
+    docDetailModal.hide();
 
-    const modal = document.getElementById('overrideModal');
     document.getElementById('overrideReason').value = '';
 
     document.getElementById('confirmOverrideBtn').onclick = async () => {
@@ -652,6 +669,9 @@ function showOverrideModal(docId) {
                 body: JSON.stringify({ reason })
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
             const data = await response.json();
             if (data.status === 'ok') {
                 // Update local data
@@ -661,7 +681,7 @@ function showOverrideModal(docId) {
                     doc.analysis.overall_status = 'pass';
                 }
 
-                bootstrap.Modal.getInstance(modal).hide();
+                overrideModal.hide();
                 displayResults(uploadedDocuments);
             } else {
                 alert('Override failed: ' + data.message);
@@ -672,7 +692,7 @@ function showOverrideModal(docId) {
         }
     };
 
-    new bootstrap.Modal(modal).show();
+    overrideModal.show();
 }
 
 async function signOff() {
@@ -684,6 +704,9 @@ async function signOff() {
             headers: { 'Content-Type': 'application/json' }
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
         const data = await response.json();
         if (data.status === 'ok') {
             window.location.href = `/onboarding/${onboardingId}/phase/5`;
