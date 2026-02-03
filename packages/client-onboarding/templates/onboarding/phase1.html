@@ -162,6 +162,66 @@
                         </div>
                     </div>
 
+                    <hr class="my-4">
+
+                    <!-- Section 2: Regulatory Status -->
+                    <h6 class="text-uppercase text-muted small mb-3">Regulatory Status</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Regulatory Status <span class="text-danger">*</span></label>
+                            <select class="form-select" name="regulatory_status" id="regulatoryStatus" required>
+                                <option value="">Select status...</option>
+                                <option value="regulated" {% if enquiry and enquiry.regulatory_status == 'regulated' %}selected{% endif %}>Regulated</option>
+                                <option value="not_regulated" {% if enquiry and enquiry.regulatory_status == 'not_regulated' %}selected{% endif %}>Not Regulated</option>
+                                <option value="exempt" {% if enquiry and enquiry.regulatory_status == 'exempt' %}selected{% endif %}>Exempt</option>
+                                <option value="pending_registration" {% if enquiry and enquiry.regulatory_status == 'pending_registration' %}selected{% endif %}>Pending Registration</option>
+                            </select>
+                        </div>
+                        <div id="regulated-fields" style="display: none;" class="col-md-8">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Regulator <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="regulator" id="regulator">
+                                        <option value="">Select regulator...</option>
+                                        <option value="FCA" {% if enquiry and enquiry.regulator == 'FCA' %}selected{% endif %}>FCA</option>
+                                        <option value="JFSC" {% if enquiry and enquiry.regulator == 'JFSC' %}selected{% endif %}>JFSC</option>
+                                        <option value="GFSC" {% if enquiry and enquiry.regulator == 'GFSC' %}selected{% endif %}>GFSC</option>
+                                        <option value="CIMA" {% if enquiry and enquiry.regulator == 'CIMA' %}selected{% endif %}>CIMA</option>
+                                        <option value="SEC" {% if enquiry and enquiry.regulator == 'SEC' %}selected{% endif %}>SEC</option>
+                                        <option value="CSSF" {% if enquiry and enquiry.regulator == 'CSSF' %}selected{% endif %}>CSSF</option>
+                                        <option value="CBI" {% if enquiry and enquiry.regulator == 'CBI' %}selected{% endif %}>CBI</option>
+                                        <option value="Other" {% if enquiry and enquiry.regulator == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">License/Registration Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="license_number" id="licenseNumber"
+                                           placeholder="e.g., FRN 123456"
+                                           value="{{ enquiry.license_number if enquiry else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Section 3: Source of Wealth -->
+                    <h6 class="text-uppercase text-muted small mb-3">Source of Wealth</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label">Principal Business Activities <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="principal_business_activities" rows="2" required
+                                      placeholder="Describe the sponsor's primary business activities and revenue sources...">{{ enquiry.principal_business_activities if enquiry else '' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Source of Wealth Narrative <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="source_of_wealth_narrative" rows="3" required
+                                      placeholder="Describe how the sponsor accumulated its wealth/capital...">{{ enquiry.source_of_wealth_narrative if enquiry else '' }}</textarea>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
@@ -253,6 +313,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 principalPlaceOfBusiness.value = this.value;
             }
         });
+    }
+
+    // Regulatory Status conditional fields
+    const regulatoryStatusSelect = document.getElementById('regulatoryStatus');
+    const regulatedFields = document.getElementById('regulated-fields');
+    const regulatorSelect = document.getElementById('regulator');
+    const licenseNumberInput = document.getElementById('licenseNumber');
+
+    function toggleRegulatedFields() {
+        if (regulatoryStatusSelect.value === 'regulated') {
+            regulatedFields.style.display = '';
+            regulatorSelect.required = true;
+            licenseNumberInput.required = true;
+        } else {
+            regulatedFields.style.display = 'none';
+            regulatorSelect.required = false;
+            licenseNumberInput.required = false;
+            regulatorSelect.value = '';
+            licenseNumberInput.value = '';
+        }
+    }
+
+    if (regulatoryStatusSelect && regulatedFields) {
+        regulatoryStatusSelect.addEventListener('change', toggleRegulatedFields);
+        // Initialize on page load
+        toggleRegulatedFields();
     }
 });
 </script>
