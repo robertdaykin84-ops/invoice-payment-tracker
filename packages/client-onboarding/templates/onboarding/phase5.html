@@ -136,6 +136,33 @@
             </div>
         </div>
 
+        <!-- Risk Assessment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-shield-check me-2"></i>
+                Risk Assessment
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <div class="display-5 fw-bold" id="overall-risk-score">{{ risk_score or '28' }}</div>
+                        <span class="badge fs-6 {% if risk_rating == 'Low' %}badge-risk-low{% elif risk_rating == 'Medium' %}badge-risk-medium{% else %}badge-risk-high{% endif %}">
+                            {{ risk_rating or 'Low' }}
+                        </span>
+                        <p class="small text-muted mt-2">Overall Risk Score</p>
+                    </div>
+                    <div class="col-md-8">
+                        <h6>Risk Factors:</h6>
+                        <ul class="small">
+                            <li>Jurisdiction: {{ jurisdiction_risk or 'Low risk' }}</li>
+                            <li>Business Type: {{ business_risk or 'Low risk' }}</li>
+                            <li>Screening: {{ screening_risk or 'No adverse findings' }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Approval Workflow -->
         <div class="card mb-4">
             <div class="card-header">

@@ -190,86 +190,6 @@
             </div>
         </div>
 
-        <!-- Risk Assessment -->
-        <div class="card mb-4" id="risk-card" style="display: none;">
-            <div class="card-header">
-                <i class="bi bi-speedometer2 me-2"></i>
-                Risk Assessment
-            </div>
-            <div class="card-body">
-                <!-- Summary Row -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <div class="text-center p-3 border rounded bg-light">
-                            <div class="small text-muted mb-1">Overall Score</div>
-                            <div class="display-5 fw-bold" id="overall-risk-score">-</div>
-                            <span class="badge fs-6" id="overall-risk-badge">-</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">EDD Required</div>
-                            <div class="h4 mb-0" id="edd-status">-</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Approval Level</div>
-                            <div class="h4 mb-0" id="approval-level">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Factor Breakdown -->
-                <h6 class="small text-uppercase text-muted mb-3">Factor Breakdown</h6>
-                <div id="factor-breakdown">
-                    <!-- Factors will be populated by JavaScript -->
-                </div>
-
-                <!-- AI Risk Analysis -->
-                <div class="border rounded p-3 bg-light mt-4">
-                    <div class="d-flex align-items-start gap-2">
-                        <i class="bi bi-robot text-primary fs-5"></i>
-                        <div>
-                            <h6 class="mb-2">AI Risk Analysis</h6>
-                            <p class="small text-muted mb-0" id="ai-analysis">
-                                Run screening to generate risk analysis...
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Generate Reports -->
-                <div id="report-generation" class="border rounded p-3 mt-4" style="display: none;">
-                    <h6 class="mb-3"><i class="bi bi-file-earmark-pdf me-2"></i>Generate Reports</h6>
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-primary w-100 report-btn" data-type="compliance">
-                                <i class="bi bi-file-text me-1"></i>
-                                Compliance Report
-                                <div class="small text-muted">Full detail for MLRO</div>
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-primary w-100 report-btn" data-type="board">
-                                <i class="bi bi-clipboard-data me-1"></i>
-                                Board Summary
-                                <div class="small text-muted">Executive overview</div>
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-primary w-100 report-btn" data-type="audit">
-                                <i class="bi bi-folder2-open me-1"></i>
-                                Audit Pack
-                                <div class="small text-muted">Complete record</div>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="report-status" class="small text-muted mt-2" style="display: none;"></div>
-                </div>
-            </div>
-        </div>
-
         <!-- Form Actions -->
         <form method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=3) }}">
             <!-- Hidden fields for audit trail -->
@@ -307,10 +227,6 @@
                     <li class="d-flex align-items-center gap-2 mb-2" id="check-review">
                         <i class="bi bi-circle text-muted"></i>
                         <span>Review any matches</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2 mb-2" id="check-risk">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Confirm risk assessment</span>
                     </li>
                 </ul>
             </div>
@@ -356,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = progressDiv.querySelector('.progress-bar');
     const progressText = document.getElementById('progress-text');
     const resultsCard = document.getElementById('results-card');
-    const riskCard = document.getElementById('risk-card');
     const continueBtn = document.getElementById('continue-btn');
 
     runBtn.addEventListener('click', async function() {
@@ -490,8 +405,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show results card
         resultsCard.style.display = 'block';
-        riskCard.style.display = 'block';
-        document.getElementById('report-generation').style.display = 'block';
 
         // Calculate summary
         let clear = 0, review = 0, hits = 0;
@@ -549,175 +462,13 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }).join('');
 
-        // Display risk assessment from API response
-        if (data.risk_assessment) {
-            const risk = data.risk_assessment;
-
-            // Update summary
-            document.getElementById('overall-risk-score').textContent = Math.round(risk.score);
-
-            const overallBadge = document.getElementById('overall-risk-badge');
-            if (risk.rating === 'low') {
-                overallBadge.className = 'badge fs-6 bg-success';
-                overallBadge.textContent = 'LOW RISK';
-            } else if (risk.rating === 'medium') {
-                overallBadge.className = 'badge fs-6 bg-warning text-dark';
-                overallBadge.textContent = 'MEDIUM RISK';
-            } else {
-                overallBadge.className = 'badge fs-6 bg-danger';
-                overallBadge.textContent = 'HIGH RISK';
-            }
-
-            // EDD and Approval
-            const eddStatus = document.getElementById('edd-status');
-            eddStatus.innerHTML = risk.edd_required
-                ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Yes</span>'
-                : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>No</span>';
-
-            const approvalLevel = document.getElementById('approval-level');
-            const approvalMap = {
-                'compliance': '<span class="text-success">Compliance</span>',
-                'mlro': '<span class="text-warning">MLRO</span>',
-                'board': '<span class="text-danger">MLRO + Board</span>'
-            };
-            approvalLevel.innerHTML = approvalMap[risk.approval_level] || risk.approval_level;
-
-            // Factor breakdown
-            const factorDiv = document.getElementById('factor-breakdown');
-            const factorOrder = ['jurisdiction', 'pep_status', 'sanctions', 'adverse_media', 'entity_structure'];
-            const factorLabels = {
-                'jurisdiction': 'Jurisdiction',
-                'pep_status': 'PEP Status',
-                'sanctions': 'Sanctions',
-                'adverse_media': 'Adverse Media',
-                'entity_structure': 'Entity Structure'
-            };
-
-            factorDiv.innerHTML = factorOrder.map(key => {
-                const f = risk.factors[key];
-                const barWidth = f.score;
-                let barColor = 'bg-success';
-                if (f.score >= 70) barColor = 'bg-danger';
-                else if (f.score >= 40) barColor = 'bg-warning';
-
-                return `
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small fw-medium">${factorLabels[key]} (${f.weight}%)</span>
-                            <span class="small text-muted">${f.score} → ${f.contribution}pts</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar ${barColor}" style="width: ${barWidth}%"></div>
-                        </div>
-                        <div class="small text-muted mt-1">${f.reason}</div>
-                    </div>
-                `;
-            }).join('');
-
-            // Show EDD trigger card if needed
-            if (risk.edd_required) {
-                document.getElementById('edd-trigger-card').style.display = 'block';
-                document.getElementById('edd-reason').textContent =
-                    risk.rating === 'high'
-                        ? 'High risk score detected. Enhanced Due Diligence required before approval.'
-                        : 'Elevated risk factors detected. EDD recommended.';
-            }
-
-            // AI Analysis
-            let analysis = '';
-            if (risk.rating === 'high') {
-                analysis = `<strong class="text-danger">High Risk Alert:</strong> Overall risk score of ${Math.round(risk.score)} exceeds threshold. Enhanced Due Diligence is required. Approval required from: ${risk.approval_level.toUpperCase()}.`;
-            } else if (risk.rating === 'medium') {
-                analysis = `<strong class="text-warning">Medium Risk:</strong> Risk score of ${Math.round(risk.score)} indicates elevated risk factors. EDD recommended. MLRO approval required before proceeding.`;
-            } else {
-                analysis = `<strong class="text-success">Low Risk Profile:</strong> Risk score of ${Math.round(risk.score)} is within acceptable range. Standard onboarding pathway recommended. Compliance approval sufficient.`;
-            }
-            document.getElementById('ai-analysis').innerHTML = analysis;
-        }
-
         // Update checklist
         document.querySelector('#check-screening i').className = 'bi bi-check-circle text-success';
         document.querySelector('#check-review i').className = 'bi bi-check-circle text-success';
-        document.querySelector('#check-risk i').className = 'bi bi-check-circle text-success';
 
         // Enable continue button
         continueBtn.disabled = false;
-
-        // Auto-download compliance report after screening
-        setTimeout(() => {
-            generateReport('compliance', true);
-        }, 1000);
     }
-
-    // Reusable report generation function
-    async function generateReport(reportType, isAutoDownload = false) {
-        const statusDiv = document.getElementById('report-status');
-        const btn = document.querySelector(`.report-btn[data-type="${reportType}"]`);
-        const originalText = btn ? btn.innerHTML : '';
-
-        // Show loading state
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...';
-        }
-        statusDiv.style.display = 'block';
-        statusDiv.textContent = isAutoDownload
-            ? 'Auto-generating compliance backup report...'
-            : `Generating ${reportType} report...`;
-
-        try {
-            const response = await fetch(`/api/report/generate/{{ onboarding_id }}?type=${reportType}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to generate report');
-            }
-
-            // Get filename from header
-            const disposition = response.headers.get('Content-Disposition');
-            const filename = disposition ? disposition.split('filename=')[1].replace(/"/g, '') : `report-${reportType}.pdf`;
-
-            // Download the PDF
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-
-            // Show success message
-            const driveStatus = response.headers.get('X-Drive-Status');
-            const demoMode = response.headers.get('X-Demo-Mode') === 'true';
-
-            if (driveStatus === 'success') {
-                statusDiv.innerHTML = '<i class="bi bi-cloud-check text-success me-1"></i>Compliance report saved to Google Drive';
-            } else if (driveStatus === 'demo') {
-                statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Compliance report generated (demo mode)';
-            } else if (demoMode) {
-                statusDiv.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Compliance report generated (demo mode)';
-            } else {
-                statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Compliance report downloaded';
-            }
-
-        } catch (error) {
-            statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle text-danger me-1"></i>Failed to generate compliance report';
-            console.error('Report generation error:', error);
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        }
-    }
-
-    // Report generation button handlers
-    document.querySelectorAll('.report-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            generateReport(this.dataset.type);
-        });
-    });
 });
 </script>
 {% endblock %}
