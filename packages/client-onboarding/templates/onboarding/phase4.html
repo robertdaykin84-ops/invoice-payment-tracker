@@ -150,6 +150,9 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
             </a>
             <div>
+                <button type="button" class="btn btn-outline-success me-2" id="saveProgressBtn" onclick="saveProgress()">
+                    <i class="bi bi-save me-1"></i> Save Progress
+                </button>
                 <button type="button" class="btn btn-outline-primary me-2" id="uploadMoreBtn" disabled>
                     <i class="bi bi-plus-lg me-1"></i> Upload More
                 </button>
@@ -1341,5 +1344,59 @@ async function performSignOff(mlroOverrideJustification) {
         alert('Sign off failed. Please try again.');
     }
 }
+
+// Save Progress function
+window.saveProgress = async function() {
+    const saveBtn = document.getElementById('saveProgressBtn');
+
+    try {
+        // Disable button during save
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
+        }
+
+        // Collect MLRO justification and override reasons if present
+        const mlroJustification = document.getElementById('mlroJustification')?.value || '';
+        const overrideReasons = {};
+
+        // Collect any override reasons that may have been entered
+        document.querySelectorAll('[id^="overrideReason"]').forEach(textarea => {
+            if (textarea.value) {
+                overrideReasons[textarea.id] = textarea.value;
+            }
+        });
+
+        const response = await fetch(`/api/onboarding/${onboardingId}/save-progress`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phase: 4,
+                mlro_justification: mlroJustification,
+                override_reasons: overrideReasons,
+                saved_at: new Date().toISOString()
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'ok') {
+            showToast('success', 'Progress saved successfully');
+        } else {
+            showToast('error', result.message || 'Failed to save progress');
+        }
+    } catch (error) {
+        console.error('Save progress error:', error);
+        showToast('error', 'Network error saving progress');
+    } finally {
+        // Re-enable button
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Progress';
+        }
+    }
+};
 </script>
 {% endblock %}
