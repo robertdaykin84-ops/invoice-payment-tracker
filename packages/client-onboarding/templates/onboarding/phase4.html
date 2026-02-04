@@ -948,7 +948,9 @@ async function reassignDocument(docId, newType) {
 
         if (result.status === 'ok') {
             showToast('success', 'Document reassigned successfully');
-            setTimeout(() => location.reload(), 1000);
+            // Immediately update UI without page reload to preserve form data
+            await updateDocumentStatus();
+            await updateJFSCRequirements();
         } else {
             showToast('error', result.message || 'Failed to reassign document');
         }
