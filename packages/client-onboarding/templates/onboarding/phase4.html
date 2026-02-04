@@ -1019,12 +1019,26 @@ async function reassignDocument(docId, newType, assignmentType, personId) {
         const result = await response.json();
 
         if (result.status === 'ok') {
-            showToast('success', 'Document reassigned successfully');
+            showToast('success', 'Document reassigned successfully. Refresh the page to see the updated document list.');
+
+            // Remove the document from unassigned list in the UI
+            const docElement = document.querySelector(`[data-doc-id="${docId}"]`);
+            if (docElement) {
+                docElement.remove();
+            }
+
+            // Update the unassigned section visibility
+            const unassignedList = document.getElementById('unassignedDocsList');
+            if (unassignedList && unassignedList.children.length === 0) {
+                const unassignedSection = document.getElementById('unassignedSection');
+                if (unassignedSection) {
+                    unassignedSection.classList.add('d-none');
+                }
+            }
+
             // Immediately update UI without page reload to preserve form data
             await updateDocumentStatus();
             await updateJFSCRequirements();
-            // Reload the page to show the updated document in the correct section
-            setTimeout(() => location.reload(), 1500);
         } else {
             showToast('error', result.message || 'Failed to reassign document');
         }
