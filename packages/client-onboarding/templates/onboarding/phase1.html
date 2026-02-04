@@ -36,7 +36,7 @@
 <div class="row">
     <div class="col-lg-8">
         <form id="enquiryForm" method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1) }}" enctype="multipart/form-data"
-              data-loading-message="Saving Enquiry..." data-loading-submessage="Uploading documents and saving sponsor details">
+              data-loading-message="Saving Enquiry..." data-loading-submessage="Saving sponsor and fund details">
 
             <!-- ============================================================ -->
             <!-- PART A: SPONSOR DETAILS -->
@@ -141,6 +141,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Registered Address <span class="text-danger">*</span></label>
+                            <div class="mb-2" style="height: 32px;"></div>
                             <textarea class="form-control" name="registered_address" rows="3" required
                                       placeholder="Full registered address including postcode...">{{ enquiry.registered_address if enquiry else '' }}</textarea>
                         </div>
@@ -588,112 +589,11 @@
                 </div>
             </div>
 
-            <!-- Section 11: Supporting Documents -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="bi bi-paperclip me-2"></i>
-                    11. Supporting Documents
-                </div>
-                <div class="card-body">
-                    <p class="small text-muted mb-3">
-                        Upload supporting documents. Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (max 10MB each).
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>Certificate of Incorporation</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_certificate_of_incorporation"
-                                       accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" id="docCertIncorp">
-                                <div id="docCertIncorpStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-file-earmark-text fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>M&A / Partnership Agreement</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_partnership_agreement"
-                                       accept=".pdf,.doc,.docx" id="docPartnership">
-                                <div id="docPartnershipStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-diagram-3 fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>Structure Chart</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_structure_chart"
-                                       accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx" id="docStructure">
-                                <div id="docStructureStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-file-earmark-pdf fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>Fund PPM/IM (Draft)</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_ppm"
-                                       accept=".pdf,.doc,.docx" id="docPPM">
-                                <div id="docPPMStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-person-badge fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>ID Documents (Principals/UBOs)</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_id_documents"
-                                       accept=".pdf,.png,.jpg,.jpeg" multiple id="docID">
-                                <small class="text-muted">Can select multiple files</small>
-                                <div id="docIDStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-file-earmark-plus fs-4 text-primary me-2"></i>
-                                    <div>
-                                        <strong>Other Supporting Documents</strong>
-                                        <span class="badge bg-light text-muted ms-2">Optional</span>
-                                    </div>
-                                </div>
-                                <input type="file" class="form-control form-control-sm" name="doc_other"
-                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" multiple id="docOther">
-                                <small class="text-muted">Can select multiple files</small>
-                                <div id="docOtherStatus" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 12: Declaration -->
+            <!-- Section 11: Declaration -->
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-check2-square me-2"></i>
-                    12. Declaration
+                    11. Declaration
                 </div>
                 <div class="card-body">
                     <div class="form-check">
@@ -1606,47 +1506,6 @@ document.addEventListener('DOMContentLoaded', initTargetCountries);
 
 // ============================================================
 // DOCUMENT UPLOAD HANDLING
-// ============================================================
-function initDocumentUploads() {
-    const maxFileSize = 10 * 1024 * 1024; // 10MB
-
-    document.querySelectorAll('input[type="file"]').forEach(input => {
-        input.addEventListener('change', function() {
-            const statusDiv = document.getElementById(this.id + 'Status');
-            if (!statusDiv) return;
-
-            if (this.files.length === 0) {
-                statusDiv.innerHTML = '';
-                return;
-            }
-
-            let messages = [];
-            let hasError = false;
-
-            Array.from(this.files).forEach(file => {
-                if (file.size > maxFileSize) {
-                    messages.push(`<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${file.name} exceeds 10MB limit</span>`);
-                    hasError = true;
-                } else {
-                    const sizeKB = (file.size / 1024).toFixed(1);
-                    messages.push(`<span class="text-success"><i class="bi bi-check-circle"></i> ${file.name} (${sizeKB} KB)</span>`);
-                }
-            });
-
-            statusDiv.innerHTML = messages.join('<br>');
-
-            if (hasError) {
-                this.value = ''; // Clear invalid files
-                setTimeout(() => {
-                    alert('One or more files exceed the 10MB size limit. Please select smaller files.');
-                }, 100);
-            }
-        });
-    });
-}
-
-document.addEventListener('DOMContentLoaded', initDocumentUploads);
-
 // ============================================================
 // UTILITY FUNCTIONS
 // ============================================================

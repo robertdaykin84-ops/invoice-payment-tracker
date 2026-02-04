@@ -821,39 +821,6 @@ def onboarding_phase(onboarding_id, phase):
         if phase == 1 and sponsor_name != 'Unknown Sponsor':
             ensure_folder_structure(sponsor_name, fund_name)
 
-            # Handle document uploads for Phase 1 (Enquiry)
-            doc_fields = [
-                'doc_certificate_of_incorporation',
-                'doc_partnership_agreement',
-                'doc_structure_chart',
-                'doc_ppm',
-                'doc_id_documents',
-                'doc_other'
-            ]
-            uploaded_docs = []
-            for field_name in doc_fields:
-                if field_name in request.files:
-                    files = request.files.getlist(field_name)
-                    for file in files:
-                        if file and file.filename:
-                            try:
-                                from services.documents import upload_document
-                                doc_type = field_name.replace('doc_', '').replace('_', ' ').title()
-                                result = upload_document(
-                                    file,
-                                    onboarding_id if onboarding_id != 'NEW' else 'pending',
-                                    doc_type,
-                                    uploaded_by=get_current_user()['name']
-                                )
-                                if result.get('status') == 'success':
-                                    uploaded_docs.append(file.filename)
-                                    logger.info(f"Uploaded document: {file.filename} ({doc_type})")
-                            except Exception as e:
-                                logger.error(f"Error uploading {file.filename}: {e}")
-
-            if uploaded_docs:
-                flash(f'Uploaded {len(uploaded_docs)} document(s) successfully.', 'success')
-
         if action == 'save':
             # Save draft - stay on current phase
             flash('Draft saved successfully.', 'success')
@@ -869,8 +836,22 @@ def onboarding_phase(onboarding_id, phase):
                 return redirect(url_for('dashboard'))
 
     # Handle GET request - display form
-    # Check if we're auto-populating from an enquiry (from URL param or session)
-    enquiry_id = request.args.get('enquiry_id') or session.get('current_enquiry_id')
+    # Check if we're auto-populating from an enquiry
+    # Priority: 1) URL param, 2) Onboarding's enquiry_id field, 3) Session (for NEW only)
+    enquiry_id = request.args.get('enquiry_id')
+
+    # For existing onboardings, always use the onboarding's enquiry_id
+    if not enquiry_id and onboarding_id != 'NEW':
+        onboarding = sheets_db.get_onboarding(onboarding_id)
+        if onboarding:
+            enquiry_id = onboarding.get('enquiry_id')
+            if enquiry_id:
+                logger.info(f"Loaded enquiry_id '{enquiry_id}' from onboarding {onboarding_id}")
+
+    # For new onboardings, fall back to session
+    if not enquiry_id and onboarding_id == 'NEW':
+        enquiry_id = session.get('current_enquiry_id')
+
     enquiry = None
     if enquiry_id:
         # Try to get from Sheets first
@@ -895,8 +876,19 @@ def onboarding_phase(onboarding_id, phase):
         else:
             enquiry = mock_enquiry
 
-        # Log enquiry regulatory_status for debugging
+        # Normalize regulatory_status to expected values
         if enquiry:
+            raw_status = enquiry.get('regulatory_status', '')
+            if raw_status:
+                status_lower = raw_status.lower()
+                if 'regulated' in status_lower and 'not' not in status_lower:
+                    enquiry['regulatory_status'] = 'regulated'
+                elif 'not' in status_lower or 'unregulated' in status_lower:
+                    enquiry['regulatory_status'] = 'not_regulated'
+                elif 'exempt' in status_lower:
+                    enquiry['regulatory_status'] = 'exempt'
+                elif 'pending' in status_lower:
+                    enquiry['regulatory_status'] = 'pending_registration'
             logger.info(f"Enquiry {enquiry_id} loaded - regulatory_status: '{enquiry.get('regulatory_status')}', sponsor: '{enquiry.get('sponsor_name')}'")
 
         # Update session with enquiry_id for subsequent phases
@@ -1796,19 +1788,24 @@ def api_reports_data():
     if risk_filter:
         filtered = [o for o in filtered if o.get('risk_level') == risk_filter]
 
-    # Phase names
-    phase_names = {
-        1: 'Enquiry', 2: 'Sponsor', 3: 'Fund', 4: 'Screening',
-        5: 'EDD', 6: 'Approval', 7: 'Commercial', 8: 'Complete'
-    }
+    # Get phases from workflow configuration (consistent with dashboard)
+    phases = get_phases()
+    phase_names = {p['num']: p['name'] for p in phases}
 
-    # Aggregate by phase
+    # Aggregate by phase (convert current_phase to int for comparison)
+    def safe_int(val, default=0):
+        try:
+            return int(val) if val else default
+        except (ValueError, TypeError):
+            return default
+
     by_phase = []
-    for phase_num in range(1, 9):
-        count = sum(1 for o in filtered if o.get('current_phase') == phase_num)
+    for phase in phases:
+        phase_num = phase['num']
+        count = sum(1 for o in filtered if safe_int(o.get('current_phase')) == phase_num)
         by_phase.append({
             'phase': phase_num,
-            'name': phase_names[phase_num],
+            'name': phase['name'],
             'count': count
         })
 
@@ -2011,14 +2008,23 @@ def api_kyc_checklist(onboarding_id):
     """API: Get KYC document checklist for an onboarding"""
     from services.kyc_checklist import generate_checklist, get_checklist_progress
 
-    # Get enquiry data
+    # Get enquiry data (use same merge logic as phase rendering and upload)
     enquiry_id = request.args.get('enquiry_id') or session.get('current_enquiry_id')
     enquiry = None
 
     if enquiry_id:
-        enquiry = sheets_db.get_enquiry(enquiry_id)
-        if not enquiry:
-            enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+        sheets_enquiry = sheets_db.get_enquiry(enquiry_id)
+        mock_enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+
+        if sheets_enquiry:
+            enquiry = sheets_enquiry
+            # Merge principals from mock if not in sheets
+            if mock_enquiry:
+                for array_key in ['principals', 'gp_directors', 'initial_investors']:
+                    if array_key not in enquiry or not enquiry.get(array_key):
+                        enquiry[array_key] = mock_enquiry.get(array_key, [])
+        else:
+            enquiry = mock_enquiry
 
     if not enquiry:
         # Use first mock enquiry as fallback for demo
@@ -2055,9 +2061,28 @@ def api_kyc_upload(onboarding_id):
     if not files or all(f.filename == '' for f in files):
         return jsonify({'status': 'error', 'message': 'No files selected'}), 400
 
-    # Get enquiry data for key parties
+    # Get enquiry data for key parties (use same logic as phase rendering)
     enquiry_id = request.form.get('enquiry_id') or session.get('current_enquiry_id')
-    enquiry = MOCK_ENQUIRIES.get(enquiry_id) or MOCK_ENQUIRIES.get('ENQ-001')
+
+    # Load enquiry from Sheets first, then merge with MOCK_ENQUIRIES if needed
+    enquiry = None
+    if enquiry_id:
+        sheets_enquiry = sheets_db.get_enquiry(enquiry_id)
+        mock_enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+
+        if sheets_enquiry:
+            enquiry = sheets_enquiry
+            # Merge principals from mock if not in sheets
+            if mock_enquiry:
+                for array_key in ['principals', 'gp_directors', 'initial_investors']:
+                    if array_key not in enquiry or not enquiry.get(array_key):
+                        enquiry[array_key] = mock_enquiry.get(array_key, [])
+        else:
+            enquiry = mock_enquiry
+
+    # Fallback to default mock
+    if not enquiry:
+        enquiry = MOCK_ENQUIRIES.get('ENQ-001')
 
     key_parties = []
     for i, p in enumerate(enquiry.get('principals', [])):
@@ -2195,28 +2220,54 @@ def api_kyc_override(onboarding_id, doc_id):
 @app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
 @login_required
 def api_kyc_signoff(onboarding_id):
-    """API: BD sign-off on KYC documentation"""
+    """API: KYC documentation sign-off (with optional MLRO/MLCO override)"""
     from services.kyc_checklist import get_checklist_progress
+
+    data = request.get_json() or {}
+    current_user = get_current_user()
 
     # Check all documents are complete
     docs = session.get('kyc_documents', {})
 
-    # In production, would verify against checklist
-    # For now, just mark as signed off
-
-    session['kyc_signed_off'] = {
+    # Build sign-off record
+    signoff_data = {
         'onboarding_id': onboarding_id,
-        'signed_off_by': get_current_user()['name'],
+        'signed_off_by': current_user['name'],
+        'signed_off_by_role': current_user.get('role', ''),
         'signed_off_at': datetime.now().isoformat(),
         'document_count': len(docs)
     }
 
+    # Handle MLRO/MLCO override
+    if data.get('mlro_override'):
+        if current_user.get('role') not in ['mlro', 'compliance']:
+            return jsonify({
+                'status': 'error',
+                'message': 'Only MLRO/MLCO can override documentation requirements'
+            }), 403
+
+        justification = data.get('justification', '').strip()
+        if not justification or len(justification) < 50:
+            return jsonify({
+                'status': 'error',
+                'message': 'MLRO override requires detailed justification (minimum 50 characters)'
+            }), 400
+
+        signoff_data['mlro_override'] = {
+            'justification': justification,
+            'outstanding_documents': data.get('outstanding_documents', []),
+            'override_by': current_user['name'],
+            'override_at': datetime.now().isoformat()
+        }
+        logger.info(f"MLRO/MLCO override applied for {onboarding_id} by {current_user['name']}")
+
+    session['kyc_signed_off'] = signoff_data
     session.modified = True
 
     return jsonify({
         'status': 'ok',
         'message': 'KYC documentation signed off',
-        'signoff': session['kyc_signed_off']
+        'signoff': signoff_data
     })
 
 
