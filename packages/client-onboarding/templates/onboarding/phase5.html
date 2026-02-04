@@ -163,6 +163,49 @@
             </div>
         </div>
 
+        <!-- Screening Report Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-search me-2"></i>
+                Sanctions Screening Report
+            </div>
+            <div class="card-body">
+                {% if screening_results %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Findings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in screening_results %}
+                            <tr>
+                                <td>{{ result.name }}</td>
+                                <td>{{ result.role }}</td>
+                                <td>
+                                    <span class="badge {% if result.status == 'Clear' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ result.status }}
+                                    </span>
+                                </td>
+                                <td>{{ result.findings or 'No adverse findings' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Screening must be completed in Phase 3 before approval.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Approval Workflow -->
         <div class="card mb-4">
             <div class="card-header">

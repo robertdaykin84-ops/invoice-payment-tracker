@@ -898,14 +898,33 @@ def onboarding_phase(onboarding_id, phase):
     # Get list of pending enquiries for Phase 1 dropdown
     pending_enquiries = [e for e in MOCK_ENQUIRIES.values() if e['status'] == 'pending'] if phase == 1 else []
 
-    return render_template(f'onboarding/phase{phase}.html',
-                         onboarding_id=onboarding_id,
-                         phase=phase,
-                         phases=phases,
-                         current_phase=current_phase,
-                         enquiry=enquiry,
-                         pending_enquiries=pending_enquiries,
-                         uploaded=uploaded)
+    # Prepare context for template
+    context = {
+        'onboarding_id': onboarding_id,
+        'phase': phase,
+        'phases': phases,
+        'current_phase': current_phase,
+        'enquiry': enquiry,
+        'pending_enquiries': pending_enquiries,
+        'uploaded': uploaded
+    }
+
+    # Phase 5: Add screening and risk data
+    if phase == 5:
+        # Get screening results from sheets_db
+        screening_results = sheets_db.get_screening_results(onboarding_id)
+        risk_data = sheets_db.get_risk_assessment(onboarding_id)
+
+        context.update({
+            'screening_results': screening_results,
+            'risk_score': risk_data.get('score') if risk_data else None,
+            'risk_rating': risk_data.get('rating') if risk_data else None,
+            'jurisdiction_risk': risk_data.get('jurisdiction') if risk_data else None,
+            'business_risk': risk_data.get('business_type') if risk_data else None,
+            'screening_risk': risk_data.get('screening') if risk_data else None
+        })
+
+    return render_template(f'onboarding/phase{phase}.html', **context)
 
 
 @app.route('/onboarding/<onboarding_id>/trigger-review')
