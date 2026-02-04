@@ -223,7 +223,18 @@ def get_outstanding_requirements(onboarding_id: str, session_data) -> List[Dict[
         'register_of_shareholders'
     ]
 
-    verified_types = [d.get('analysis', {}).get('detected_type') for d in onboarding_docs if d.get('analysis', {}).get('overall_status') == 'pass']
+    # Get verified document types - check both suggested_assignment.document_type (after reassignment)
+    # and analysis.detected_type (initial detection)
+    verified_types = []
+    for d in onboarding_docs:
+        if d.get('analysis', {}).get('overall_status') == 'pass':
+            # Prefer suggested_assignment.document_type as it reflects manual reassignments
+            doc_type = d.get('suggested_assignment', {}).get('document_type')
+            if not doc_type:
+                # Fall back to analysis.detected_type for initial detection
+                doc_type = d.get('analysis', {}).get('detected_type')
+            if doc_type:
+                verified_types.append(doc_type)
 
     for doc_type in required_sponsor_docs:
         if doc_type not in verified_types:
