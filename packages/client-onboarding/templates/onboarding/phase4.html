@@ -904,7 +904,12 @@ function renderUnassignedDocuments(containerId, docs) {
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1">
-                    <h6 class="mb-1">${escapeHtml(doc.filename)}</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">${escapeHtml(doc.filename)}</h6>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                    </div>
                     <p class="small text-muted mb-2">Could not automatically classify</p>
 
                     <div class="mb-2">
