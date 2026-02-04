@@ -510,6 +510,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load checklist
     loadChecklist();
 
+    // Load existing documents for this onboarding
+    loadExistingDocuments();
+
     // Setup drag and drop
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -579,6 +582,28 @@ function handleFiles(files) {
 
     document.getElementById('selectedFiles').classList.remove('d-none');
     window.selectedFiles = files;
+}
+
+async function loadExistingDocuments() {
+    try {
+        console.log('[LOAD DOCS] Loading existing documents for onboarding:', onboardingId);
+        const response = await fetch(`/api/kyc/${onboardingId}/documents`);
+        if (!response.ok) {
+            console.log('[LOAD DOCS] No existing documents found');
+            return;
+        }
+        const data = await response.json();
+
+        if (data.status === 'ok' && data.documents && data.documents.length > 0) {
+            console.log(`[LOAD DOCS] Loaded ${data.documents.length} existing documents`);
+            uploadedDocuments = data.documents;
+            displayResults(uploadedDocuments);
+        } else {
+            console.log('[LOAD DOCS] No documents to display');
+        }
+    } catch (err) {
+        console.error('[LOAD DOCS] Error loading existing documents:', err);
+    }
 }
 
 async function loadChecklist() {
@@ -1008,6 +1033,8 @@ async function confirmReassignment(docId) {
 async function reassignDocument(docId, newType, assignmentType, personId) {
     if (!newType) return;
 
+    console.log(`[REASSIGN START] docId=${docId}, type=${newType}, assignment=${assignmentType}, person=${personId}`);
+
     try {
         const payload = {
             type: assignmentType,
@@ -1018,13 +1045,17 @@ async function reassignDocument(docId, newType, assignmentType, personId) {
             payload.person_id = personId;
         }
 
+        console.log(`[REASSIGN] Calling API with payload:`, payload);
+
         const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/reassign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
+        console.log(`[REASSIGN] API response status:`, response.status);
         const result = await response.json();
+        console.log(`[REASSIGN] API result:`, result);
 
         if (result.status === 'ok') {
             showToast('success', 'Document reassigned successfully. Refresh the page to see the updated document list.');
@@ -1032,6 +1063,7 @@ async function reassignDocument(docId, newType, assignmentType, personId) {
             // Remove the document from unassigned list in the UI
             const docElement = document.querySelector(`[data-doc-id="${docId}"]`);
             if (docElement) {
+                console.log(`[REASSIGN] Removing document element from DOM`);
                 docElement.remove();
             }
 
@@ -1040,18 +1072,23 @@ async function reassignDocument(docId, newType, assignmentType, personId) {
             if (unassignedList && unassignedList.children.length === 0) {
                 const unassignedSection = document.getElementById('unassignedSection');
                 if (unassignedSection) {
+                    console.log(`[REASSIGN] Hiding unassigned section`);
                     unassignedSection.classList.add('d-none');
                 }
             }
 
             // Immediately update UI without page reload to preserve form data
+            console.log(`[REASSIGN] Calling updateDocumentStatus()`);
             await updateDocumentStatus();
+            console.log(`[REASSIGN] Calling updateJFSCRequirements()`);
             await updateJFSCRequirements();
+            console.log(`[REASSIGN] Complete`);
         } else {
+            console.error(`[REASSIGN] API returned error:`, result.message);
             showToast('error', result.message || 'Failed to reassign document');
         }
     } catch (error) {
-        console.error('Reassign error:', error);
+        console.error('[REASSIGN] Exception:', error);
         showToast('error', 'Network error reassigning document');
     }
 }

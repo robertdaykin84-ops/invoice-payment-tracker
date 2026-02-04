@@ -2158,23 +2158,33 @@ def api_kyc_upload(onboarding_id):
 @login_required
 def api_kyc_reassign(onboarding_id, doc_id):
     """API: Reassign a document to a different checklist slot"""
+    logger.info(f"[REASSIGN API] onboarding_id={onboarding_id}, doc_id={doc_id}")
+
     data = request.get_json()
     if not data:
+        logger.error("[REASSIGN API] No JSON payload")
         return jsonify({'status': 'error', 'message': 'Invalid JSON payload'}), 400
 
     assignment_type = data.get('type')  # 'sponsor' or 'key_party'
     if assignment_type not in ('sponsor', 'key_party'):
+        logger.error(f"[REASSIGN API] Invalid assignment type: {assignment_type}")
         return jsonify({'status': 'error', 'message': 'Invalid assignment type'}), 400
 
     document_type = data.get('document_type')
     person_id = data.get('person_id')  # For key_party assignments
+    logger.info(f"[REASSIGN API] assignment_type={assignment_type}, document_type={document_type}, person_id={person_id}")
 
     # Get document from session
-    doc = session.get('kyc_documents', {}).get(doc_id)
+    all_docs = session.get('kyc_documents', {})
+    logger.info(f"[REASSIGN API] Total docs in session: {len(all_docs)}, doc_ids: {list(all_docs.keys())}")
+
+    doc = all_docs.get(doc_id)
     if not doc:
+        logger.error(f"[REASSIGN API] Document {doc_id} not found in session")
         return jsonify({'status': 'error', 'message': 'Document not found'}), 404
 
     if doc.get('onboarding_id') != onboarding_id:
+        logger.error(f"[REASSIGN API] Document {doc_id} belongs to different onboarding: {doc.get('onboarding_id')} != {onboarding_id}")
         return jsonify({'status': 'error', 'message': 'Document not found'}), 404
 
     # Update assignment
@@ -2187,11 +2197,46 @@ def api_kyc_reassign(onboarding_id, doc_id):
     }
 
     session.modified = True
+    logger.info(f"[REASSIGN API] Successfully reassigned document {doc_id}")
 
     return jsonify({
         'status': 'ok',
         'message': 'Document reassigned',
         'document': doc
+    })
+
+
+@app.route('/api/debug/session-documents', methods=['GET'])
+@login_required
+def debug_session_documents():
+    """Debug endpoint to check what documents are in session"""
+    all_docs = session.get('kyc_documents', {})
+    return jsonify({
+        'total': len(all_docs),
+        'document_ids': list(all_docs.keys()),
+        'documents': [{
+            'document_id': doc_id,
+            'onboarding_id': doc.get('onboarding_id'),
+            'filename': doc.get('filename')
+        } for doc_id, doc in all_docs.items()]
+    })
+
+
+@app.route('/api/kyc/<onboarding_id>/documents', methods=['GET'])
+@login_required
+def get_kyc_documents(onboarding_id):
+    """Get all KYC documents for a specific onboarding"""
+    all_docs = session.get('kyc_documents', {})
+
+    # Filter documents by onboarding_id
+    onboarding_docs = [
+        doc for doc_id, doc in all_docs.items()
+        if doc.get('onboarding_id') == onboarding_id
+    ]
+
+    return jsonify({
+        'status': 'ok',
+        'documents': onboarding_docs
     })
 
 

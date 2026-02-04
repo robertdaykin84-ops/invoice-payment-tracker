@@ -62,8 +62,8 @@
             <div class="card-header">
                 <i class="bi bi-funnel me-2"></i>Pipeline by Phase
             </div>
-            <div class="card-body">
-                <canvas id="pipelineChart" height="200"></canvas>
+            <div class="card-body" style="height: 250px;">
+                <canvas id="pipelineChart"></canvas>
             </div>
         </div>
     </div>
@@ -72,8 +72,8 @@
             <div class="card-header">
                 <i class="bi bi-pie-chart me-2"></i>Risk Distribution
             </div>
-            <div class="card-body">
-                <canvas id="riskChart" height="200"></canvas>
+            <div class="card-body" style="height: 250px;">
+                <canvas id="riskChart"></canvas>
             </div>
         </div>
     </div>
@@ -177,7 +177,6 @@
                                     <i class="bi bi-check-lg"></i>
                                 </a>
                                 {% endif %}
-                                {% if onboarding.status != 'approved' or current_user.role == 'admin' %}
                                 <button type="button" class="btn btn-outline-danger btn-delete-onboarding"
                                         data-onboarding-id="{{ onboarding.id }}"
                                         data-sponsor-name="{{ onboarding.sponsor_name }}"
@@ -185,7 +184,6 @@
                                         title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -257,7 +255,7 @@
 
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Fetch report data for charts
@@ -306,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: true,
                         plugins: { legend: { position: 'bottom' } }
                     }
                 });
@@ -313,18 +312,23 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => console.error('Chart data error:', err));
 
-    // Delete onboarding functionality
+    // Delete onboarding functionality using event delegation for reliability
     let currentDeleteId = null;
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const deleteModalEl = document.getElementById('deleteConfirmModal');
+    const deleteModal = new bootstrap.Modal(deleteModalEl);
 
-    document.querySelectorAll('.btn-delete-onboarding').forEach(btn => {
-        btn.addEventListener('click', function() {
-            currentDeleteId = this.dataset.onboardingId;
+    // Use event delegation on the table body for better reliability
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-delete-onboarding');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            currentDeleteId = btn.dataset.onboardingId;
             document.getElementById('deleteOnboardingId').textContent = currentDeleteId;
-            document.getElementById('deleteSponsorName').textContent = this.dataset.sponsorName || 'Unknown Sponsor';
-            document.getElementById('deleteFundName').textContent = this.dataset.fundName || 'Unknown Fund';
+            document.getElementById('deleteSponsorName').textContent = btn.dataset.sponsorName || 'Unknown Sponsor';
+            document.getElementById('deleteFundName').textContent = btn.dataset.fundName || 'Unknown Fund';
             deleteModal.show();
-        });
+        }
     });
 
     document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
@@ -347,13 +351,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteModal.hide();
                 // Show success message and reload
                 const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
                 alertDiv.innerHTML = `
                     <i class="bi bi-check-circle me-1"></i>
                     ${result.message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
-                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.row'));
+                const container = document.querySelector('.container-fluid');
+                if (container) {
+                    container.prepend(alertDiv);
+                }
                 // Reload after brief delay
                 setTimeout(() => window.location.reload(), 1500);
             } else {
