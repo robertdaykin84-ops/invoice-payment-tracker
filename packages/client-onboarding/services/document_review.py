@@ -456,6 +456,39 @@ Respond ONLY with valid JSON, no additional text."""
             'confidence': analysis.get('confidence', 0.0)
         }
 
+    def _detect_type_from_filename(self, filename: str) -> str:
+        """Detect document type from filename keywords."""
+        # Normalize filename: convert hyphens and underscores to spaces
+        filename_lower = filename.lower().replace('-', ' ').replace('_', ' ')
+
+        for doc_type, keywords in DOCUMENT_TYPES.items():
+            for keyword in keywords:
+                if keyword in filename_lower:
+                    return doc_type
+
+        return 'unassigned'
+
+    def _calculate_realistic_confidence(self, filename: str, detected_type: str) -> float:
+        """Calculate realistic confidence based on filename match quality."""
+        # Normalize filename: convert hyphens and underscores to spaces, remove extension
+        filename_lower = filename.lower().replace('-', ' ').replace('_', ' ').replace('.pdf', '').replace('.png', '').replace('.jpg', '').replace('.jpeg', '')
+
+        if detected_type == 'unassigned':
+            return 0.0
+
+        # Check for exact keyword match
+        keywords = DOCUMENT_TYPES.get(detected_type, [])
+        for keyword in keywords:
+            if keyword in filename_lower:
+                # Exact match: high confidence
+                if keyword == filename_lower.strip():
+                    return 0.95
+                # Contains keyword: medium-high confidence
+                confidence = 0.75 + (len(keyword) / 50.0)
+                return min(confidence, 0.95)  # Cap at 0.95
+
+        return 0.60  # Low confidence fallback
+
     def _demo_analysis(
         self,
         file_name: str,
@@ -465,26 +498,13 @@ Respond ONLY with valid JSON, no additional text."""
         """Return demo analysis results"""
         logger.info(f"[DEMO] Analyzing document: {file_name}")
 
-        # Guess type from filename
-        fn_lower = file_name.lower()
-        detected_type = 'unknown'
-        for doc_type, keywords in DOCUMENT_TYPES.items():
-            if any(kw in fn_lower for kw in keywords):
-                detected_type = doc_type
-                break
-
-        # If still unknown, use expected type or guess from extension
-        if detected_type == 'unknown':
-            if expected_type:
-                detected_type = expected_type
-            elif 'passport' in fn_lower or 'id' in fn_lower:
-                detected_type = 'passport'
-            elif 'bill' in fn_lower or 'statement' in fn_lower:
-                detected_type = 'address_proof'
+        # Use realistic detection based on filename
+        detected_type = self._detect_type_from_filename(file_name)
+        confidence = self._calculate_realistic_confidence(file_name, detected_type)
 
         return {
             'overall_status': 'pass',
-            'confidence': 0.85,
+            'confidence': confidence,
             'detected_type': detected_type,
             'checks': {
                 'document_type_match': {'status': 'pass', 'detail': f'Detected: {detected_type}'},
