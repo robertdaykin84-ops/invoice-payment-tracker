@@ -294,6 +294,9 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
             </a>
             <div>
+                <button type="button" class="btn btn-outline-primary me-2" id="btn-save-progress" onclick="saveProgress()">
+                    <i class="bi bi-save me-1"></i> Save Progress
+                </button>
                 <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=6) }}"
                    class="btn btn-primary me-2 {% if not session.get('approval_status') == 'approved' %}disabled{% endif %}"
                    id="btn-continue"
@@ -527,6 +530,49 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Save Progress function
+    window.saveProgress = async function() {
+        const onboardingId = '{{ onboarding_id }}';
+        const comments = document.getElementById('approval-comments')?.value || '';
+        const saveBtn = document.getElementById('btn-save-progress');
+
+        try {
+            // Disable button during save
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
+            }
+
+            const response = await fetch(`/api/onboarding/${onboardingId}/save-progress`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phase: 5,
+                    approval_comments: comments
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                showToast('Progress saved successfully', 'success');
+            } else {
+                showToast(result.message || 'Failed to save progress', 'danger');
+            }
+        } catch (error) {
+            console.error('Save progress error:', error);
+            showToast('Network error saving progress', 'danger');
+        } finally {
+            // Re-enable button
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Progress';
+            }
+        }
+    };
 });
 </script>
 {% endblock %}

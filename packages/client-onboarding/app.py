@@ -2306,6 +2306,41 @@ def get_jfsc_requirements(onboarding_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/save-progress', methods=['POST'])
+@login_required
+def save_onboarding_progress(onboarding_id):
+    """Save onboarding progress without completing the phase."""
+    try:
+        data = request.get_json() or {}
+        phase = data.get('phase', 5)
+
+        # Save phase-specific data to session
+        progress_key = f'onboarding_{onboarding_id}_progress'
+        if progress_key not in session:
+            session[progress_key] = {}
+
+        # Store the data
+        session[progress_key][f'phase_{phase}'] = {
+            'saved_at': datetime.now().isoformat(),
+            'data': data
+        }
+        session.modified = True
+
+        logger.info(f"Saved progress for onboarding {onboarding_id}, phase {phase}")
+
+        return jsonify({
+            'status': 'ok',
+            'message': 'Progress saved successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error saving progress: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
 @app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
 @login_required
 def api_kyc_signoff(onboarding_id):
