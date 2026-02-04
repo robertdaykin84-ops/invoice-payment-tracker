@@ -489,6 +489,48 @@ Respond ONLY with valid JSON, no additional text."""
 
         return 0.60  # Low confidence fallback
 
+    def _extract_name_from_filename(self, filename: str, detected_type: str) -> Optional[str]:
+        """
+        Extract person name from filename for personal documents.
+        Example: 'passport-sarah-johnson-certified.pdf' -> 'Sarah Johnson'
+        """
+        # Only extract names for personal document types
+        personal_doc_types = ['passport', 'address_proof']
+        if detected_type not in personal_doc_types:
+            return None
+
+        # Normalize filename: remove extension and convert to lowercase
+        filename_lower = filename.lower()
+        for ext in ['.pdf', '.png', '.jpg', '.jpeg']:
+            filename_lower = filename_lower.replace(ext, '')
+
+        # Convert hyphens and underscores to spaces
+        filename_lower = filename_lower.replace('-', ' ').replace('_', ' ')
+
+        # Remove document type keywords
+        for doc_type, keywords in DOCUMENT_TYPES.items():
+            for keyword in keywords:
+                filename_lower = filename_lower.replace(keyword, '')
+
+        # Remove common suffixes
+        common_suffixes = [
+            'certified', 'copy', 'scan', 'scanned', 'original',
+            'proof', 'bill', 'statement', 'document', 'doc'
+        ]
+        for suffix in common_suffixes:
+            filename_lower = filename_lower.replace(suffix, '')
+
+        # Clean up multiple spaces and trim
+        name_parts = [part for part in filename_lower.split() if part]
+
+        if not name_parts:
+            return None
+
+        # Title case the name parts
+        extracted_name = ' '.join(part.capitalize() for part in name_parts)
+
+        return extracted_name if extracted_name else None
+
     def _demo_analysis(
         self,
         file_name: str,
@@ -502,6 +544,10 @@ Respond ONLY with valid JSON, no additional text."""
         detected_type = self._detect_type_from_filename(file_name)
         confidence = self._calculate_realistic_confidence(file_name, detected_type)
 
+        # Extract name from filename for personal documents
+        extracted_name = self._extract_name_from_filename(file_name, detected_type)
+        final_name = expected_name or extracted_name or 'John Smith'
+
         return {
             'overall_status': 'pass',
             'confidence': confidence,
@@ -514,7 +560,7 @@ Respond ONLY with valid JSON, no additional text."""
                 'image_quality': {'status': 'pass', 'detail': 'Clear and legible'}
             },
             'extracted_data': {
-                'name': expected_name or 'John Smith',
+                'name': final_name,
                 'document_number': 'AB123456',
                 'expiry_date': '2030-06-20'
             },
