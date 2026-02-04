@@ -246,6 +246,27 @@
             </div>
         </div>
     </div>
+
+    <div class="col-lg-4">
+        <!-- JFSC Requirements Checklist -->
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-clipboard-check me-2"></i>
+                Outstanding JFSC Requirements
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush" id="jfscRequirementsList">
+                    <li class="list-group-item">
+                        <div class="spinner-border spinner-border-sm me-2"></div>
+                        Loading requirements...
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer small text-muted" id="requirementsUpdated">
+                Updated: <span id="lastUpdateTime">--:--</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Document Detail Modal -->
@@ -373,10 +394,52 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+async function updateJFSCRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements`);
+        const data = await response.json();
+
+        if (data.success) {
+            const requirementsList = document.getElementById('jfscRequirementsList');
+            const requirements = data.requirements;
+
+            if (requirements.length === 0) {
+                requirementsList.innerHTML = `
+                    <li class="list-group-item text-center text-success py-4">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                        <strong>All Requirements Met</strong>
+                        <p class="small text-muted mb-0">Ready for approval</p>
+                    </li>
+                `;
+            } else {
+                requirementsList.innerHTML = requirements.map(req => `
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-circle text-warning me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold small">${escapeHtml(req.category)}</div>
+                                <div class="small text-muted">${escapeHtml(req.description)}</div>
+                            </div>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            // Update timestamp
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent =
+                now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+    } catch (error) {
+        console.error('Requirements update error:', error);
+    }
+}
+
 function startStatusPolling() {
     // Poll every 3 seconds
     statusPollInterval = setInterval(async () => {
         await updateDocumentStatus();
+        await updateJFSCRequirements();
     }, 3000);
 }
 
@@ -476,7 +539,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('selectedFiles').classList.add('d-none');
     });
 
-    // Start polling when page loads
+    // Initial load of requirements and start polling
+    updateJFSCRequirements();
     startStatusPolling();
 });
 

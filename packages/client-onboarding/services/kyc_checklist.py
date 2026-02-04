@@ -200,3 +200,52 @@ def get_checklist_progress(checklist: Dict) -> Dict:
         'percentage': round((complete / total * 100) if total > 0 else 0),
         'can_sign_off': review_needed == 0 and complete == total
     }
+
+
+def get_outstanding_requirements(onboarding_id: str, session_data) -> List[Dict[str, str]]:
+    """
+    Get list of outstanding JFSC requirements.
+
+    Returns:
+        List of requirements with category and description
+    """
+    requirements = []
+
+    # Get documents from session
+    documents = session_data.get('kyc_documents', {})
+    onboarding_docs = [d for d in documents.values() if d.get('onboarding_id') == onboarding_id]
+
+    # Check sponsor entity documents
+    required_sponsor_docs = [
+        'certificate_of_incorporation',
+        'memorandum_articles',
+        'register_of_directors',
+        'register_of_shareholders'
+    ]
+
+    verified_types = [d.get('analysis', {}).get('detected_type') for d in onboarding_docs if d.get('analysis', {}).get('overall_status') == 'pass']
+
+    for doc_type in required_sponsor_docs:
+        if doc_type not in verified_types:
+            requirements.append({
+                'category': 'Sponsor Entity',
+                'description': f'Missing: {doc_type.replace("_", " ").title()}'
+            })
+
+    # Check for passport and address proof (at least one of each)
+    has_passport = 'passport' in verified_types
+    has_address_proof = 'address_proof' in verified_types
+
+    if not has_passport:
+        requirements.append({
+            'category': 'Key Party',
+            'description': 'Requires certified passport for at least one principal'
+        })
+
+    if not has_address_proof:
+        requirements.append({
+            'category': 'Key Party',
+            'description': 'Requires certified address proof for at least one principal'
+        })
+
+    return requirements

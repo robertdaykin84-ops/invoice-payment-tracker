@@ -2287,6 +2287,25 @@ def get_document_status(onboarding_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/requirements', methods=['GET'])
+@login_required
+def get_jfsc_requirements(onboarding_id):
+    """Get outstanding JFSC requirements."""
+    try:
+        from services.kyc_checklist import get_outstanding_requirements
+
+        requirements = get_outstanding_requirements(onboarding_id, session)
+
+        return jsonify({
+            'success': True,
+            'requirements': requirements
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting JFSC requirements: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
 @login_required
 def api_kyc_signoff(onboarding_id):
