@@ -906,9 +906,9 @@ function renderUnassignedDocuments(containerId, docs) {
 
                     <div class="mb-2">
                         <label class="small fw-semibold">Manually assign document type:</label>
-                        <select class="form-select form-select-sm manual-assign-select"
+                        <select class="form-select form-select-sm manual-assign-type-select"
                                 data-doc-id="${escapeHtml(doc.document_id)}"
-                                onchange="reassignDocument('${escapeHtml(doc.document_id)}', this.value)">
+                                onchange="handleDocTypeSelection('${escapeHtml(doc.document_id)}', this.value)">
                             <option value="">-- Select Type --</option>
                             <option value="passport">Passport</option>
                             <option value="address_proof">Address Proof</option>
@@ -923,6 +923,20 @@ function renderUnassignedDocuments(containerId, docs) {
                             <option value="regulatory_license">Regulatory License</option>
                         </select>
                     </div>
+
+                    <div class="mb-2 d-none" id="person-select-${escapeHtml(doc.document_id)}">
+                        <label class="small fw-semibold">Assign to person:</label>
+                        <select class="form-select form-select-sm manual-assign-person-select"
+                                data-doc-id="${escapeHtml(doc.document_id)}">
+                            <option value="">-- Select Person --</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-sm btn-primary d-none"
+                            id="assign-btn-${escapeHtml(doc.document_id)}"
+                            onclick="confirmReassignment('${escapeHtml(doc.document_id)}')">
+                        Assign Document
+                    </button>
                 </div>
                 <span class="badge bg-warning">Unassigned</span>
             </div>
@@ -931,17 +945,75 @@ function renderUnassignedDocuments(containerId, docs) {
     });
 }
 
-async function reassignDocument(docId, newType) {
+function handleDocTypeSelection(docId, docType) {
+    if (!docType) return;
+
+    const personalDocTypes = ['passport', 'address_proof'];
+    const personSelectDiv = document.getElementById(`person-select-${docId}`);
+    const assignBtn = document.getElementById(`assign-btn-${docId}`);
+
+    if (personalDocTypes.includes(docType)) {
+        // Personal document - show person selector
+        const personSelect = personSelectDiv.querySelector('select');
+        personSelect.innerHTML = '<option value="">-- Select Person --</option>';
+
+        if (checklist && checklist.key_parties && checklist.key_parties.length > 0) {
+            checklist.key_parties.forEach(party => {
+                const option = document.createElement('option');
+                option.value = party.person_id;
+                option.textContent = `${party.name} (${party.role})`;
+                personSelect.appendChild(option);
+            });
+            personSelectDiv.classList.remove('d-none');
+            assignBtn.classList.remove('d-none');
+        } else {
+            showToast('error', 'No key parties defined. Add directors/UBOs in Phase 1 first.');
+        }
+    } else {
+        // Sponsor document - assign immediately
+        personSelectDiv.classList.add('d-none');
+        assignBtn.classList.add('d-none');
+        reassignDocument(docId, docType, 'sponsor', null);
+    }
+}
+
+async function confirmReassignment(docId) {
+    const typeSelect = document.querySelector(`select.manual-assign-type-select[data-doc-id="${docId}"]`);
+    const personSelect = document.querySelector(`#person-select-${docId} select`);
+
+    const docType = typeSelect.value;
+    const personId = personSelect.value;
+
+    if (!docType) {
+        showToast('error', 'Please select a document type');
+        return;
+    }
+
+    if (!personId) {
+        showToast('error', 'Please select a person');
+        return;
+    }
+
+    await reassignDocument(docId, docType, 'key_party', personId);
+}
+
+async function reassignDocument(docId, newType, assignmentType, personId) {
     if (!newType) return;
 
     try {
+        const payload = {
+            type: assignmentType,
+            document_type: newType
+        };
+
+        if (assignmentType === 'key_party' && personId) {
+            payload.person_id = personId;
+        }
+
         const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/reassign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                type: 'sponsor',
-                document_type: newType
-            })
+            body: JSON.stringify(payload)
         });
 
         const result = await response.json();
@@ -951,6 +1023,8 @@ async function reassignDocument(docId, newType) {
             // Immediately update UI without page reload to preserve form data
             await updateDocumentStatus();
             await updateJFSCRequirements();
+            // Reload the page to show the updated document in the correct section
+            setTimeout(() => location.reload(), 1500);
         } else {
             showToast('error', result.message || 'Failed to reassign document');
         }
