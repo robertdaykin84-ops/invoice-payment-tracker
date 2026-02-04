@@ -46,7 +46,7 @@
                     <h5>Drag & drop all documents here</h5>
                     <p class="text-muted mb-3">or click to browse</p>
                     <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" class="d-none">
-                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                    <button type="button" class="btn btn-outline-primary" onclick="event.stopPropagation(); document.getElementById('fileInput').click();">
                         <i class="bi bi-folder2-open me-1"></i> Browse Files
                     </button>
                     <p class="small text-muted mt-3 mb-0">Supported: PDF, JPG, PNG (max 20MB each)</p>
@@ -125,6 +125,19 @@
             </div>
         </div>
 
+        <!-- Documentation Status Section -->
+        <div class="card mb-4" id="documentationStatusSection">
+            <div class="card-header">
+                <i class="bi bi-list-check me-2"></i>
+                Documentation Status
+            </div>
+            <div class="card-body">
+                <div id="documentationStatusContent">
+                    <p class="text-muted small">Loading documentation requirements...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Investor KYC Note -->
         <div class="alert alert-info mb-4">
             <i class="bi bi-info-circle me-2"></i>
@@ -177,6 +190,23 @@
                         <span id="reviewCount">0</span>
                     </li>
                 </ul>
+            </div>
+        </div>
+
+        <!-- Outstanding Documents Card -->
+        <div class="card mb-4 border-warning d-none" id="outstandingDocsCard">
+            <div class="card-header bg-warning bg-opacity-10">
+                <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                Outstanding JFSC Requirements
+            </div>
+            <div class="card-body">
+                <p class="small mb-2"><strong>Missing documents:</strong></p>
+                <div id="outstandingDocsList" class="small"></div>
+                <hr class="my-2">
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    MLRO/MLCO can override with justification
+                </p>
             </div>
         </div>
 
@@ -261,6 +291,45 @@
     </div>
 </div>
 
+<!-- MLRO/MLCO Sign-off Override Modal -->
+<div class="modal fade" id="mlroOverrideModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-warning bg-warning bg-opacity-10">
+                <h5 class="modal-title text-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>MLRO/MLCO Override Required
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Documentation Incomplete</strong><br>
+                    The following JFSC-required documents are missing or incomplete. As MLRO/MLCO, you may sign off with a justification, which will be recorded in the audit trail.
+                </div>
+
+                <h6 class="mb-2">Outstanding Documents:</h6>
+                <div id="mlroOutstandingList" class="mb-3 small"></div>
+
+                <hr>
+
+                <label class="form-label fw-bold">
+                    MLRO/MLCO Justification <span class="text-danger">*</span>
+                </label>
+                <p class="small text-muted">Explain why sign-off is appropriate despite missing documentation. This explanation will be included in the compliance audit trail.</p>
+                <textarea class="form-control" id="mlroJustification" rows="4"
+                          placeholder="Example: Client has provided equivalent documentation from Luxembourg regulator which satisfies KYC requirements. Confirmed with external counsel that this meets JFSC standards for EU-based entities..." required></textarea>
+                <div class="form-text">Minimum 50 characters required</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmMlroOverride">
+                    <i class="bi bi-shield-check me-1"></i> Sign Off with Override
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .upload-zone {
     border: 2px dashed #dee2e6;
@@ -288,7 +357,7 @@
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 const onboardingId = '{{ onboarding_id }}';
 const enquiryId = '{{ enquiry.id if enquiry else "" }}';
@@ -382,6 +451,7 @@ async function loadChecklist() {
         if (data.status === 'ok') {
             checklist = data.checklist;
             updateChecklistDisplay(checklist);
+            updateDocumentationStatus(checklist);
             updateProgress(data.progress);
 
             // Show EDD section if required
@@ -417,6 +487,118 @@ function updateChecklistDisplay(checklist) {
     summary.innerHTML = html;
 }
 
+function updateDocumentationStatus(checklist) {
+    const container = document.getElementById('documentationStatusContent');
+
+    let html = '<div class="row g-3">';
+
+    // Sponsor Documents Column
+    html += '<div class="col-md-6">';
+    html += '<h6 class="mb-3"><i class="bi bi-building me-2"></i>Sponsor Documents</h6>';
+    html += '<div class="list-group list-group-flush">';
+
+    checklist.sponsor_documents.forEach(doc => {
+        const statusClass = doc.status === 'complete' ? 'success' :
+                           doc.status === 'review_needed' ? 'warning' : 'secondary';
+        const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                          doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                          'bi-circle';
+        const statusText = doc.status === 'complete' ? 'Complete' :
+                          doc.status === 'review_needed' ? 'Review Needed' :
+                          'Pending';
+        const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${escapeHtml(doc.label)}${requiredBadge}</div>
+                </div>
+                <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                    <i class="bi ${statusIcon}"></i> ${statusText}
+                </span>
+            </div>`;
+    });
+
+    html += '</div></div>';
+
+    // Key Parties Documents Column
+    html += '<div class="col-md-6">';
+    html += '<h6 class="mb-3"><i class="bi bi-person-badge me-2"></i>Key Parties</h6>';
+
+    if (checklist.key_parties.length === 0) {
+        html += '<p class="text-muted small">No key parties identified</p>';
+    } else {
+        checklist.key_parties.forEach(party => {
+            html += `<div class="mb-3">`;
+            html += `<div class="small fw-semibold text-muted mb-2">${escapeHtml(party.name)} - ${escapeHtml(party.role)}</div>`;
+            html += '<div class="list-group list-group-flush">';
+
+            party.documents.forEach(doc => {
+                const statusClass = doc.status === 'complete' ? 'success' :
+                                   doc.status === 'review_needed' ? 'warning' : 'secondary';
+                const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                                  doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                                  'bi-circle';
+                const statusText = doc.status === 'complete' ? 'Complete' :
+                                  doc.status === 'review_needed' ? 'Review Needed' :
+                                  'Pending';
+                const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-start py-2">
+                        <div class="flex-grow-1 small">
+                            <div>${escapeHtml(doc.label)}${requiredBadge}</div>
+                        </div>
+                        <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                            <i class="bi ${statusIcon}"></i> ${statusText}
+                        </span>
+                    </div>`;
+            });
+
+            html += '</div></div>';
+        });
+    }
+
+    html += '</div>';
+
+    // EDD Documents (if required)
+    if (checklist.edd_required && checklist.edd_documents) {
+        html += '<div class="col-12 mt-3">';
+        html += '<div class="alert alert-warning">';
+        html += '<h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Enhanced Due Diligence Required</h6>';
+        html += `<p class="small mb-2">${escapeHtml(checklist.edd_trigger_reason)}</p>`;
+        html += '<div class="list-group list-group-flush">';
+
+        checklist.edd_documents.forEach(doc => {
+            const statusClass = doc.status === 'complete' ? 'success' :
+                               doc.status === 'review_needed' ? 'warning' : 'secondary';
+            const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                              doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                              'bi-circle';
+            const statusText = doc.status === 'complete' ? 'Complete' :
+                              doc.status === 'review_needed' ? 'Review Needed' :
+                              'Pending';
+            const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="fw-medium">${escapeHtml(doc.label)}${requiredBadge}</div>
+                    </div>
+                    <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                        <i class="bi ${statusIcon}"></i> ${statusText}
+                    </span>
+                </div>`;
+        });
+
+        html += '</div></div></div>';
+    }
+
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
 function updateProgress(progress) {
     document.getElementById('progressPercent').textContent = progress.percentage + '%';
     document.getElementById('overallProgress').style.width = progress.percentage + '%';
@@ -424,8 +606,13 @@ function updateProgress(progress) {
     document.getElementById('completeCount').textContent = progress.complete;
     document.getElementById('reviewCount').textContent = progress.review_needed;
 
-    // Enable sign off if ready
-    document.getElementById('signOffBtn').disabled = !progress.can_sign_off;
+    // Update outstanding docs display
+    updateOutstandingDocsDisplay();
+
+    // Enable sign off if ready OR if user is MLRO/MLCO (who can override)
+    const userRole = '{{ current_user.role if current_user else "" }}';
+    const canSignOff = progress.can_sign_off || (userRole === 'mlro' || userRole === 'compliance');
+    document.getElementById('signOffBtn').disabled = !canSignOff;
 }
 
 async function uploadFiles() {
@@ -515,11 +702,14 @@ function displayResults(documents) {
     // Render unassigned
     if (unassigned.length > 0) {
         document.getElementById('unassignedSection').classList.remove('d-none');
-        renderDocumentList('unassignedDocsList', unassigned);
+        renderUnassignedDocuments('unassignedDocsList', unassigned);
     }
 
     // Update progress
     updateProgressFromDocs(documents);
+
+    // Reload checklist to update documentation status
+    loadChecklist();
 }
 
 function renderDocumentList(containerId, docs) {
@@ -551,6 +741,94 @@ function renderDocumentList(containerId, docs) {
         `;
         container.appendChild(item);
     });
+}
+
+function renderUnassignedDocuments(containerId, docs) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    docs.forEach(doc => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item';
+        item.setAttribute('data-doc-id', doc.document_id);
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${escapeHtml(doc.filename)}</h6>
+                    <p class="small text-muted mb-2">Could not automatically classify</p>
+
+                    <div class="mb-2">
+                        <label class="small fw-semibold">Manually assign document type:</label>
+                        <select class="form-select form-select-sm manual-assign-select"
+                                data-doc-id="${escapeHtml(doc.document_id)}"
+                                onchange="reassignDocument('${escapeHtml(doc.document_id)}', this.value)">
+                            <option value="">-- Select Type --</option>
+                            <option value="passport">Passport</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="certificate_of_incorporation">Certificate of Incorporation</option>
+                            <option value="certificate_of_registration">Certificate of Registration</option>
+                            <option value="memorandum_articles">Memorandum & Articles</option>
+                            <option value="llp_agreement">LLP Agreement</option>
+                            <option value="register_of_directors">Register of Directors</option>
+                            <option value="register_of_shareholders">Register of Shareholders</option>
+                            <option value="structure_chart">Structure Chart</option>
+                            <option value="trust_deed">Trust Deed</option>
+                            <option value="regulatory_license">Regulatory License</option>
+                        </select>
+                    </div>
+                </div>
+                <span class="badge bg-warning">Unassigned</span>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+async function reassignDocument(docId, newType) {
+    if (!newType) return;
+
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/reassign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'sponsor',
+                document_type: newType
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'ok') {
+            showToast('success', 'Document reassigned successfully');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('error', result.message || 'Failed to reassign document');
+        }
+    } catch (error) {
+        console.error('Reassign error:', error);
+        showToast('error', 'Network error reassigning document');
+    }
+}
+
+function showToast(type, message) {
+    // Simple toast notification
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle';
+
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi ${icon} me-2"></i>${escapeHtml(message)}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 
 function renderKeyPartyDocs(keyPartyDocs) {
@@ -695,13 +973,121 @@ function showOverrideModal(docId) {
     overrideModal.show();
 }
 
-async function signOff() {
-    if (!confirm('Sign off KYC documentation and proceed to MLRO approval?')) return;
+function getOutstandingDocuments() {
+    if (!checklist) return [];
 
+    const outstanding = [];
+
+    // Check sponsor documents
+    checklist.sponsor_documents.forEach(doc => {
+        if (doc.required && doc.status !== 'complete') {
+            outstanding.push({ type: 'Sponsor', label: doc.label });
+        }
+    });
+
+    // Check key party documents
+    checklist.key_parties.forEach(party => {
+        party.documents.forEach(doc => {
+            if (doc.required && doc.status !== 'complete') {
+                outstanding.push({ type: party.name, label: doc.label });
+            }
+        });
+    });
+
+    // Check EDD documents if required
+    if (checklist.edd_required && checklist.edd_documents) {
+        checklist.edd_documents.forEach(doc => {
+            if (doc.required && doc.status !== 'complete') {
+                outstanding.push({ type: 'EDD', label: doc.label });
+            }
+        });
+    }
+
+    return outstanding;
+}
+
+function updateOutstandingDocsDisplay() {
+    const outstanding = getOutstandingDocuments();
+    const card = document.getElementById('outstandingDocsCard');
+    const list = document.getElementById('outstandingDocsList');
+
+    if (outstanding.length > 0) {
+        card.classList.remove('d-none');
+        let html = '<ul class="list-unstyled mb-0">';
+        outstanding.forEach(doc => {
+            html += `<li class="mb-1"><i class="bi bi-x-circle text-danger me-1"></i><strong>${escapeHtml(doc.type)}:</strong> ${escapeHtml(doc.label)}</li>`;
+        });
+        html += '</ul>';
+        list.innerHTML = html;
+    } else {
+        card.classList.add('d-none');
+    }
+}
+
+async function signOff() {
+    const outstanding = getOutstandingDocuments();
+
+    // If there are outstanding docs, check if user is MLRO/MLCO
+    if (outstanding.length > 0) {
+        const userRole = '{{ current_user.role if current_user else "" }}';
+        if (userRole !== 'mlro' && userRole !== 'compliance') {
+            alert('Documentation is incomplete. Only MLRO/MLCO can sign off with missing documents.');
+            return;
+        }
+
+        // Show MLRO override modal
+        showMlroOverrideModal(outstanding);
+        return;
+    }
+
+    // All docs complete - proceed with normal sign-off
+    if (!confirm('Sign off KYC documentation and proceed to approval phase?')) return;
+
+    performSignOff(null);
+}
+
+function showMlroOverrideModal(outstanding) {
+    const modal = new bootstrap.Modal(document.getElementById('mlroOverrideModal'));
+    const list = document.getElementById('mlroOutstandingList');
+    const justificationField = document.getElementById('mlroJustification');
+
+    // Populate outstanding docs list
+    let html = '<ul class="list-unstyled">';
+    outstanding.forEach(doc => {
+        html += `<li><i class="bi bi-x-circle text-danger me-2"></i><strong>${escapeHtml(doc.type)}:</strong> ${escapeHtml(doc.label)}</li>`;
+    });
+    html += '</ul>';
+    list.innerHTML = html;
+
+    justificationField.value = '';
+
+    // Setup confirm button
+    document.getElementById('confirmMlroOverride').onclick = async () => {
+        const justification = justificationField.value.trim();
+        if (!justification || justification.length < 50) {
+            alert('Please provide a detailed justification (minimum 50 characters).');
+            return;
+        }
+
+        modal.hide();
+        await performSignOff(justification);
+    };
+
+    modal.show();
+}
+
+async function performSignOff(mlroOverrideJustification) {
     try {
+        const payload = mlroOverrideJustification ? {
+            mlro_override: true,
+            justification: mlroOverrideJustification,
+            outstanding_documents: getOutstandingDocuments()
+        } : {};
+
         const response = await fetch(`/api/kyc/${onboardingId}/signoff`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
