@@ -1121,9 +1121,30 @@ function updateProgressFromDocs(documents) {
     });
 }
 
-function viewDocument(docId) {
-    const doc = uploadedDocuments.find(d => d.document_id === docId);
-    if (!doc) return;
+async function viewDocument(docId) {
+    // Try to find in local array first
+    let doc = uploadedDocuments.find(d => d.document_id === docId);
+
+    // If not found locally, fetch from API
+    if (!doc) {
+        try {
+            const response = await fetch(`/api/onboarding/${onboardingId}/document/${docId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                doc = data.document;
+                // Add to uploadedDocuments for future access
+                uploadedDocuments.push(doc);
+            } else {
+                showToast('error', 'Document not found');
+                return;
+            }
+        } catch (error) {
+            console.error('Error fetching document:', error);
+            showToast('error', 'Failed to load document');
+            return;
+        }
+    }
 
     const modal = document.getElementById('docDetailModal');
     const content = document.getElementById('docDetailContent');

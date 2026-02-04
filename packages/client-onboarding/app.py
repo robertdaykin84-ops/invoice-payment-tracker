@@ -2306,6 +2306,40 @@ def get_jfsc_requirements(onboarding_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/document/<doc_id>', methods=['GET'])
+@login_required
+def get_document_detail(onboarding_id, doc_id):
+    """Get full document details for viewing."""
+    try:
+        # Get document from session
+        all_documents = session.get('kyc_documents', {})
+        doc = all_documents.get(doc_id)
+
+        if not doc:
+            return jsonify({
+                'success': False,
+                'error': 'Document not found'
+            }), 404
+
+        if doc.get('onboarding_id') != onboarding_id:
+            return jsonify({
+                'success': False,
+                'error': 'Document not found'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'document': doc
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching document {doc_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/save-progress', methods=['POST'])
 @login_required
 def save_onboarding_progress(onboarding_id):
