@@ -2236,6 +2236,57 @@ def api_kyc_override(onboarding_id, doc_id):
     })
 
 
+@app.route('/api/onboarding/<onboarding_id>/documents/status', methods=['GET'])
+@login_required
+def get_document_status(onboarding_id):
+    """Get current status of all documents."""
+    try:
+        # Get documents from session (POC uses session storage)
+        all_documents = session.get('kyc_documents', {})
+
+        # Filter by onboarding_id
+        onboarding_docs = [
+            {
+                'id': doc_id,
+                'status': doc.get('analysis', {}).get('overall_status', 'Pending Review'),
+                'filename': doc.get('filename', 'Unknown')
+            }
+            for doc_id, doc in all_documents.items()
+            if doc.get('onboarding_id') == onboarding_id
+        ]
+
+        # Map status values to display format
+        status_map = {
+            'pass': 'Verified',
+            'review_needed': 'Pending Review',
+            'fail': 'Rejected'
+        }
+
+        for doc in onboarding_docs:
+            doc['status'] = status_map.get(doc['status'], 'Pending Review')
+
+        # Calculate summary
+        total = len(onboarding_docs)
+        verified = sum(1 for d in onboarding_docs if d.get('status') == 'Verified')
+        pending = sum(1 for d in onboarding_docs if d.get('status') == 'Pending Review')
+        progress = (verified / total * 100) if total > 0 else 0
+
+        return jsonify({
+            'success': True,
+            'documents': onboarding_docs,
+            'summary': {
+                'total': total,
+                'verified': verified,
+                'pending': pending,
+                'progress': round(progress, 1)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting document status: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
 @login_required
 def api_kyc_signoff(onboarding_id):

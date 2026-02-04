@@ -365,11 +365,75 @@ let uploadedDocuments = [];
 let checklist = null;
 let docDetailModal = null;
 let overrideModal = null;
+let statusPollInterval;
 
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text || '';
     return div.innerHTML;
+}
+
+function startStatusPolling() {
+    // Poll every 3 seconds
+    statusPollInterval = setInterval(async () => {
+        await updateDocumentStatus();
+    }, 3000);
+}
+
+async function updateDocumentStatus() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/documents/status`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Update document status badges
+            data.documents.forEach(doc => {
+                const statusBadge = document.querySelector(`[data-doc-id="${doc.id}"] .status-badge`);
+                if (statusBadge) {
+                    statusBadge.className = `badge status-badge ${getStatusBadgeClass(doc.status)}`;
+                    statusBadge.textContent = doc.status;
+                }
+            });
+
+            // Update progress summary
+            updateProgressSummary(data.summary);
+        }
+    } catch (error) {
+        console.error('Status polling error:', error);
+    }
+}
+
+function getStatusBadgeClass(status) {
+    const statusClasses = {
+        'Verified': 'bg-success',
+        'Pending Review': 'bg-warning',
+        'Rejected': 'bg-danger',
+        'Unassigned': 'bg-secondary'
+    };
+    return statusClasses[status] || 'bg-secondary';
+}
+
+function updateProgressSummary(summary) {
+    const summaryElement = document.getElementById('documentationStatusContent');
+    if (summaryElement && summary) {
+        summaryElement.innerHTML = `
+            <div class="d-flex justify-content-between mb-2">
+                <span>Verified:</span>
+                <strong class="text-success">${summary.verified}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Pending:</span>
+                <strong class="text-warning">${summary.pending}</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Total:</span>
+                <strong>${summary.total}</strong>
+            </div>
+            <div class="progress mt-3" style="height: 8px;">
+                <div class="progress-bar bg-success" style="width: ${summary.progress}%"></div>
+            </div>
+        `;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -411,6 +475,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('uploadSection').classList.remove('d-none');
         document.getElementById('selectedFiles').classList.add('d-none');
     });
+
+    // Start polling when page loads
+    startStatusPolling();
+});
+
+// Stop polling when page unloads
+window.addEventListener('beforeunload', () => {
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+    }
 });
 
 function handleDrop(e) {
@@ -722,16 +796,25 @@ function renderDocumentList(containerId, docs) {
                           status === 'review_needed' ? 'bi-exclamation-circle-fill text-warning' :
                           'bi-x-circle-fill text-danger';
 
+        // Map status to display format
+        const statusDisplay = status === 'pass' ? 'Verified' :
+                            status === 'review_needed' ? 'Pending Review' :
+                            status === 'fail' ? 'Rejected' : 'Pending Review';
+
+        const statusBadgeClass = getStatusBadgeClass(statusDisplay);
+
         const confidence = Math.round((doc.suggested_assignment.confidence || 0) * 100);
 
         const item = document.createElement('div');
         item.className = 'list-group-item d-flex justify-content-between align-items-center';
+        item.setAttribute('data-doc-id', doc.document_id);
         item.innerHTML = `
             <div>
                 <i class="bi ${statusIcon} me-2"></i>
                 <strong>${escapeHtml(doc.analysis.detected_type || 'Unknown')}</strong>
                 <small class="text-muted ms-2">${escapeHtml(doc.filename)}</small>
                 <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
+                <span class="badge status-badge ${statusBadgeClass} ms-2">${statusDisplay}</span>
             </div>
             <div>
                 <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
