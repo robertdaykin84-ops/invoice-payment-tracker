@@ -611,9 +611,28 @@ def new_onboarding():
 
         if sponsor_type == 'existing':
             sponsor_id = request.form.get('sponsor_id')
+
+            # Create new onboarding for existing sponsor's new fund
+            # In demo mode, generate a new onboarding ID
+            import random
+            new_onboarding_id = f"ONB-{random.randint(100, 999):03d}"
+
+            # Store minimal onboarding data in session for demo mode
+            if not session.get('onboardings'):
+                session['onboardings'] = {}
+
+            session['onboardings'][new_onboarding_id] = {
+                'onboarding_id': new_onboarding_id,
+                'sponsor_id': sponsor_id,
+                'status': 'trigger_review',
+                'current_phase': 1,
+                'created_at': datetime.now().isoformat()
+            }
+            session.modified = True
+
             # Redirect to trigger review workflow
             flash('Starting trigger review for existing sponsor...', 'info')
-            return redirect(url_for('trigger_review', sponsor_id=sponsor_id))
+            return redirect(url_for('trigger_review', onboarding_id=new_onboarding_id))
         else:
             # Start new sponsor onboarding
             flash('New client enquiry started.', 'success')
@@ -960,10 +979,25 @@ def onboarding_phase(onboarding_id, phase):
     return render_template(f'onboarding/phase{phase}.html', **context)
 
 
-@app.route('/onboarding/<onboarding_id>/trigger-review')
+@app.route('/onboarding/<onboarding_id>/trigger-review', methods=['GET', 'POST'])
 @login_required
 def trigger_review(onboarding_id):
     """Trigger event review for existing sponsor"""
+    if request.method == 'POST':
+        # Save trigger review data (in demo mode, just store in session)
+        if 'trigger_reviews' not in session:
+            session['trigger_reviews'] = {}
+
+        session['trigger_reviews'][onboarding_id] = {
+            'completed_at': datetime.now().isoformat(),
+            'review_notes': request.form.get('review_notes', '')
+        }
+        session.modified = True
+
+        flash('Trigger review completed. Proceeding to fund setup.', 'success')
+        # Redirect to Phase 1 (fund structure setup for existing sponsor)
+        return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=1))
+
     return render_template('onboarding/trigger_review.html',
                          onboarding_id=onboarding_id)
 
@@ -2467,6 +2501,40 @@ def api_generate_requirements(onboarding_id):
         # Generate new requirements
         requirements = generate_document_requirements(onboarding_id)
 
+        # Link existing documents to newly generated requirements
+        from flask import session
+        kyc_docs = session.get('kyc_documents', {})
+        existing_docs = [doc for doc in kyc_docs.values() if doc.get('onboarding_id') == onboarding_id]
+        for doc in existing_docs:
+            suggested = doc.get('suggested_assignment', {})
+            person_name = suggested.get('person_name')
+            doc_type_suggested = suggested.get('document_type', '').lower().replace(' ', '_')
+
+            if person_name and doc_type_suggested:
+                # Find matching requirement
+                matching_reqs = sheets.query('DocumentRequirements', filters={
+                    'onboarding_id': onboarding_id,
+                    'person_name': person_name,
+                    'doc_type': doc_type_suggested
+                })
+
+                if matching_reqs:
+                    requirement = matching_reqs[0]
+                    requirement_id = requirement['requirement_id']
+                    doc_id = doc.get('document_id')
+
+                    # Update requirement with document link
+                    sheets.update('DocumentRequirements', requirement_id, {
+                        'uploaded_doc_id': doc_id,
+                        'status': 'submitted',
+                        'uploaded_at': doc.get('uploaded_at', '')
+                    })
+
+                    logger.info(f"Linked existing document {doc_id} to requirement {requirement_id}")
+
+        # Refresh requirements after linking
+        requirements = sheets.query('DocumentRequirements', filters={'onboarding_id': onboarding_id})
+
         # Format for frontend
         enriched_requirements = []
         for req in requirements:
@@ -2477,7 +2545,8 @@ def api_generate_requirements(onboarding_id):
                 'document_type': format_doc_type(req.get('doc_type', '')),
                 'doc_type': req.get('doc_type'),
                 'status': req.get('status', 'outstanding'),
-                'description': get_doc_type_description(req.get('doc_type', ''))
+                'description': get_doc_type_description(req.get('doc_type', '')),
+                'uploaded_at': req.get('uploaded_at', '')
             })
 
         return jsonify({
@@ -2487,6 +2556,67 @@ def api_generate_requirements(onboarding_id):
         })
     except Exception as e:
         logger.error(f"Error generating requirements: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/onboarding/<onboarding_id>/sync-documents', methods=['POST'])
+@login_required
+def api_sync_documents_to_requirements(onboarding_id):
+    """Sync documents from session to requirements in database.
+
+    Links verified documents from session to their matching requirements
+    and updates requirement status to 'submitted'.
+    """
+    try:
+        sheets = get_sheets_client()
+        linked_count = 0
+
+        # Get documents from session
+        kyc_docs = session.get('kyc_documents', {})
+        docs_for_onboarding = [doc for doc in kyc_docs.values()
+                              if doc.get('onboarding_id') == onboarding_id]
+
+        logger.info(f"[SYNC] Found {len(docs_for_onboarding)} documents in session for {onboarding_id}")
+
+        for doc in docs_for_onboarding:
+            suggested = doc.get('suggested_assignment', {})
+            person_name = suggested.get('person_name')
+            doc_type_suggested = suggested.get('document_type', '').lower().replace(' ', '_')
+            confidence = suggested.get('confidence', 0)
+
+            # Only link documents with high confidence matches (>= 85%)
+            if person_name and doc_type_suggested and confidence >= 0.85:
+                # Find matching requirement
+                matching_reqs = sheets.query('DocumentRequirements', filters={
+                    'onboarding_id': onboarding_id,
+                    'person_name': person_name,
+                    'doc_type': doc_type_suggested
+                })
+
+                if matching_reqs:
+                    requirement = matching_reqs[0]
+                    requirement_id = requirement['requirement_id']
+                    doc_id = doc.get('document_id')
+
+                    # Check if already linked
+                    if requirement.get('uploaded_doc_id') != doc_id:
+                        # Update requirement with document link
+                        sheets.update('DocumentRequirements', requirement_id, {
+                            'uploaded_doc_id': doc_id,
+                            'status': 'submitted',
+                            'uploaded_at': doc.get('uploaded_at', '')
+                        })
+                        linked_count += 1
+                        logger.info(f"[SYNC] Linked document {doc_id} ({doc.get('filename')}) to requirement {requirement_id}")
+
+        return jsonify({
+            'success': True,
+            'linked': linked_count,
+            'total_docs': len(docs_for_onboarding)
+        })
+
+    except Exception as e:
+        logger.error(f"Error syncing documents to requirements: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

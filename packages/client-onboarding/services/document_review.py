@@ -45,7 +45,8 @@ CERTIFICATION_REQUIREMENTS = {
 # Document type detection patterns
 DOCUMENT_TYPES = {
     'passport': ['passport', 'travel document', 'laissez-passer'],
-    'address_proof': ['utility bill', 'bank statement', 'council tax', 'electricity', 'gas bill', 'water bill'],
+    'address_proof': ['address proof', 'utility bill', 'bank statement', 'council tax', 'electricity', 'gas bill', 'water bill'],
+    'source_of_wealth': ['source of wealth', 'sow', 'wealth declaration', 'sow declaration', 'origin of funds'],
     'certificate_of_incorporation': ['certificate of incorporation', 'incorporation certificate'],
     'certificate_of_registration': ['certificate of registration', 'registration certificate'],
     'memorandum_articles': ['memorandum', 'articles of association', 'm&a', 'constitution'],

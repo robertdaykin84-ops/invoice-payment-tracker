@@ -1073,7 +1073,8 @@ async function loadChecklist() {
             checklist = data.checklist;
             updateChecklistDisplay(checklist);
             updateDocumentationStatus(checklist);
-            updateProgress(data.progress);
+            // Don't call updateProgress(data.progress) here - it's stale!
+            // Progress is calculated from actual documents via updateProgressFromDocs()
 
             // Show EDD section if required
             if (checklist.edd_required) {
@@ -1221,11 +1222,14 @@ function updateDocumentationStatus(checklist) {
 }
 
 function updateProgress(progress) {
+    console.log('[UPDATE PROGRESS] Called with:', progress);
     document.getElementById('progressPercent').textContent = progress.percentage + '%';
     document.getElementById('overallProgress').style.width = progress.percentage + '%';
     document.getElementById('pendingCount').textContent = progress.pending;
     document.getElementById('completeCount').textContent = progress.complete;
     document.getElementById('reviewCount').textContent = progress.review_needed;
+
+    console.log('[UPDATE PROGRESS] Updated DOM - complete:', progress.complete, 'percentage:', progress.percentage + '%');
 
     // Update outstanding docs display
     updateOutstandingDocsDisplay();
@@ -1234,6 +1238,7 @@ function updateProgress(progress) {
     const userRole = '{{ current_user.role if current_user else "" }}';
     const canSignOff = progress.can_sign_off || (userRole === 'mlro' || userRole === 'compliance');
     document.getElementById('signOffBtn').disabled = !canSignOff;
+    console.log('[UPDATE PROGRESS] Sign off button disabled:', !canSignOff, 'can_sign_off:', progress.can_sign_off);
 }
 
 async function uploadFiles() {
@@ -1606,10 +1611,12 @@ function renderKeyPartyDocs(keyPartyDocs) {
 }
 
 function updateProgressFromDocs(documents) {
+    console.log(`[PROGRESS] Calculating progress for ${documents.length} documents`);
     let complete = 0;
     let reviewNeeded = 0;
 
     documents.forEach(doc => {
+        console.log(`[PROGRESS] Doc ${doc.document_id}: overall_status = ${doc.analysis?.overall_status}`);
         if (doc.analysis.overall_status === 'pass') complete++;
         else if (doc.analysis.overall_status === 'review_needed') reviewNeeded++;
     });
@@ -1618,6 +1625,8 @@ function updateProgressFromDocs(documents) {
         checklist.sponsor_documents.length +
         checklist.key_parties.reduce((sum, p) => sum + p.documents.length, 0) :
         documents.length;
+
+    console.log(`[PROGRESS] Results: complete=${complete}, reviewNeeded=${reviewNeeded}, total=${total}`);
 
     updateProgress({
         total: total,
