@@ -66,3 +66,4 @@ build/
 *.local
 .env.local
 .env.*.local
+.worktrees/
