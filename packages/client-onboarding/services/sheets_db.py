@@ -271,7 +271,7 @@ class SheetsDB:
                 except json.JSONDecodeError:
                     pass
             # Parse booleans
-            elif header in ('is_ubo', 'id_verified', 'edd_triggered', 'is_existing_sponsor'):
+            elif header in ('is_ubo', 'id_verified', 'edd_triggered', 'is_existing_sponsor', 'declaration_accepted'):
                 value = value.lower() == 'true' if isinstance(value, str) else bool(value)
             result[header] = value
         return result
