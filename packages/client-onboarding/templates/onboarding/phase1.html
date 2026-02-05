@@ -1119,6 +1119,16 @@ function removeSponsorPrincipal(index) {
     }
 }
 
+function viewSponsorPrincipal(index) {
+    const principal = sponsorPrincipals[index];
+    alert(`View principal: ${principal.full_name}`);
+}
+
+function editSponsorPrincipal(index) {
+    const principal = sponsorPrincipals[index];
+    alert(`Edit principal: ${principal.full_name}`);
+}
+
 function renderSponsorPrincipalsTable() {
     const tbody = document.getElementById('sponsorPrincipalsTableBody');
     tbody.innerHTML = '';
@@ -1149,6 +1159,12 @@ function renderSponsorPrincipalsTable() {
             <td>${p.ownership_pct !== null ? p.ownership_pct + '%' : '-'}</td>
             <td>${p.is_ubo ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>'}</td>
             <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="viewSponsorPrincipal(${index})">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editSponsorPrincipal(${index})">
+                    <i class="bi bi-pencil"></i>
+                </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSponsorPrincipal(${index})">
                     <i class="bi bi-trash"></i>
                 </button>
