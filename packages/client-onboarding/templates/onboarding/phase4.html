@@ -521,15 +521,15 @@ function updateProgressSummary(summary) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Cache Bootstrap modal instances
     docDetailModal = new bootstrap.Modal(document.getElementById('docDetailModal'));
     overrideModal = new bootstrap.Modal(document.getElementById('overrideModal'));
 
-    // Load checklist
-    loadChecklist();
+    // Load checklist FIRST (required for rendering documents)
+    await loadChecklist();
 
-    // Load existing documents for this onboarding
+    // Then load existing documents for this onboarding
     loadExistingDocuments();
 
     // Setup drag and drop
