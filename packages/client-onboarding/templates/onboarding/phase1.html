@@ -141,7 +141,10 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Registered Address <span class="text-danger">*</span></label>
-                            <div class="mb-2" style="height: 28px;"></div>
+                            <div class="form-check mb-2" style="visibility: hidden; height: 24px;">
+                                <input class="form-check-input" type="checkbox" disabled>
+                                <label class="form-check-label small">Placeholder</label>
+                            </div>
                             <textarea class="form-control" name="registered_address" rows="3" required
                                       placeholder="Full registered address including postcode...">{{ enquiry.registered_address if enquiry else '' }}</textarea>
                         </div>
