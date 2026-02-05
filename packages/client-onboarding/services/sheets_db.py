@@ -43,7 +43,7 @@ SCHEMA = {
         'regulatory_status', 'regulator', 'license_number',
         'business_activities', 'source_of_wealth',
         'fund_type', 'legal_structure',
-        'investment_strategy', 'target_size', 'status', 'notes', 'created_at', 'created_by'
+        'investment_strategy', 'target_size', 'status', 'notes', 'declaration_accepted', 'created_at', 'created_by'
     ],
     'Sponsors': [
         'sponsor_id', 'legal_name', 'trading_name', 'entity_type', 'jurisdiction',
