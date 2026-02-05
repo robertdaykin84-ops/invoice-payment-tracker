@@ -2402,6 +2402,89 @@ def api_generate_requirements(onboarding_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/documents', methods=['POST'])
+@login_required
+def api_upload_documents(onboarding_id):
+    """Upload document and optionally link to requirement."""
+    from datetime import datetime
+    from werkzeug.utils import secure_filename
+    import uuid
+    import os
+
+    try:
+        sheets = get_sheets_client()
+
+        # Get uploaded file
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file provided'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'Empty filename'}), 400
+
+        # Get optional assignment parameters
+        person_name = request.form.get('person_name', '')
+        doc_type = request.form.get('doc_type', '')
+
+        # Generate document ID and secure filename
+        doc_id = str(uuid.uuid4())
+        filename = secure_filename(file.filename)
+        file_size = 0
+
+        # Save file (for now, save to static/samples/ - later integrate with Google Drive)
+        upload_folder = os.path.join(app.root_path, 'static', 'samples')
+        os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+
+        # Create document record
+        document = {
+            'doc_id': doc_id,
+            'onboarding_id': onboarding_id,
+            'filename': filename,
+            'file_path': f'static/samples/{filename}',
+            'fulfills_requirement_id': '',
+            'uploaded_at': datetime.now().isoformat(),
+            'file_size': str(file_size)
+        }
+
+        # If assigned, link to requirement
+        if person_name and doc_type:
+            # Find matching requirement
+            requirements = sheets.query('DocumentRequirements', filters={
+                'onboarding_id': onboarding_id,
+                'person_name': person_name,
+                'doc_type': doc_type
+            })
+
+            if requirements:
+                requirement = requirements[0]
+                requirement_id = requirement['requirement_id']
+
+                # Link document to requirement
+                document['fulfills_requirement_id'] = requirement_id
+
+                # Update requirement status
+                sheets.update('DocumentRequirements', requirement_id, {
+                    'uploaded_doc_id': doc_id,
+                    'status': 'submitted',
+                    'uploaded_at': datetime.now().isoformat()
+                })
+
+        # Save document to database
+        sheets.insert('Documents', document)
+
+        return jsonify({
+            'success': True,
+            'document': document
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading document: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/document/<doc_id>', methods=['GET'])
 @login_required
 def get_document_detail(onboarding_id, doc_id):
