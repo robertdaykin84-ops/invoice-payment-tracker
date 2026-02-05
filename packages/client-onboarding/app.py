@@ -2365,6 +2365,22 @@ def get_jfsc_requirements(onboarding_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/requirements/generate', methods=['POST'])
+@login_required
+def api_generate_requirements(onboarding_id):
+    """Generate document requirements for all principals."""
+    try:
+        requirements = generate_document_requirements(onboarding_id)
+        return jsonify({
+            'success': True,
+            'requirements': requirements,
+            'count': len(requirements)
+        })
+    except Exception as e:
+        logger.error(f"Error generating requirements: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/document/<doc_id>', methods=['GET'])
 @login_required
 def get_document_detail(onboarding_id, doc_id):
@@ -2489,6 +2505,60 @@ def api_kyc_signoff(onboarding_id):
 
 
 # ========== Helper Functions ==========
+
+def generate_document_requirements(onboarding_id):
+    """Generate document requirements for all fund principals."""
+    from datetime import datetime
+    import uuid
+
+    sheets = get_sheets_client()
+
+    # Get all principals for this onboarding
+    principals_data = sheets.query('FundPrincipals',
+                                   filters={'onboarding_id': onboarding_id})
+
+    requirements = []
+
+    for principal in principals_data:
+        person_name = principal.get('name', '')
+        person_role = principal.get('role', '')
+
+        # All principals need passport and proof of address
+        for doc_type in ['passport', 'proof_of_address']:
+            requirement = {
+                'requirement_id': str(uuid.uuid4()),
+                'onboarding_id': onboarding_id,
+                'person_name': person_name,
+                'person_role': person_role,
+                'doc_type': doc_type,
+                'status': 'outstanding',
+                'uploaded_doc_id': '',
+                'uploaded_at': '',
+                'created_at': datetime.now().isoformat()
+            }
+            requirements.append(requirement)
+
+        # Only partners/UBOs need source of wealth
+        if person_role in ['Managing Partner', 'Partner', 'UBO', 'Beneficial Owner']:
+            requirement = {
+                'requirement_id': str(uuid.uuid4()),
+                'onboarding_id': onboarding_id,
+                'person_name': person_name,
+                'person_role': person_role,
+                'doc_type': 'source_of_wealth',
+                'status': 'outstanding',
+                'uploaded_doc_id': '',
+                'uploaded_at': '',
+                'created_at': datetime.now().isoformat()
+            }
+            requirements.append(requirement)
+
+    # Save all requirements to database
+    for req in requirements:
+        sheets.insert('DocumentRequirements', req)
+
+    return requirements
+
 
 def get_phases():
     """Get workflow phases configuration"""
