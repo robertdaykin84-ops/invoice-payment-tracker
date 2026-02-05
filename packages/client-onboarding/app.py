@@ -2596,6 +2596,67 @@ def api_view_document(doc_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/documents/<doc_id>', methods=['PUT'])
+@login_required
+def api_update_document(doc_id):
+    """Update document metadata."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'Invalid JSON payload'}), 400
+
+        # Get document from session
+        doc = session.get('kyc_documents', {}).get(doc_id)
+        if not doc:
+            return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+
+        # Update document type
+        if 'doc_type' in data:
+            if 'analysis' not in doc:
+                doc['analysis'] = {}
+            doc['analysis']['detected_type'] = data['doc_type']
+
+        # Update status
+        if 'status' in data:
+            if 'analysis' not in doc:
+                doc['analysis'] = {}
+            doc['analysis']['overall_status'] = data['status']
+
+        # Update notes
+        if 'notes' in data:
+            doc['notes'] = data['notes']
+
+        # Update assignment
+        if 'assignment_type' in data:
+            if 'suggested_assignment' not in doc:
+                doc['suggested_assignment'] = {}
+
+            doc['suggested_assignment']['type'] = data['assignment_type']
+
+            if data['assignment_type'] == 'key_party' and 'person_id' in data:
+                doc['suggested_assignment']['person_id'] = data['person_id']
+            elif data['assignment_type'] == 'sponsor':
+                doc['suggested_assignment'].pop('person_id', None)
+
+        # Update modified timestamp
+        doc['modified_at'] = datetime.now().isoformat()
+        doc['modified_by'] = get_current_user()['name']
+
+        session.modified = True
+
+        logger.info(f"Updated document {doc_id}")
+
+        return jsonify({
+            'status': 'ok',
+            'message': 'Document updated successfully',
+            'document': doc
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating document: {e}")
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/save-progress', methods=['POST'])
 @login_required
 def save_onboarding_progress(onboarding_id):

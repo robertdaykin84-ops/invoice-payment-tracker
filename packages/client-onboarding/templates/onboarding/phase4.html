@@ -373,6 +373,78 @@
     </div>
 </div>
 
+<!-- Edit Document Modal -->
+<div class="modal fade" id="editDocumentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil me-2"></i>Edit Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editDocumentForm">
+                    <input type="hidden" id="editDocId" name="doc_id">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Document Type</label>
+                        <select class="form-select" id="editDocType" name="doc_type" required>
+                            <option value="">Select type...</option>
+                            <option value="passport">Passport</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="certificate_of_incorporation">Certificate of Incorporation</option>
+                            <option value="certificate_of_registration">Certificate of Registration</option>
+                            <option value="memorandum_articles">Memorandum & Articles</option>
+                            <option value="llp_agreement">LLP Agreement</option>
+                            <option value="register_of_directors">Register of Directors</option>
+                            <option value="register_of_shareholders">Register of Shareholders</option>
+                            <option value="board_resolution">Board Resolution</option>
+                            <option value="partnership_agreement">Partnership Agreement</option>
+                            <option value="trust_deed">Trust Deed</option>
+                            <option value="financial_statements">Financial Statements</option>
+                            <option value="bank_reference">Bank Reference</option>
+                            <option value="source_of_funds">Source of Funds</option>
+                            <option value="source_of_wealth">Source of Wealth</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Assign To</label>
+                        <select class="form-select" id="editAssignTo" name="assign_to" required>
+                            <option value="">Select person...</option>
+                            <option value="sponsor">Sponsor</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select class="form-select" id="editDocStatus" name="status" required>
+                            <option value="pending">Pending</option>
+                            <option value="pass">Approved</option>
+                            <option value="review_needed">Review Needed</option>
+                            <option value="fail">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea class="form-control" id="editDocNotes" name="notes" rows="3"
+                                  placeholder="Add any notes or comments about this document..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveDocumentBtn">
+                    <i class="bi bi-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .upload-zone {
     border: 2px dashed #dee2e6;
@@ -563,6 +635,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('uploadSection').classList.remove('d-none');
         document.getElementById('selectedFiles').classList.add('d-none');
     });
+    document.getElementById('saveDocumentBtn').addEventListener('click', saveDocumentChanges);
 
     // Initial load of requirements and start polling
     updateJFSCRequirements();
@@ -737,8 +810,131 @@ function uploadForRequirement(requirementId) {
     alert(`Upload functionality for requirement ${requirementId} will be implemented in the next phase.`);
 }
 
-function editDocument(docId) {
-    alert(`Edit functionality for document ${docId} will be implemented in the next phase.`);
+async function editDocument(docId) {
+    // Find the document in uploaded documents
+    const doc = uploadedDocuments.find(d => d.document_id === docId);
+
+    if (!doc) {
+        console.error('Document not found:', docId);
+        alert('Document not found');
+        return;
+    }
+
+    // Populate the form with current values
+    document.getElementById('editDocId').value = docId;
+    document.getElementById('editDocType').value = doc.analysis?.detected_type || '';
+
+    // Set assignment
+    const assignment = doc.suggested_assignment;
+    if (assignment.type === 'sponsor') {
+        document.getElementById('editAssignTo').value = 'sponsor';
+    } else if (assignment.type === 'key_party') {
+        document.getElementById('editAssignTo').value = assignment.person_id;
+    } else {
+        document.getElementById('editAssignTo').value = '';
+    }
+
+    // Set status from analysis
+    document.getElementById('editDocStatus').value = doc.analysis?.overall_status || 'pending';
+
+    // Set notes if available
+    document.getElementById('editDocNotes').value = doc.notes || '';
+
+    // Populate assign_to dropdown with key parties
+    const assignToSelect = document.getElementById('editAssignTo');
+    assignToSelect.innerHTML = '<option value="">Select person...</option><option value="sponsor">Sponsor</option>';
+
+    if (checklist && checklist.key_parties) {
+        checklist.key_parties.forEach(party => {
+            const option = document.createElement('option');
+            option.value = party.person_id;
+            option.textContent = party.name;
+            assignToSelect.appendChild(option);
+        });
+    }
+
+    // Re-set the value after populating options
+    if (assignment.type === 'key_party') {
+        assignToSelect.value = assignment.person_id;
+    } else if (assignment.type === 'sponsor') {
+        assignToSelect.value = 'sponsor';
+    }
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editDocumentModal'));
+    modal.show();
+}
+
+async function saveDocumentChanges() {
+    const docId = document.getElementById('editDocId').value;
+    const docType = document.getElementById('editDocType').value;
+    const assignTo = document.getElementById('editAssignTo').value;
+    const status = document.getElementById('editDocStatus').value;
+    const notes = document.getElementById('editDocNotes').value;
+
+    if (!docType || !assignTo || !status) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    // Prepare update payload
+    const updateData = {
+        doc_type: docType,
+        status: status,
+        notes: notes
+    };
+
+    // Handle assignment
+    if (assignTo === 'sponsor') {
+        updateData.assignment_type = 'sponsor';
+    } else {
+        updateData.assignment_type = 'key_party';
+        updateData.person_id = assignTo;
+    }
+
+    try {
+        const response = await fetch(`/api/documents/${docId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            // Update local document data
+            const doc = uploadedDocuments.find(d => d.document_id === docId);
+            if (doc) {
+                doc.analysis.detected_type = docType;
+                doc.analysis.overall_status = status;
+                doc.notes = notes;
+                doc.suggested_assignment = {
+                    type: updateData.assignment_type,
+                    person_id: updateData.person_id,
+                    confidence: doc.suggested_assignment.confidence
+                };
+            }
+
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editDocumentModal'));
+            modal.hide();
+
+            // Refresh display
+            displayResults(uploadedDocuments);
+
+            // Show success message
+            showToast('success', 'Document updated successfully');
+        } else {
+            alert('Update failed: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error updating document:', error);
+        alert('Failed to update document. Please try again.');
+    }
 }
 
 // Stop polling when page unloads
@@ -1099,9 +1295,12 @@ function renderDocumentList(containerId, docs) {
                 <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
                 <span class="badge status-badge ${statusBadgeClass} ms-2">${statusDisplay}</span>
             </div>
-            <div>
-                <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
                     <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(doc.document_id)}')">
+                    <i class="bi bi-pencil"></i> Edit
                 </button>
             </div>
         `;
@@ -1122,9 +1321,14 @@ function renderUnassignedDocuments(containerId, docs) {
                 <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0">${escapeHtml(doc.filename)}</h6>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
-                            <i class="bi bi-eye"></i> View
-                        </button>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(doc.document_id)}')">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        </div>
                     </div>
                     <p class="small text-muted mb-2">Could not automatically classify</p>
 
