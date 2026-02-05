@@ -499,14 +499,27 @@ async function updateJFSCRequirements() {
 
             if (requirements.length === 0) {
                 requirementsList.innerHTML = `
-                    <li class="list-group-item text-center text-success py-4">
-                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
-                        <strong>All Requirements Met</strong>
-                        <p class="small text-muted mb-0">Ready for approval</p>
+                    <li class="list-group-item text-center text-info py-3">
+                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+                        <strong>No Requirements Yet</strong>
+                        <p class="small text-muted mb-0">Complete Phase 2 and generate requirements</p>
                     </li>
                 `;
             } else {
-                requirementsList.innerHTML = requirements.map(req => `
+                // Check if all requirements are met
+                const outstandingReqs = data.outstanding || [];
+                if (outstandingReqs.length === 0) {
+                    requirementsList.innerHTML = `
+                        <li class="list-group-item text-center text-success py-4">
+                            <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                            <strong>All Requirements Met</strong>
+                            <p class="small text-muted mb-0">Ready for approval</p>
+                        </li>
+                    `;
+                    return;
+                }
+                // Show outstanding requirements
+                requirementsList.innerHTML = outstandingReqs.map(req => `
                     <li class="list-group-item">
                         <div class="d-flex align-items-start">
                             <i class="bi bi-exclamation-circle text-warning me-2 mt-1"></i>
@@ -593,6 +606,28 @@ function updateProgressSummary(summary) {
     }
 }
 
+/**
+ * Sync documents from session to requirements in database
+ * Links verified documents to their matching requirements and updates status
+ */
+async function syncDocumentsToRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/sync-documents`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`[SYNC] Synced ${data.linked} documents to requirements`);
+        } else {
+            console.error('[SYNC] Error:', data.error);
+        }
+    } catch (error) {
+        console.error('[SYNC] Exception:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     // Cache Bootstrap modal instances
     docDetailModal = new bootstrap.Modal(document.getElementById('docDetailModal'));
@@ -602,7 +637,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadChecklist();
 
     // Then load existing documents for this onboarding
-    loadExistingDocuments();
+    await loadExistingDocuments();
+
+    // Sync documents to requirements after loading
+    await syncDocumentsToRequirements();
+
+    // Reload documents to get updated status from sync and recalculate progress
+    await loadExistingDocuments();
 
     // Setup drag and drop
     const dropZone = document.getElementById('dropZone');
@@ -682,6 +723,22 @@ function renderRequirements(requirements) {
     const container = document.getElementById('requirementsTrackerContent');
 
     if (!requirements || requirements.length === 0) {
+        // Check if this is because there are no principals (Phase 2 not completed)
+        // or because all requirements are genuinely met
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>No Requirements Generated</strong>
+                <p class="mb-0 mt-2">Requirements will be generated automatically based on the principals added in Phase 2.
+                If Phase 2 is complete, click "Generate Requirements" to create the document checklist.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Check if all requirements are met
+    const allMet = requirements.every(req => req.status === 'submitted');
+    if (allMet) {
         container.innerHTML = `
             <div class="text-center py-4">
                 <i class="bi bi-check-circle text-success fs-1 d-block mb-3"></i>
@@ -1351,6 +1408,7 @@ function renderUnassignedDocuments(containerId, docs) {
                             <option value="">-- Select Type --</option>
                             <option value="passport">Passport</option>
                             <option value="address_proof">Address Proof</option>
+                            <option value="source_of_wealth">Source of Wealth</option>
                             <option value="certificate_of_incorporation">Certificate of Incorporation</option>
                             <option value="certificate_of_registration">Certificate of Registration</option>
                             <option value="memorandum_articles">Memorandum & Articles</option>
@@ -1488,6 +1546,8 @@ async function reassignDocument(docId, newType, assignmentType, personId) {
             await updateDocumentStatus();
             console.log(`[REASSIGN] Calling updateJFSCRequirements()`);
             await updateJFSCRequirements();
+            console.log(`[REASSIGN] Reloading documents to update progress`);
+            await loadExistingDocuments();
             console.log(`[REASSIGN] Complete`);
         } else {
             console.error(`[REASSIGN] API returned error:`, result.message);
