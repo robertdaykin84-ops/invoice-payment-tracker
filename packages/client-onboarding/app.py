@@ -2543,30 +2543,21 @@ def api_view_document(doc_id):
     import os
 
     try:
-        # First check session documents (KYC uploads with AI analysis)
+        # Check session documents (KYC uploads with AI analysis)
         session_docs = session.get('kyc_documents', {})
         if doc_id in session_docs:
             document = session_docs[doc_id]
             file_path = os.path.join(app.root_path, document['file_path'])
 
             if not os.path.exists(file_path):
-                return jsonify({'success': False, 'error': 'File not found'}), 404
+                logger.error(f"File not found: {file_path}")
+                return jsonify({'success': False, 'error': 'File not found on disk'}), 404
 
             return send_file(file_path, mimetype='application/pdf')
 
-        # If not in session, check Google Sheets (manual uploads)
-        sheets = get_sheets_client()
-        docs = sheets.query('Documents', filters={'doc_id': doc_id})
-        if not docs:
-            return jsonify({'success': False, 'error': 'Document not found'}), 404
-
-        document = docs[0]
-        file_path = os.path.join(app.root_path, document['file_path'])
-
-        if not os.path.exists(file_path):
-            return jsonify({'success': False, 'error': 'File not found'}), 404
-
-        return send_file(file_path, mimetype='application/pdf')
+        # Document not found in session
+        logger.error(f"Document {doc_id} not found in session")
+        return jsonify({'success': False, 'error': 'Document not found'}), 404
 
     except Exception as e:
         logger.error(f"Error viewing document: {e}")
