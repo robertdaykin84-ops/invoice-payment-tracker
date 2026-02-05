@@ -652,6 +652,12 @@ async function loadRequirements() {
         const data = await response.json();
 
         if (data.success) {
+            // If no requirements exist, auto-generate them
+            if (!data.requirements || data.requirements.length === 0) {
+                console.log('[REQUIREMENTS] No requirements found, auto-generating...');
+                await generateRequirements();
+                return; // generateRequirements will call loadRequirements again
+            }
             renderRequirements(data.requirements);
         } else {
             document.getElementById('requirementsTrackerContent').innerHTML = `
@@ -795,6 +801,11 @@ async function generateRequirements() {
         if (data.success) {
             showToast('success', 'Requirements generated successfully');
             renderRequirements(data.requirements);
+
+            // Reload documents to auto-assign them to newly generated requirements
+            console.log('[REQUIREMENTS] Re-loading documents to auto-assign to requirements');
+            updateJFSCRequirements();
+            loadExistingDocuments();
         } else {
             showToast('error', data.error || 'Failed to generate requirements');
             loadRequirements();
