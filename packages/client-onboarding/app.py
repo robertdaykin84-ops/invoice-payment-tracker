@@ -2405,29 +2405,46 @@ def api_get_requirements(onboarding_id):
         requirements = sheets.query('DocumentRequirements',
                                    filters={'onboarding_id': onboarding_id})
 
-        # Enrich with document details if uploaded
-        for req in requirements:
-            if req.get('uploaded_doc_id'):
-                doc = sheets.query('Documents',
-                                  filters={'doc_id': req['uploaded_doc_id']})
-                if doc:
-                    req['document'] = doc[0]
+        # Filter to only outstanding requirements (for JFSC sidebar)
+        outstanding = []
 
-        # Group by person
-        grouped = {}
+        # Enrich with document details if uploaded and prepare response
+        enriched_requirements = []
         for req in requirements:
-            person = req['person_name']
-            if person not in grouped:
-                grouped[person] = {
-                    'person_name': person,
-                    'person_role': req['person_role'],
-                    'requirements': []
-                }
-            grouped[person]['requirements'].append(req)
+            # Create enriched requirement object
+            enriched_req = {
+                'requirement_id': req.get('requirement_id'),
+                'person_name': req.get('person_name'),
+                'person_role': req.get('person_role'),
+                'document_type': format_doc_type(req.get('doc_type', '')),
+                'doc_type': req.get('doc_type'),
+                'status': req.get('status', 'outstanding'),
+                'uploaded_at': req.get('uploaded_at'),
+                'created_at': req.get('created_at'),
+                'description': get_doc_type_description(req.get('doc_type', ''))
+            }
+
+            # Add document details if uploaded
+            if req.get('uploaded_doc_id'):
+                docs = sheets.query('Documents',
+                                  filters={'doc_id': req['uploaded_doc_id']})
+                if docs:
+                    enriched_req['document_id'] = docs[0].get('doc_id')
+                    enriched_req['filename'] = docs[0].get('filename')
+
+            enriched_requirements.append(enriched_req)
+
+            # Track outstanding for JFSC sidebar
+            if req.get('status') == 'outstanding':
+                outstanding.append({
+                    'category': f"{req.get('person_name')} - {req.get('person_role')}",
+                    'description': f"{format_doc_type(req.get('doc_type', ''))} required"
+                })
 
         return jsonify({
             'success': True,
-            'requirements': list(grouped.values())
+            'requirements': enriched_requirements,
+            'outstanding': outstanding
         })
     except Exception as e:
         logger.error(f"Error fetching requirements: {e}")
@@ -2439,11 +2456,34 @@ def api_get_requirements(onboarding_id):
 def api_generate_requirements(onboarding_id):
     """Generate document requirements for all principals."""
     try:
+        sheets = get_sheets_client()
+
+        # Delete existing requirements first to avoid duplicates
+        existing_requirements = sheets.query('DocumentRequirements',
+                                            filters={'onboarding_id': onboarding_id})
+        for req in existing_requirements:
+            sheets.delete('DocumentRequirements', req['requirement_id'])
+
+        # Generate new requirements
         requirements = generate_document_requirements(onboarding_id)
+
+        # Format for frontend
+        enriched_requirements = []
+        for req in requirements:
+            enriched_requirements.append({
+                'requirement_id': req.get('requirement_id'),
+                'person_name': req.get('person_name'),
+                'person_role': req.get('person_role'),
+                'document_type': format_doc_type(req.get('doc_type', '')),
+                'doc_type': req.get('doc_type'),
+                'status': req.get('status', 'outstanding'),
+                'description': get_doc_type_description(req.get('doc_type', ''))
+            })
+
         return jsonify({
             'success': True,
-            'requirements': requirements,
-            'count': len(requirements)
+            'requirements': enriched_requirements,
+            'count': len(enriched_requirements)
         })
     except Exception as e:
         logger.error(f"Error generating requirements: {e}")
@@ -2826,8 +2866,42 @@ def api_kyc_signoff(onboarding_id):
 
 # ========== Helper Functions ==========
 
+def format_doc_type(doc_type):
+    """Format document type for display."""
+    type_map = {
+        'passport': 'Passport',
+        'proof_of_address': 'Proof of Address',
+        'source_of_wealth': 'Source of Wealth',
+        'certificate_of_incorporation': 'Certificate of Incorporation',
+        'memorandum_articles': 'Memorandum & Articles',
+        'register_of_directors': 'Register of Directors',
+        'register_of_shareholders': 'Register of Shareholders'
+    }
+    return type_map.get(doc_type, doc_type.replace('_', ' ').title())
+
+
+def get_doc_type_description(doc_type):
+    """Get description for document type."""
+    desc_map = {
+        'passport': 'Valid passport copy (certified)',
+        'proof_of_address': 'Utility bill or bank statement (last 3 months)',
+        'source_of_wealth': 'Documentation explaining source of wealth',
+        'certificate_of_incorporation': 'Certified certificate of incorporation',
+        'memorandum_articles': 'Certified memorandum and articles of association',
+        'register_of_directors': 'Current register of directors',
+        'register_of_shareholders': 'Current register of shareholders'
+    }
+    return desc_map.get(doc_type, '')
+
+
 def generate_document_requirements(onboarding_id):
-    """Generate document requirements for all fund principals."""
+    """Generate document requirements for all fund principals.
+
+    Role-based requirements:
+    - All principals: passport, proof_of_address
+    - Partners/UBOs: also need source_of_wealth
+    - Directors and Independent Directors: only passport + proof_of_address
+    """
     from datetime import datetime
     import uuid
 
@@ -2837,10 +2911,14 @@ def generate_document_requirements(onboarding_id):
     principals_data = sheets.query('FundPrincipals',
                                    filters={'onboarding_id': onboarding_id})
 
+    if not principals_data:
+        logger.warning(f"No principals found for onboarding {onboarding_id}")
+        return []
+
     requirements = []
 
     for principal in principals_data:
-        person_name = principal.get('name', '')
+        person_name = principal.get('full_name') or principal.get('name', '')
         person_role = principal.get('role', '')
 
         # All principals need passport and proof of address
@@ -2858,8 +2936,14 @@ def generate_document_requirements(onboarding_id):
             }
             requirements.append(requirement)
 
-        # Only partners/UBOs need source of wealth
-        if person_role in ['Managing Partner', 'Partner', 'UBO', 'Beneficial Owner']:
+        # Only partners/UBOs need source of wealth (not directors)
+        # Normalize role names for comparison
+        role_lower = person_role.lower()
+        is_partner_or_ubo = any(keyword in role_lower for keyword in
+                                ['partner', 'ubo', 'beneficial owner', 'managing'])
+        is_director_only = 'director' in role_lower and not is_partner_or_ubo
+
+        if is_partner_or_ubo:
             requirement = {
                 'requirement_id': str(uuid.uuid4()),
                 'onboarding_id': onboarding_id,
@@ -2877,6 +2961,7 @@ def generate_document_requirements(onboarding_id):
     for req in requirements:
         sheets.insert('DocumentRequirements', req)
 
+    logger.info(f"Generated {len(requirements)} requirements for {len(principals_data)} principals")
     return requirements
 
 

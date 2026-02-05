@@ -1055,6 +1055,219 @@ class SheetsDB:
 
     # ========== Seed Data ==========
 
+    # ========== Generic CRUD Operations ==========
+
+    def query(self, table_name: str, filters: Optional[dict] = None) -> list[dict]:
+        """Query records from a table with optional filters."""
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would query {table_name} with filters {filters}")
+
+            # Return demo data for FundPrincipals
+            if table_name == 'FundPrincipals' and filters and filters.get('onboarding_id') == 'ONB-001':
+                return [
+                    {
+                        'principal_id': 'PRI-001',
+                        'onboarding_id': 'ONB-001',
+                        'name': 'John Smith',
+                        'full_name': 'John Edward Smith',
+                        'role': 'Managing Partner',
+                        'dob': '1972-05-15',
+                        'nationality': 'British',
+                        'residential_address': '45 Kensington Gardens, London, W8 4QS',
+                        'ownership_pct': '35',
+                        'is_ubo': True,
+                        'source': 'enquiry'
+                    },
+                    {
+                        'principal_id': 'PRI-002',
+                        'onboarding_id': 'ONB-001',
+                        'name': 'Sarah Johnson',
+                        'full_name': 'Sarah Anne Johnson',
+                        'role': 'Partner',
+                        'dob': '1978-09-22',
+                        'nationality': 'British',
+                        'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
+                        'ownership_pct': '35',
+                        'is_ubo': True,
+                        'source': 'enquiry'
+                    },
+                    {
+                        'principal_id': 'PRI-003',
+                        'onboarding_id': 'ONB-001',
+                        'name': 'Michael Brown',
+                        'full_name': 'Michael James Brown',
+                        'role': 'Independent Director',
+                        'dob': '1980-01-10',
+                        'nationality': 'British',
+                        'residential_address': '8 Hampstead Heath, London, NW3 1AA',
+                        'ownership_pct': '0',
+                        'is_ubo': False,
+                        'source': 'enquiry'
+                    }
+                ]
+
+            # Return requirements from session in demo mode
+            if table_name == 'DocumentRequirements':
+                from flask import session
+                requirements = session.get('demo_requirements', [])
+                if filters:
+                    # Apply filters
+                    filtered = []
+                    for req in requirements:
+                        match = True
+                        for key, value in filters.items():
+                            if req.get(key) != value:
+                                match = False
+                                break
+                        if match:
+                            filtered.append(req)
+                    return filtered
+                return requirements
+
+            return []
+
+        try:
+            sheet = self._get_sheet(table_name)
+            if not sheet:
+                return []
+
+            all_values = sheet.get_all_values()
+            if len(all_values) <= 1:
+                return []
+
+            headers = all_values[0]
+            results = []
+
+            for row in all_values[1:]:
+                if not row or not row[0]:
+                    continue
+                record = self._row_to_dict(headers, row)
+
+                # Apply filters
+                if filters:
+                    match = True
+                    for key, value in filters.items():
+                        if record.get(key) != value:
+                            match = False
+                            break
+                    if not match:
+                        continue
+
+                results.append(record)
+
+            return results
+        except Exception as e:
+            logger.error(f"Error querying {table_name}: {e}")
+            return []
+
+    def insert(self, table_name: str, data: dict) -> bool:
+        """Insert a new record into a table."""
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would insert into {table_name}: {data}")
+            # Store requirements in session for demo mode
+            if table_name == 'DocumentRequirements':
+                from flask import session
+                if 'demo_requirements' not in session:
+                    session['demo_requirements'] = []
+                session['demo_requirements'].append(data)
+                session.modified = True
+            return True
+
+        try:
+            sheet = self._get_sheet(table_name)
+            if not sheet:
+                return False
+
+            # Ensure ID is set
+            id_field = list(SCHEMA[table_name])[0]  # First field is always ID
+            if not data.get(id_field):
+                prefix = ID_PREFIXES.get(table_name, 'GEN')
+                data[id_field] = self._generate_id(prefix, sheet)
+
+            row = self._dict_to_row(SCHEMA[table_name], data)
+            sheet.append_row(row)
+            self._log_action('insert', table_name, data.get(id_field, 'unknown'), data)
+            logger.info(f"Inserted into {table_name}: {data.get(id_field)}")
+            return True
+        except Exception as e:
+            logger.error(f"Error inserting into {table_name}: {e}")
+            return False
+
+    def update(self, table_name: str, record_id: str, data: dict) -> bool:
+        """Update an existing record in a table."""
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would update {table_name} record {record_id}: {data}")
+            # Handle requirements update in demo mode
+            if table_name == 'DocumentRequirements':
+                from flask import session
+                requirements = session.get('demo_requirements', [])
+                for req in requirements:
+                    if req.get('requirement_id') == record_id:
+                        req.update(data)
+                        break
+                session['demo_requirements'] = requirements
+                session.modified = True
+            return True
+
+        try:
+            sheet = self._get_sheet(table_name)
+            if not sheet:
+                return False
+
+            all_values = sheet.get_all_values()
+            headers = all_values[0]
+
+            for i, row in enumerate(all_values[1:], start=2):
+                if row and row[0] == record_id:
+                    # Merge existing data with updates
+                    existing = self._row_to_dict(headers, row)
+                    existing.update(data)
+                    new_row = self._dict_to_row(headers, existing)
+                    sheet.update(f'A{i}:{chr(65 + len(headers) - 1)}{i}', [new_row])
+                    self._log_action('update', table_name, record_id, data)
+                    logger.info(f"Updated {table_name} record {record_id}")
+                    return True
+            return False
+        except Exception as e:
+            logger.error(f"Error updating {table_name} record {record_id}: {e}")
+            return False
+
+    def delete(self, table_name: str, record_id: str) -> bool:
+        """Delete a record from a table."""
+        if self.demo_mode:
+            logger.info(f"[DEMO] Would delete {table_name} record {record_id}")
+            # Handle requirements deletion in demo mode
+            if table_name == 'DocumentRequirements':
+                from flask import session
+                requirements = session.get('demo_requirements', [])
+                session['demo_requirements'] = [r for r in requirements if r.get('requirement_id') != record_id]
+                session.modified = True
+            return True
+
+        try:
+            sheet = self._get_sheet(table_name)
+            if not sheet:
+                return False
+
+            all_values = sheet.get_all_values()
+
+            for i, row in enumerate(all_values[1:], start=2):
+                if row and row[0] == record_id:
+                    sheet.delete_rows(i)
+                    self._log_action('delete', table_name, record_id, {})
+                    logger.info(f"Deleted {table_name} record {record_id}")
+                    return True
+            return False
+        except Exception as e:
+            logger.error(f"Error deleting {table_name} record {record_id}: {e}")
+            return False
+
+    def create(self, table_name: str, data: dict) -> bool:
+        """Alias for insert() method for consistency with existing code."""
+        return self.insert(table_name, data)
+
+    # ========== Seed Data ==========
+
     def seed_initial_data(self):
         """One-time migration of mock data"""
         if self.demo_mode:
