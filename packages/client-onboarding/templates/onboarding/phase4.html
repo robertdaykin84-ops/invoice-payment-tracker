@@ -1355,71 +1355,8 @@ function updateProgressFromDocs(documents) {
 }
 
 async function viewDocument(docId) {
-    // Try to find in local array first
-    let doc = uploadedDocuments.find(d => d.document_id === docId);
-
-    // If not found locally, fetch from API
-    if (!doc) {
-        try {
-            const response = await fetch(`/api/onboarding/${onboardingId}/document/${docId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                doc = data.document;
-                // Add to uploadedDocuments for future access
-                uploadedDocuments.push(doc);
-            } else {
-                showToast('error', 'Document not found');
-                return;
-            }
-        } catch (error) {
-            console.error('Error fetching document:', error);
-            showToast('error', 'Failed to load document');
-            return;
-        }
-    }
-
-    const modal = document.getElementById('docDetailModal');
-    const content = document.getElementById('docDetailContent');
-    const overrideBtn = document.getElementById('overrideBtn');
-
-    let checksHtml = '';
-    Object.entries(doc.analysis.checks || {}).forEach(([key, check]) => {
-        const icon = check.status === 'pass' ? 'bi-check-circle-fill text-success' :
-                    check.status === 'review_needed' ? 'bi-exclamation-circle-fill text-warning' :
-                    'bi-x-circle-fill text-danger';
-        checksHtml += `
-            <div class="check-item">
-                <i class="bi ${icon}"></i>
-                <strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
-                <span>${escapeHtml(check.detail)}</span>
-            </div>
-        `;
-    });
-
-    content.innerHTML = `
-        <h6>${escapeHtml(doc.filename)}</h6>
-        <p class="text-muted">Detected Type: ${escapeHtml(doc.analysis.detected_type)}</p>
-        <hr>
-        <h6>AI Review Results</h6>
-        ${checksHtml}
-        ${doc.override ? `
-            <div class="alert alert-info mt-3">
-                <strong>Override Applied:</strong> ${escapeHtml(doc.override.reason)}<br>
-                <small>By ${escapeHtml(doc.override.by)} at ${escapeHtml(doc.override.at)}</small>
-            </div>
-        ` : ''}
-    `;
-
-    // Show override button if review needed
-    if (doc.analysis.overall_status === 'review_needed' && !doc.override) {
-        overrideBtn.classList.remove('d-none');
-        overrideBtn.onclick = () => showOverrideModal(docId);
-    } else {
-        overrideBtn.classList.add('d-none');
-    }
-
-    docDetailModal.show();
+    // Open the actual PDF document in a new tab
+    window.open(`/api/documents/${docId}/view`, '_blank');
 }
 
 function showOverrideModal(docId) {
