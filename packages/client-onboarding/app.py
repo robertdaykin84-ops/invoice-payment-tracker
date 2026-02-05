@@ -2582,6 +2582,59 @@ def save_onboarding_progress(onboarding_id):
         }), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/principals/<principal_id>', methods=['GET'])
+@login_required
+def api_get_principal(onboarding_id, principal_id):
+    """Get principal details."""
+    try:
+        sheets = get_sheets_client()
+        principals = sheets.query('FundPrincipals', filters={
+            'onboarding_id': onboarding_id,
+            'principal_id': principal_id
+        })
+
+        if not principals:
+            return jsonify({'success': False, 'error': 'Principal not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'principal': principals[0]
+        })
+    except Exception as e:
+        logger.error(f"Error fetching principal: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/onboarding/<onboarding_id>/principals/<principal_id>', methods=['DELETE'])
+@login_required
+def api_delete_principal(onboarding_id, principal_id):
+    """Delete a principal."""
+    try:
+        sheets = get_sheets_client()
+        sheets.delete('FundPrincipals', principal_id)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error deleting principal: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/onboarding/<onboarding_id>/principals/<principal_id>', methods=['PUT'])
+@login_required
+def api_update_principal(onboarding_id, principal_id):
+    """Update principal details."""
+    try:
+        sheets = get_sheets_client()
+        data = request.get_json()
+
+        sheets.update('FundPrincipals', principal_id, data)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error updating principal: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/kyc/<onboarding_id>/signoff', methods=['POST'])
 @login_required
 def api_kyc_signoff(onboarding_id):
