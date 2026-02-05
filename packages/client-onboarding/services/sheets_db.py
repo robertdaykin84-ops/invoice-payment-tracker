@@ -109,10 +109,18 @@ class SheetsDB:
     """Google Sheets database client for persistent storage"""
 
     def __init__(self):
+        # Check if DEMO_MODE is forced via environment variable
+        force_demo = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+
         self.demo_mode = True
         self.client = None
         self.spreadsheet = None
         self._sheet_cache: dict[str, Any] = {}
+
+        # If DEMO_MODE is explicitly set to true, don't connect to Sheets
+        if force_demo:
+            logger.info("SheetsDB running in DEMO MODE - forced by DEMO_MODE=true")
+            return
 
         if not GSPREAD_AVAILABLE:
             logger.info("SheetsDB running in DEMO MODE - gspread not available")
