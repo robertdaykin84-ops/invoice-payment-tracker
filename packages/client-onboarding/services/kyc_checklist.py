@@ -96,6 +96,21 @@ def generate_checklist(enquiry: Dict, risk_assessment: Optional[Dict] = None) ->
     key_parties = []
     for i, principal in enumerate(principals):
         party_docs = [dict(d, document_id=None, status='pending') for d in KEY_PARTY_DOCUMENTS]
+
+        # UBOs (25%+ ownership) need source of wealth documentation
+        ownership = principal.get('ownership_percentage', 0)
+        role_lower = str(principal.get('role', '')).lower()
+        is_ubo = ownership >= 25 or 'ubo' in role_lower or 'beneficial owner' in role_lower
+
+        if is_ubo:
+            party_docs.append({
+                'item': 'source_of_wealth',
+                'label': 'Source of Wealth',
+                'required': True,
+                'document_id': None,
+                'status': 'pending'
+            })
+
         key_parties.append({
             'person_id': principal.get('person_id', f'principal_{i}'),
             'name': principal.get('full_name') or principal.get('name', f'Principal {i+1}'),

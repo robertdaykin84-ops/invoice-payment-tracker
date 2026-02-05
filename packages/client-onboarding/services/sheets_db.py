@@ -1063,14 +1063,15 @@ class SheetsDB:
             logger.info(f"[DEMO] Would query {table_name} with filters {filters}")
 
             # Return demo data for FundPrincipals
-            if table_name == 'FundPrincipals' and filters and filters.get('onboarding_id') == 'ONB-001':
+            if table_name == 'FundPrincipals' and filters and filters.get('onboarding_id'):
+                onboarding_id = filters.get('onboarding_id')
                 return [
                     {
                         'principal_id': 'PRI-001',
-                        'onboarding_id': 'ONB-001',
+                        'onboarding_id': onboarding_id,
                         'name': 'John Smith',
                         'full_name': 'John Edward Smith',
-                        'role': 'Managing Partner',
+                        'role': 'Director & UBO',
                         'dob': '1972-05-15',
                         'nationality': 'British',
                         'residential_address': '45 Kensington Gardens, London, W8 4QS',
@@ -1080,10 +1081,10 @@ class SheetsDB:
                     },
                     {
                         'principal_id': 'PRI-002',
-                        'onboarding_id': 'ONB-001',
+                        'onboarding_id': onboarding_id,
                         'name': 'Sarah Johnson',
                         'full_name': 'Sarah Anne Johnson',
-                        'role': 'Partner',
+                        'role': 'Director & UBO',
                         'dob': '1978-09-22',
                         'nationality': 'British',
                         'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
@@ -1093,15 +1094,15 @@ class SheetsDB:
                     },
                     {
                         'principal_id': 'PRI-003',
-                        'onboarding_id': 'ONB-001',
+                        'onboarding_id': onboarding_id,
                         'name': 'Michael Brown',
                         'full_name': 'Michael James Brown',
-                        'role': 'Independent Director',
+                        'role': 'Director & UBO',
                         'dob': '1980-01-10',
                         'nationality': 'British',
                         'residential_address': '8 Hampstead Heath, London, NW3 1AA',
-                        'ownership_pct': '0',
-                        'is_ubo': False,
+                        'ownership_pct': '30',
+                        'is_ubo': True,
                         'source': 'enquiry'
                     }
                 ]

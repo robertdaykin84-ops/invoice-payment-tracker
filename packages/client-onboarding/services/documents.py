@@ -156,6 +156,7 @@ def delete_document(document_id: str) -> Dict[str, Any]:
 DOCUMENT_TYPES = {
     'id_proof': 'ID Proof (Passport/Driving License)',
     'address_proof': 'Address Proof',
+    'source_of_wealth': 'Source of Wealth',
     'corporate_doc': 'Corporate Documentation',
     'bank_reference': 'Bank Reference',
     'source_of_funds': 'Source of Funds Declaration',
