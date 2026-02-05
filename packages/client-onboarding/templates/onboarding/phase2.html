@@ -266,9 +266,17 @@
                                 </td>
                                 <td><span class="badge badge-status-pending">Pending</span></td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary"
+                                    <button class="btn btn-sm btn-outline-primary me-1"
                                             onclick="viewPrincipal('{{ director.full_name }}')">
                                         <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            onclick="editPrincipal('{{ director.principal_id or 'principal_' ~ loop.index }}')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deletePrincipal('{{ director.principal_id or 'principal_' ~ loop.index }}')">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -289,9 +297,17 @@
                                 </td>
                                 <td><span class="badge badge-status-approved">Complete</span></td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary"
+                                    <button class="btn btn-sm btn-outline-primary me-1"
                                             onclick="viewPrincipal('John Smith')">
                                         <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            onclick="editPrincipal('principal_john_smith')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deletePrincipal('principal_john_smith')">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
