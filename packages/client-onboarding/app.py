@@ -2114,7 +2114,15 @@ def api_kyc_upload(onboarding_id):
     sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor')
 
     # Process each file
+    import os
+    from werkzeug.utils import secure_filename
+
+    # Create uploads directory if it doesn't exist
+    upload_folder = os.path.join(app.root_path, 'uploads', onboarding_id)
+    os.makedirs(upload_folder, exist_ok=True)
+
     documents = []
+    file_paths = []
     for file in files:
         if file and file.filename:
             content = file.read()
@@ -2123,6 +2131,13 @@ def api_kyc_upload(onboarding_id):
                 'filename': file.filename,
                 'mime_type': file.content_type or 'application/octet-stream'
             })
+
+            # Save file to disk
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(upload_folder, filename)
+            with open(file_path, 'wb') as f:
+                f.write(content)
+            file_paths.append(f'uploads/{onboarding_id}/{filename}')
 
     # Analyze all documents
     results = analyze_batch(documents, key_parties, sponsor_name)
@@ -2138,6 +2153,7 @@ def api_kyc_upload(onboarding_id):
             'document_id': doc_id,
             'onboarding_id': onboarding_id,
             'filename': result['filename'],
+            'file_path': file_paths[i],
             'analysis': result['analysis'],
             'suggested_assignment': result['suggested_assignment'],
             'uploaded_at': datetime.now().isoformat(),
@@ -2527,9 +2543,19 @@ def api_view_document(doc_id):
     import os
 
     try:
-        sheets = get_sheets_client()
+        # First check session documents (KYC uploads with AI analysis)
+        session_docs = session.get('kyc_documents', {})
+        if doc_id in session_docs:
+            document = session_docs[doc_id]
+            file_path = os.path.join(app.root_path, document['file_path'])
 
-        # Get document record
+            if not os.path.exists(file_path):
+                return jsonify({'success': False, 'error': 'File not found'}), 404
+
+            return send_file(file_path, mimetype='application/pdf')
+
+        # If not in session, check Google Sheets (manual uploads)
+        sheets = get_sheets_client()
         docs = sheets.query('Documents', filters={'doc_id': doc_id})
         if not docs:
             return jsonify({'success': False, 'error': 'Document not found'}), 404
