@@ -255,10 +255,21 @@
                                 </td>
                                 <td><span class="badge bg-info">{{ director.position|title if director.position else 'GP Director' }}</span></td>
                                 <td>{{ enquiry.fund_name or 'Fund GP' }}</td>
-                                <td><i class="bi bi-check-circle text-success" title="From Enquiry"></i> <small class="text-muted">Enquiry</small></td>
+                                <td>
+                                    {% if director.source %}
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        {{ director.source|title }}
+                                    {% else %}
+                                        <i class="bi bi-info-circle text-muted me-1"></i>
+                                        Enquiry
+                                    {% endif %}
+                                </td>
                                 <td><span class="badge badge-status-pending">Pending</span></td>
                                 <td>
-                                    <button class="btn btn-outline-secondary btn-sm" title="View"><i class="bi bi-eye"></i></button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="viewPrincipal('{{ director.full_name }}')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -272,10 +283,16 @@
                                 </td>
                                 <td><span class="badge bg-info">GP Director</span></td>
                                 <td>Granite Capital GP III Ltd</td>
-                                <td><i class="bi bi-check-circle text-success" title="From Sponsor"></i> <small class="text-muted">Sponsor</small></td>
+                                <td>
+                                    <i class="bi bi-check-circle text-success me-1"></i>
+                                    Sponsor
+                                </td>
                                 <td><span class="badge badge-status-approved">Complete</span></td>
                                 <td>
-                                    <button class="btn btn-outline-secondary btn-sm" title="View"><i class="bi bi-eye"></i></button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="viewPrincipal('John Smith')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                 </td>
                             </tr>
                             {% endif %}
@@ -288,13 +305,24 @@
                                 </td>
                                 <td><span class="badge bg-purple" style="background-color: #8b5cf6 !important;">Independent Director</span></td>
                                 <td>Fund III LP</td>
-                                <td><i class="bi bi-dash text-muted" title="New principal"></i></td>
+                                <td>
+                                    <i class="bi bi-info-circle text-muted me-1"></i>
+                                    Enquiry
+                                </td>
                                 <td><span class="badge badge-status-pending">Pending</span></td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-outline-danger" title="Remove"><i class="bi bi-trash"></i></button>
-                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                            onclick="viewPrincipal('Robert Jones')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            onclick="editPrincipal('principal_123')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deletePrincipal('principal_123')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>

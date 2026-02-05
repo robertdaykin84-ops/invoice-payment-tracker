@@ -94,3 +94,35 @@ function formatDate(dateString) {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-GB', options);
 }
+
+// Fund Principals Management
+function viewPrincipal(name) {
+    // TODO: Fetch principal details and show modal
+    alert(`View principal: ${name}`);
+}
+
+function editPrincipal(principalId) {
+    // TODO: Open edit modal with form
+    alert(`Edit principal: ${principalId}`);
+}
+
+async function deletePrincipal(principalId) {
+    if (!confirm('Are you sure you want to delete this principal?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/onboarding/principals/${principalId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error deleting principal');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting principal');
+    }
+}
