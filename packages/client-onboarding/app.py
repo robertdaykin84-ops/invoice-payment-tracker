@@ -2348,20 +2348,41 @@ def get_document_status(onboarding_id):
 
 @app.route('/api/onboarding/<onboarding_id>/requirements', methods=['GET'])
 @login_required
-def get_jfsc_requirements(onboarding_id):
-    """Get outstanding JFSC requirements."""
+def api_get_requirements(onboarding_id):
+    """Get all document requirements with fulfillment status."""
     try:
-        from services.kyc_checklist import get_outstanding_requirements
+        sheets = get_sheets_client()
 
-        requirements = get_outstanding_requirements(onboarding_id, session)
+        # Get all requirements for this onboarding
+        requirements = sheets.query('DocumentRequirements',
+                                   filters={'onboarding_id': onboarding_id})
+
+        # Enrich with document details if uploaded
+        for req in requirements:
+            if req.get('uploaded_doc_id'):
+                doc = sheets.query('Documents',
+                                  filters={'doc_id': req['uploaded_doc_id']})
+                if doc:
+                    req['document'] = doc[0]
+
+        # Group by person
+        grouped = {}
+        for req in requirements:
+            person = req['person_name']
+            if person not in grouped:
+                grouped[person] = {
+                    'person_name': person,
+                    'person_role': req['person_role'],
+                    'requirements': []
+                }
+            grouped[person]['requirements'].append(req)
 
         return jsonify({
             'success': True,
-            'requirements': requirements
+            'requirements': list(grouped.values())
         })
-
     except Exception as e:
-        logger.error(f"Error getting JFSC requirements: {e}")
+        logger.error(f"Error fetching requirements: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
