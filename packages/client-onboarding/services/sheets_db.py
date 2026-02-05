@@ -73,6 +73,14 @@ SCHEMA = {
     ],
     'AuditLog': [
         'log_id', 'timestamp', 'user', 'action', 'entity_type', 'entity_id', 'details'
+    ],
+    'DocumentRequirements': [
+        'requirement_id', 'onboarding_id', 'person_name', 'person_role', 'doc_type',
+        'status', 'uploaded_doc_id', 'uploaded_at', 'created_at'
+    ],
+    'Documents': [
+        'doc_id', 'onboarding_id', 'filename', 'file_path', 'fulfills_requirement_id',
+        'uploaded_at', 'file_size'
     ]
 }
 
@@ -85,7 +93,9 @@ ID_PREFIXES = {
     'PersonRoles': 'ROL',
     'Screenings': 'SCR',
     'RiskAssessments': 'RSK',
-    'AuditLog': 'LOG'
+    'AuditLog': 'LOG',
+    'DocumentRequirements': 'REQ',
+    'Documents': 'DOC'
 }
 
 
