@@ -145,22 +145,26 @@ MOCK_ENQUIRIES = {
         ],
         'gp_directors': [
             {
+                'principal_id': 'principal_js_enq001',
                 'full_name': 'John Edward Smith',
                 'former_names': '',
                 'dob': '1972-05-15',
                 'nationality': 'British',
                 'residential_address': '45 Kensington Gardens, London, W8 4QS',
                 'country_of_residence': 'UK',
-                'position': 'director'
+                'position': 'director',
+                'source': 'enquiry'
             },
             {
+                'principal_id': 'principal_saj_enq001',
                 'full_name': 'Sarah Anne Johnson',
                 'former_names': 'Sarah Anne Williams (maiden name)',
                 'dob': '1978-09-22',
                 'nationality': 'British',
                 'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
                 'country_of_residence': 'UK',
-                'position': 'director'
+                'position': 'director',
+                'source': 'enquiry'
             }
         ],
         'initial_investors': [
@@ -909,6 +913,34 @@ def onboarding_phase(onboarding_id, phase):
         'pending_enquiries': pending_enquiries,
         'uploaded': uploaded
     }
+
+    # Phase 2: Add additional principals (not from enquiry)
+    if phase == 2 and onboarding_id != 'NEW':
+        try:
+            added_principals = sheets_db.query('FundPrincipals', filters={
+                'onboarding_id': onboarding_id
+            })
+            # Filter out enquiry principals - only get manually added ones
+            added_principals = [p for p in added_principals if p.get('source') != 'enquiry']
+            context['added_principals'] = added_principals
+        except Exception as e:
+            logger.error(f"Error fetching added principals: {e}")
+            context['added_principals'] = []
+    elif phase == 2:
+        # For NEW onboarding, add Robert Jones as an example added principal
+        context['added_principals'] = [
+            {
+                'principal_id': 'principal_rj_123',
+                'full_name': 'Robert Jones',
+                'former_names': '',
+                'dob': '1975-08-20',
+                'nationality': 'British',
+                'residential_address': '78 Mayfair Gardens, London, W1K 3AB',
+                'country_of_residence': 'UK',
+                'position': 'independent_director',
+                'source': 'manual'
+            }
+        ]
 
     # Phase 5: Add screening and risk data
     if phase == 5:
@@ -2649,6 +2681,31 @@ def api_update_principal(onboarding_id, principal_id):
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Error updating principal: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/onboarding/<onboarding_id>/principals', methods=['POST'])
+@login_required
+def api_add_principal(onboarding_id):
+    """Add a new principal."""
+    try:
+        sheets = get_sheets_client()
+        data = request.get_json()
+
+        # Add onboarding_id to the data
+        data['onboarding_id'] = onboarding_id
+
+        # Generate a principal_id if not provided
+        if 'principal_id' not in data:
+            import uuid
+            data['principal_id'] = f"principal_{uuid.uuid4().hex[:8]}"
+
+        # Create the principal
+        sheets.create('FundPrincipals', data)
+
+        return jsonify({'success': True, 'principal_id': data['principal_id']})
+    except Exception as e:
+        logger.error(f"Error adding principal: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

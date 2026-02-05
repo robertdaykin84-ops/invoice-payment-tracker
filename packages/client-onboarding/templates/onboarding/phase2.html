@@ -253,31 +253,54 @@
                                         <span>{{ director.full_name }}</span>
                                     </div>
                                 </td>
-                                <td><span class="badge bg-info">{{ director.position|title if director.position else 'GP Director' }}</span></td>
+                                <td><span class="badge bg-info">{{ director.position|replace('_', ' ')|title if director.position else 'GP Director' }}</span></td>
                                 <td>{{ enquiry.fund_name or 'Fund GP' }}</td>
                                 <td>
-                                    {% if director.source %}
-                                        <i class="bi bi-check-circle text-success me-1"></i>
-                                        {{ director.source|title }}
+                                    {% set source = director.source or 'enquiry' %}
+                                    {% if source == 'enquiry' %}
+                                        <i class="bi bi-file-text text-info me-1"></i>
+                                        <span>Enquiry</span>
+                                    {% elif source == 'sponsor' %}
+                                        <i class="bi bi-building text-success me-1"></i>
+                                        <span>Sponsor</span>
+                                    {% elif source == 'fund' %}
+                                        <i class="bi bi-diagram-3 text-primary me-1"></i>
+                                        <span>Fund</span>
+                                    {% elif source == 'manual' %}
+                                        <i class="bi bi-person-plus text-secondary me-1"></i>
+                                        <span>Manual</span>
                                     {% else %}
                                         <i class="bi bi-info-circle text-muted me-1"></i>
-                                        Enquiry
+                                        <span>—</span>
                                     {% endif %}
                                 </td>
                                 <td><span class="badge badge-status-pending">Pending</span></td>
                                 <td>
+                                    {% set is_enquiry = (director.source == 'enquiry' or not director.source) %}
                                     <button class="btn btn-sm btn-outline-primary me-1"
-                                            onclick="viewPrincipal('{{ director.full_name }}')">
+                                            onclick="viewPrincipal('{{ onboarding_id }}', '{{ director.principal_id or 'principal_' ~ loop.index }}')"
+                                            title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
+                                    {% if not is_enquiry %}
                                     <button class="btn btn-sm btn-outline-secondary me-1"
-                                            onclick="editPrincipal('{{ director.principal_id or 'principal_' ~ loop.index }}')">
+                                            onclick="editPrincipal('{{ onboarding_id }}', '{{ director.principal_id or 'principal_' ~ loop.index }}')"
+                                            title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            onclick="deletePrincipal('{{ director.principal_id or 'principal_' ~ loop.index }}')">
+                                            onclick="deletePrincipal('{{ onboarding_id }}', '{{ director.principal_id or 'principal_' ~ loop.index }}', false)"
+                                            title="Delete">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Enquiry principals cannot be edited">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" disabled title="Enquiry principals cannot be deleted">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -292,55 +315,86 @@
                                 <td><span class="badge bg-info">GP Director</span></td>
                                 <td>Granite Capital GP III Ltd</td>
                                 <td>
-                                    <i class="bi bi-check-circle text-success me-1"></i>
-                                    Sponsor
+                                    <i class="bi bi-building text-success me-1"></i>
+                                    <span>Sponsor</span>
                                 </td>
                                 <td><span class="badge badge-status-approved">Complete</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary me-1"
-                                            onclick="viewPrincipal('John Smith')">
+                                            onclick="viewPrincipal('{{ onboarding_id }}', 'principal_john_smith')"
+                                            title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary me-1"
-                                            onclick="editPrincipal('principal_john_smith')">
+                                            onclick="editPrincipal('{{ onboarding_id }}', 'principal_john_smith')"
+                                            title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            onclick="deletePrincipal('principal_john_smith')">
+                                            onclick="deletePrincipal('{{ onboarding_id }}', 'principal_john_smith', false)"
+                                            title="Delete">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
                             {% endif %}
+                            {% if added_principals %}
+                            {% for principal in added_principals %}
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">RJ</div>
-                                        <span>Robert Jones</span>
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                                            {{ principal.full_name[:2]|upper if principal.full_name else 'P' }}
+                                        </div>
+                                        <span>{{ principal.full_name }}</span>
                                     </div>
                                 </td>
-                                <td><span class="badge bg-purple" style="background-color: #8b5cf6 !important;">Independent Director</span></td>
-                                <td>Fund III LP</td>
                                 <td>
-                                    <i class="bi bi-info-circle text-muted me-1"></i>
-                                    Enquiry
+                                    {% set position_name = principal.position|replace('_', ' ')|title if principal.position else 'Director' %}
+                                    {% if principal.position == 'independent_director' %}
+                                    <span class="badge bg-purple" style="background-color: #8b5cf6 !important;">{{ position_name }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ position_name }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ enquiry.fund_name if enquiry else 'Fund LP' }}</td>
+                                <td>
+                                    {% set source = principal.source or 'manual' %}
+                                    {% if source == 'sponsor' %}
+                                        <i class="bi bi-building text-success me-1"></i>
+                                        <span>Sponsor</span>
+                                    {% elif source == 'fund' %}
+                                        <i class="bi bi-diagram-3 text-primary me-1"></i>
+                                        <span>Fund</span>
+                                    {% elif source == 'manual' %}
+                                        <i class="bi bi-person-plus text-secondary me-1"></i>
+                                        <span>Manual</span>
+                                    {% else %}
+                                        <i class="bi bi-info-circle text-muted me-1"></i>
+                                        <span>{{ source|title }}</span>
+                                    {% endif %}
                                 </td>
                                 <td><span class="badge badge-status-pending">Pending</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary me-1"
-                                            onclick="viewPrincipal('Robert Jones')">
+                                            onclick="viewPrincipal('{{ onboarding_id }}', '{{ principal.principal_id }}')"
+                                            title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary me-1"
-                                            onclick="editPrincipal('principal_123')">
+                                            onclick="editPrincipal('{{ onboarding_id }}', '{{ principal.principal_id }}')"
+                                            title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            onclick="deletePrincipal('principal_123')">
+                                            onclick="deletePrincipal('{{ onboarding_id }}', '{{ principal.principal_id }}', false)"
+                                            title="Delete">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
+                            {% endfor %}
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -477,65 +531,171 @@
 
 <!-- Add Fund Principal Modal -->
 <div class="modal fade" id="addFundPrincipalModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add Fund Principal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Select existing or add new</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="principal_source" id="fromSponsor" value="sponsor" checked>
-                        <label class="form-check-label" for="fromSponsor">
-                            Link from Sponsor principals
-                        </label>
+                <form id="addPrincipalForm">
+                    <div class="mb-3">
+                        <label class="form-label">Source</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="source" id="fromSponsor" value="sponsor" checked onchange="togglePrincipalForm()">
+                            <label class="form-check-label" for="fromSponsor">
+                                Link from Sponsor principals
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="source" id="fromFund" value="fund" onchange="togglePrincipalForm()">
+                            <label class="form-check-label" for="fromFund">
+                                Fund-specific principal
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="source" id="newPrincipal" value="manual" onchange="togglePrincipalForm()">
+                            <label class="form-check-label" for="newPrincipal">
+                                Add new principal (requires CDD)
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="principal_source" id="newPrincipal" value="new">
-                        <label class="form-check-label" for="newPrincipal">
-                            Add new principal (requires CDD)
-                        </label>
+
+                    <div id="sponsorPrincipalSelect" class="mb-3">
+                        <label class="form-label">Select Sponsor Principal</label>
+                        <select class="form-select" name="sponsor_principal_id">
+                            <option value="">Choose...</option>
+                            <option value="js">John Smith (Partner)</option>
+                            <option value="sj">Sarah Johnson (Partner)</option>
+                            <option value="mb">Michael Brown (Partner)</option>
+                        </select>
                     </div>
-                </div>
 
-                <div id="sponsorPrincipalSelect" class="mb-3">
-                    <label class="form-label">Select Sponsor Principal</label>
-                    <select class="form-select">
-                        <option value="">Choose...</option>
-                        <option value="js">John Smith (Partner)</option>
-                        <option value="sj">Sarah Johnson (Partner)</option>
-                        <option value="mb">Michael Brown (Partner)</option>
-                    </select>
-                </div>
+                    <div id="newPrincipalForm" style="display: none;">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="full_name">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Former Names</label>
+                                <input type="text" class="form-control" name="former_names">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" name="dob">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nationality</label>
+                                <input type="text" class="form-control" name="nationality">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Residential Address</label>
+                                <textarea class="form-control" name="residential_address" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Country of Residence</label>
+                                <input type="text" class="form-control" name="country_of_residence">
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Role in Fund Structure</label>
-                    <select class="form-select">
-                        <option value="">Select...</option>
-                        <option value="gp_director">GP Director</option>
-                        <option value="fund_director">Fund Director</option>
-                        <option value="independent_director">Independent Director</option>
-                        <option value="investment_committee">Investment Committee</option>
-                    </select>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role in Fund Structure <span class="text-danger">*</span></label>
+                        <select class="form-select" name="position" required>
+                            <option value="">Select...</option>
+                            <option value="director">GP Director</option>
+                            <option value="fund_director">Fund Director</option>
+                            <option value="independent_director">Independent Director</option>
+                            <option value="investment_committee">Investment Committee</option>
+                        </select>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Entity</label>
-                    <select class="form-select">
-                        <option value="gp">Granite Capital GP III Limited</option>
-                        <option value="fund">Granite Capital Fund III LP</option>
-                    </select>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label">Entity</label>
+                        <select class="form-select" name="entity">
+                            <option value="gp">Granite Capital GP III Limited</option>
+                            <option value="fund">Granite Capital Fund III LP</option>
+                        </select>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="addPrincipal('{{ onboarding_id }}')">
                     <i class="bi bi-plus-lg me-1"></i> Add Principal
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function togglePrincipalForm() {
+    const source = document.querySelector('input[name="source"]:checked').value;
+    const sponsorSelect = document.getElementById('sponsorPrincipalSelect');
+    const newForm = document.getElementById('newPrincipalForm');
+
+    if (source === 'sponsor') {
+        sponsorSelect.style.display = 'block';
+        newForm.style.display = 'none';
+    } else if (source === 'fund' || source === 'manual') {
+        sponsorSelect.style.display = 'none';
+        newForm.style.display = 'block';
+    }
+}
+
+async function addPrincipal(onboardingId) {
+    const form = document.getElementById('addPrincipalForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    // Validate required fields
+    if (!data.position) {
+        alert('Please select a role');
+        return;
+    }
+
+    const source = data.source;
+
+    if (source === 'sponsor') {
+        if (!data.sponsor_principal_id) {
+            alert('Please select a sponsor principal');
+            return;
+        }
+        // For sponsor principals, we'd typically copy their data
+        // For now, just show a message
+        alert('Linking sponsor principal is not yet implemented. Please use "Add new principal" instead.');
+        return;
+    } else {
+        if (!data.full_name) {
+            alert('Please enter the principal\'s full name');
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/principals`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addFundPrincipalModal'));
+            modal.hide();
+            location.reload();
+        } else {
+            alert('Error adding principal: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error adding principal');
+    }
+}
+</script>
 {% endblock %}
