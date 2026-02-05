@@ -77,6 +77,25 @@
             </div>
         </div>
 
+        <!-- Document Requirements Tracker -->
+        <div class="card mb-4" id="requirementsTrackerSection">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    Document Requirements Tracker
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="generateRequirements()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Generate Requirements
+                </button>
+            </div>
+            <div class="card-body" id="requirementsTrackerContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted">Loading requirements...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Results Section (hidden until upload complete) -->
         <div id="resultsSection" class="d-none">
             <!-- Sponsor Documents -->
@@ -548,7 +567,179 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial load of requirements and start polling
     updateJFSCRequirements();
     startStatusPolling();
+
+    // Load requirements tracker
+    loadRequirements();
 });
+
+// Requirements Tracker Functions
+async function loadRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements`);
+        const data = await response.json();
+
+        if (data.success) {
+            renderRequirements(data.requirements);
+        } else {
+            document.getElementById('requirementsTrackerContent').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Failed to load requirements. Click "Generate Requirements" to create them.
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading requirements:', error);
+        document.getElementById('requirementsTrackerContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle me-2"></i>
+                Error loading requirements. Please try again.
+            </div>
+        `;
+    }
+}
+
+function renderRequirements(requirements) {
+    const container = document.getElementById('requirementsTrackerContent');
+
+    if (!requirements || requirements.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-check-circle text-success fs-1 d-block mb-3"></i>
+                <h5 class="text-success">All Requirements Met</h5>
+                <p class="text-muted">All required documents have been submitted.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Group requirements by person
+    const groupedReqs = {};
+
+    requirements.forEach(req => {
+        const person = req.person_name || 'Sponsor';
+        if (!groupedReqs[person]) {
+            groupedReqs[person] = [];
+        }
+        groupedReqs[person].push(req);
+    });
+
+    let html = '';
+
+    Object.keys(groupedReqs).forEach(person => {
+        const reqs = groupedReqs[person];
+        const submitted = reqs.filter(r => r.status === 'submitted').length;
+        const total = reqs.length;
+
+        html += `
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi ${person === 'Sponsor' ? 'bi-building' : 'bi-person'} me-2"></i>
+                        <strong>${escapeHtml(person)}</strong>
+                    </span>
+                    <span class="badge ${submitted === total ? 'bg-success' : 'bg-warning'}">
+                        ${submitted}/${total} submitted
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+        `;
+
+        reqs.forEach(req => {
+            const statusIcon = req.status === 'submitted' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+            const statusText = req.status === 'submitted' ? 'Submitted' : 'Outstanding';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi ${statusIcon} me-2"></i>
+                            <strong>${escapeHtml(req.document_type)}</strong>
+                        </div>
+                        ${req.description ? `<small class="text-muted">${escapeHtml(req.description)}</small>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-2">
+                            <span class="badge ${req.status === 'submitted' ? 'bg-success' : 'bg-secondary'}">${statusText}</span>
+                        </div>
+            `;
+
+            if (req.status === 'submitted' && req.document_id) {
+                html += `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(req.document_id)}')" title="View">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(req.document_id)}')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
+                `;
+            } else {
+                html += `
+                        <button class="btn btn-sm btn-outline-primary" onclick="uploadForRequirement('${escapeHtml(req.requirement_id)}')" title="Upload">
+                            <i class="bi bi-upload"></i> Upload
+                        </button>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+async function generateRequirements() {
+    try {
+        const container = document.getElementById('requirementsTrackerContent');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <p class="text-muted">Generating requirements...</p>
+            </div>
+        `;
+
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('success', 'Requirements generated successfully');
+            renderRequirements(data.requirements);
+        } else {
+            showToast('error', data.error || 'Failed to generate requirements');
+            loadRequirements();
+        }
+    } catch (error) {
+        console.error('Error generating requirements:', error);
+        showToast('error', 'Error generating requirements');
+        loadRequirements();
+    }
+}
+
+function uploadForRequirement(requirementId) {
+    alert(`Upload functionality for requirement ${requirementId} will be implemented in the next phase.`);
+}
+
+function editDocument(docId) {
+    alert(`Edit functionality for document ${docId} will be implemented in the next phase.`);
+}
 
 // Stop polling when page unloads
 window.addEventListener('beforeunload', () => {
