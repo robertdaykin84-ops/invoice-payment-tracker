@@ -597,7 +597,8 @@
                 </div>
                 <div class="card-body">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
+                        <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required
+       {% if enquiry and enquiry.declaration_accepted %}checked{% endif %}>
                         <label class="form-check-label" for="declaration">
                             I confirm that the information provided is accurate and complete to the best of my knowledge.
                             I understand that this information will be used for due diligence and regulatory compliance purposes.
