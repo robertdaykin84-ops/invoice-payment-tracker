@@ -2519,6 +2519,34 @@ def get_document_detail(onboarding_id, doc_id):
         }), 500
 
 
+@app.route('/api/documents/<doc_id>/view', methods=['GET'])
+@login_required
+def api_view_document(doc_id):
+    """Serve PDF file for viewing."""
+    from flask import send_file
+    import os
+
+    try:
+        sheets = get_sheets_client()
+
+        # Get document record
+        docs = sheets.query('Documents', filters={'doc_id': doc_id})
+        if not docs:
+            return jsonify({'success': False, 'error': 'Document not found'}), 404
+
+        document = docs[0]
+        file_path = os.path.join(app.root_path, document['file_path'])
+
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+
+        return send_file(file_path, mimetype='application/pdf')
+
+    except Exception as e:
+        logger.error(f"Error viewing document: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/save-progress', methods=['POST'])
 @login_required
 def save_onboarding_progress(onboarding_id):
