@@ -81,6 +81,11 @@ SCHEMA = {
     'Documents': [
         'doc_id', 'onboarding_id', 'filename', 'file_path', 'fulfills_requirement_id',
         'uploaded_at', 'file_size'
+    ],
+    'FundPrincipals': [
+        'principal_id', 'onboarding_id', 'name', 'full_name', 'role',
+        'dob', 'nationality', 'residential_address', 'ownership_pct',
+        'is_ubo', 'source', 'created_at'
     ]
 }
 
@@ -95,7 +100,8 @@ ID_PREFIXES = {
     'RiskAssessments': 'RSK',
     'AuditLog': 'LOG',
     'DocumentRequirements': 'REQ',
-    'Documents': 'DOC'
+    'Documents': 'DOC',
+    'FundPrincipals': 'PRI'
 }
 
 
