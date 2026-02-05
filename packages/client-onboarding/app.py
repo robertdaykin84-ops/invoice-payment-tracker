@@ -709,6 +709,7 @@ def onboarding_phase(onboarding_id, phase):
                             'legal_structure': form_data.get('fund_legal_structure'),
                             'investment_strategy': form_data.get('investment_strategy'),
                             'target_size': form_data.get('target_fund_size'),
+                            'declaration_accepted': request.form.get('declaration') == 'on',
                             'status': 'in_progress',
                             'notes': ''
                         }
