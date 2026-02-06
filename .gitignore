@@ -67,3 +67,6 @@ build/
 .env.local
 .env.*.local
 .worktrees/
+
+# Google Drive sync artifacts
+.tmp.driveupload/
