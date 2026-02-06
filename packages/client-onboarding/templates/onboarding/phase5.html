@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 5: Approval{% endblock %}
+{% block title %}Phase 5: KYC & CDD Documentation{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,11 +8,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 5: Approval</li>
+                <li class="breadcrumb-item active">Phase 5: KYC & CDD</li>
             </ol>
         </nav>
-        <h1 class="h3 mb-1">Approval</h1>
-        <p class="text-muted">Client acceptance memo and sign-off</p>
+        <h1 class="h3 mb-1">KYC & CDD Documentation</h1>
+        <p class="text-muted">Upload and verify sponsor and key party documentation</p>
     </div>
 </div>
 
@@ -34,545 +34,1989 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- Client Summary -->
-        <div class="card mb-4">
+        <!-- Upload Section -->
+        <div class="card mb-4" id="uploadSection">
             <div class="card-header">
-                <i class="bi bi-file-earmark-text me-2"></i>
-                Client Acceptance Memo
+                <i class="bi bi-cloud-upload me-2"></i>
+                Upload Documents
             </div>
             <div class="card-body">
-                <!-- AI Generated Memo -->
-                <div class="border rounded p-4 bg-light mb-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="mb-0">CLIENT ACCEPTANCE MEMORANDUM</h5>
-                        <span class="badge bg-primary"><i class="bi bi-robot me-1"></i>AI Generated</span>
-                    </div>
-
-                    <hr>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p class="small mb-1"><strong>Sponsor:</strong></p>
-                            <p class="mb-2">Granite Capital Partners LLP</p>
-
-                            <p class="small mb-1"><strong>Fund:</strong></p>
-                            <p class="mb-2">Granite Capital Fund III LP (JPF)</p>
-
-                            <p class="small mb-1"><strong>Jurisdiction:</strong></p>
-                            <p class="mb-2">Jersey</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="small mb-1"><strong>Risk Rating:</strong></p>
-                            <p class="mb-2"><span class="badge badge-risk-low">Low (28)</span></p>
-
-                            <p class="small mb-1"><strong>EDD Required:</strong></p>
-                            <p class="mb-2">No</p>
-
-                            <p class="small mb-1"><strong>Prepared By:</strong></p>
-                            <p class="mb-2">James Smith, Compliance</p>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <h6>1. BACKGROUND</h6>
-                    <p class="small">
-                        Granite Capital Partners LLP is an established UK-based private equity firm seeking to
-                        appoint us as administrator for their third fund, Granite Capital Fund III LP, structured
-                        as a Jersey Private Fund (JPF).
-                    </p>
-
-                    <h6>2. SPONSOR OVERVIEW</h6>
-                    <p class="small">
-                        The sponsor is FCA-authorised (FRN: 123456) with permissions for managing AIFs and advising
-                        on investments. Incorporated in 2012, the firm has a 10+ year track record managing two
-                        prior funds. The three founding partners (John Smith, Sarah Johnson, Michael Brown) each
-                        hold approximately one-third ownership.
-                    </p>
-
-                    <h6>3. FUND STRUCTURE</h6>
-                    <p class="small">
-                        Simple LP structure with Granite Capital GP III Limited (Jersey) as General Partner.
-                        Target fund size of $500M. Investment strategy focused on mid-market buyouts in UK and
-                        European technology and healthcare sectors.
-                    </p>
-
-                    <h6>4. DUE DILIGENCE SUMMARY</h6>
-                    <p class="small">
-                        <strong>CDD:</strong> Complete for sponsor entity and all three principals.<br>
-                        <strong>Screening:</strong> All principals cleared - no PEP, sanctions, or adverse media matches.<br>
-                        <strong>Regulatory:</strong> FCA registration verified; Companies House records current.<br>
-                        <strong>Source of Wealth:</strong> Documented from prior fund management fees and carried interest.
-                    </p>
-
-                    <h6>5. RISK ASSESSMENT</h6>
-                    <p class="small">
-                        Overall risk rated <strong>Low (28/100)</strong>. Key factors:<br>
-                        • UK jurisdiction and FCA regulation (low risk)<br>
-                        • All British principals with clear backgrounds<br>
-                        • Simple fund structure<br>
-                        • Investment focus on low-risk geographies<br>
-                        • No EDD triggers identified
-                    </p>
-
-                    <h6>6. RECOMMENDATION</h6>
-                    <p class="small mb-0">
-                        Based on the due diligence conducted, this client presents an acceptable risk profile.
-                        <strong>Recommendation: APPROVE</strong> for standard onboarding with annual periodic review.
-                    </p>
+                <div class="upload-zone border-2 border-dashed rounded p-5 text-center" id="dropZone">
+                    <i class="bi bi-file-earmark-arrow-up fs-1 text-muted mb-3 d-block"></i>
+                    <h5>Drag & drop all documents here</h5>
+                    <p class="text-muted mb-3">or click to browse</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" class="d-none">
+                    <button type="button" class="btn btn-outline-primary" onclick="event.stopPropagation(); document.getElementById('fileInput').click();">
+                        <i class="bi bi-folder2-open me-1"></i> Browse Files
+                    </button>
+                    <p class="small text-muted mt-3 mb-0">Supported: PDF, JPG, PNG (max 20MB each)</p>
                 </div>
 
-                <div class="d-flex gap-2 mb-4">
-                    <button class="btn btn-outline-primary">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Memo
-                    </button>
-                    <button class="btn btn-outline-secondary">
-                        <i class="bi bi-pencil me-1"></i> Edit Memo
-                    </button>
-                    <button class="btn btn-outline-secondary">
-                        <i class="bi bi-download me-1"></i> Download PDF
+                <!-- Selected Files Preview -->
+                <div id="selectedFiles" class="mt-3 d-none">
+                    <h6 class="mb-2">Selected Files:</h6>
+                    <ul class="list-group" id="fileList"></ul>
+                    <button type="button" class="btn btn-primary mt-3" id="uploadBtn">
+                        <i class="bi bi-cpu me-1"></i> Upload & Analyse
                     </button>
                 </div>
-            </div>
-        </div>
 
-        <!-- Risk Assessment Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-shield-check me-2"></i>
-                Risk Assessment
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-4 text-center">
-                        <div class="display-5 fw-bold" id="overall-risk-score">{{ risk_score or '28' }}</div>
-                        <span class="badge fs-6 {% if risk_rating == 'Low' %}badge-risk-low{% elif risk_rating == 'Medium' %}badge-risk-medium{% else %}badge-risk-high{% endif %}">
-                            {{ risk_rating or 'Low' }}
-                        </span>
-                        <p class="small text-muted mt-2">Overall Risk Score</p>
+                <!-- Processing Indicator -->
+                <div id="processingIndicator" class="mt-4 d-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div>
+                            <strong>AI Processing Documents...</strong>
+                            <p class="mb-0 small text-muted">Detecting document types and checking JFSC compliance</p>
+                        </div>
                     </div>
-                    <div class="col-md-8">
-                        <h6>Risk Factors:</h6>
-                        <ul class="small">
-                            <li>Jurisdiction: {{ jurisdiction_risk or 'Low risk' }}</li>
-                            <li>Business Type: {{ business_risk or 'Low risk' }}</li>
-                            <li>Screening: {{ screening_risk or 'No adverse findings' }}</li>
-                        </ul>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Screening Report Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-search me-2"></i>
-                Sanctions Screening Report
+        <!-- Document Requirements Tracker -->
+        <div class="card mb-4" id="requirementsTrackerSection">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    Document Requirements Tracker
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="generateRequirements()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Generate Requirements
+                </button>
             </div>
-            <div class="card-body">
-                {% if screening_results %}
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Findings</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for result in screening_results %}
-                            <tr>
-                                <td>{{ result.name }}</td>
-                                <td>{{ result.role }}</td>
-                                <td>
-                                    <span class="badge {% if result.status == 'Clear' %}bg-success{% else %}bg-warning{% endif %}">
-                                        {{ result.status }}
-                                    </span>
-                                </td>
-                                <td>{{ result.findings or 'No adverse findings' }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div class="card-body" id="requirementsTrackerContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted">Loading requirements...</p>
                 </div>
-                {% else %}
-                <p class="text-muted mb-0">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Screening must be completed in Phase 3 before approval.
-                </p>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Approval Workflow -->
-        <div class="card mb-4">
+        <!-- Results Section (hidden until upload complete) -->
+        <div id="resultsSection" class="d-none">
+            <!-- Sponsor Documents -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-building me-2"></i>Sponsor Entity Documents</span>
+                    <span class="badge bg-secondary" id="sponsorDocsCount">0/0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="sponsorDocsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Parties Documents -->
+            <div id="keyPartiesSection">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Unassigned Documents -->
+            <div class="card mb-4 d-none" id="unassignedSection">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <i class="bi bi-question-circle me-2 text-warning"></i>
+                    Unassigned Documents
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="unassignedDocsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDD Section (if required) -->
+            <div class="card mb-4 border-warning d-none" id="eddSection">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                    Enhanced Due Diligence Required
+                </div>
+                <div class="card-body">
+                    <p class="mb-3" id="eddReason"></p>
+                    <div class="list-group list-group-flush" id="eddDocsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Status Section -->
+        <div class="card mb-4" id="documentationStatusSection">
             <div class="card-header">
-                <i class="bi bi-check-circle me-2"></i>
-                Approval Workflow
+                <i class="bi bi-list-check me-2"></i>
+                Documentation Status
             </div>
             <div class="card-body">
-                <div class="approval-flow">
-                    <!-- Step 1: Compliance Review -->
-                    <div class="d-flex align-items-start gap-3 mb-4 pb-4 border-bottom">
-                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <i class="bi bi-check"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">Compliance Review</h6>
-                                    <p class="text-muted small mb-0">James Smith, Compliance Analyst</p>
-                                </div>
-                                <span class="badge bg-success">Approved</span>
-                            </div>
-                            <small class="text-muted">02 Feb 2026, 14:30</small>
-                            <p class="small mt-2 mb-0 fst-italic">"All CDD complete and verified. Risk assessment appropriate. Recommend for MLRO approval."</p>
-                        </div>
-                    </div>
+                <div id="documentationStatusContent">
+                    <p class="text-muted small">Loading documentation requirements...</p>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Step 2: MLRO Approval -->
-                    <div class="d-flex align-items-start gap-3 mb-4 pb-4 border-bottom">
-                        <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">MLRO Approval</h6>
-                                    <p class="text-muted small mb-0">Emma Williams, MLRO</p>
-                                </div>
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            </div>
-                            <small class="text-muted">Awaiting review</small>
+        <!-- Investor KYC Note -->
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Note:</strong> Investor KYC is collected separately during subscription. The fund cannot accept investors until their documentation is received and approved.
+        </div>
 
-                            {% if current_user.role == 'mlro' or current_user.role == 'compliance' %}
-                            <div class="mt-3 p-3 border rounded bg-light" id="approval-form">
-                                <div class="mb-3">
-                                    <label class="form-label small">Approval Comments</label>
-                                    <textarea class="form-control" id="approval-comments" rows="2" placeholder="Add any comments for the record..."></textarea>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-success btn-sm" id="btn-approve">
-                                        <i class="bi bi-check-circle me-1"></i> Approve
-                                    </button>
-                                    <button type="button" class="btn btn-outline-warning btn-sm" id="btn-request-info">
-                                        <i class="bi bi-question-circle me-1"></i> Request Info
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" id="btn-reject">
-                                        <i class="bi bi-x-circle me-1"></i> Reject
-                                    </button>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
+        <!-- Compliance & MLRO Sign-Off Card -->
+        {% set comp = kyc_approvals.get('compliance', {}) if kyc_approvals is defined else {} %}
+        {% set mlro_a = kyc_approvals.get('mlro', {}) if kyc_approvals is defined else {} %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-pen me-2"></i>
+                Compliance & MLRO Sign-Off
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                    <div>
+                        <h6 class="mb-1">Compliance</h6>
+                        {% if comp.get('status') == 'approved' %}
+                        <small class="text-success"><i class="bi bi-check-circle me-1"></i>{{ comp.signed_by }} - {{ comp.timestamp }}</small>
+                        {% else %}
+                        <small class="text-muted" id="compliance-signoff-status">Pending</small>
+                        {% endif %}
                     </div>
+                    {% if comp.get('status') != 'approved' %}
+                    <button type="button" class="btn btn-sm btn-success" id="complianceSignOffBtn">
+                        <i class="bi bi-check-circle me-1"></i> Sign Off
+                    </button>
+                    {% else %}
+                    <span class="badge bg-success">Done</span>
+                    {% endif %}
+                </div>
 
-                    <!-- Step 3: Board Approval (if high risk) -->
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <i class="bi bi-dash"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1 text-muted">Board Approval</h6>
-                                    <p class="text-muted small mb-0">Not required for low/medium risk</p>
-                                </div>
-                                <span class="badge bg-secondary">N/A</span>
-                            </div>
-                        </div>
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                    <div>
+                        <h6 class="mb-1">MLRO</h6>
+                        {% if mlro_a.get('status') == 'approved' %}
+                        <small class="text-success"><i class="bi bi-check-circle me-1"></i>{{ mlro_a.signed_by }} - {{ mlro_a.timestamp }}</small>
+                        {% else %}
+                        <small class="text-muted" id="mlro-signoff-status">Pending</small>
+                        {% endif %}
                     </div>
+                    {% if mlro_a.get('status') != 'approved' %}
+                    <button type="button" class="btn btn-sm btn-success" id="mlroSignOffBtn">
+                        <i class="bi bi-check-circle me-1"></i> Sign Off
+                    </button>
+                    {% else %}
+                    <span class="badge bg-success">Done</span>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex align-items-center justify-content-end">
+                    <button class="btn btn-outline-info btn-sm" onclick="window.open('/api/report/generate/{{ onboarding_id }}?type=audit', '_blank')">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Generate Full Report
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Form Actions -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=3) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Phase 3
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=4) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 4
             </a>
             <div>
-                <button type="button" class="btn btn-outline-primary me-2" id="btn-save-progress" onclick="saveProgress()">
+                <button type="button" class="btn btn-outline-success me-2" id="saveProgressBtn" onclick="saveProgress()">
                     <i class="bi bi-save me-1"></i> Save Progress
                 </button>
-                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=6) }}"
-                   class="btn btn-primary me-2 {% if not session.get('approval_status') == 'approved' %}disabled{% endif %}"
-                   id="btn-continue"
-                   {% if not session.get('approval_status') == 'approved' %}aria-disabled="true"{% endif %}>
-                    Continue to Phase 6 <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-                <small class="text-muted d-block text-end mt-1" id="approval-status-text">
-                    {% if session.get('approval_status') == 'approved' %}
-                    Approved - Ready to continue
-                    {% else %}
-                    Requires MLRO approval
-                    {% endif %}
-                </small>
+                <button type="button" class="btn btn-outline-primary me-2" id="uploadMoreBtn" disabled>
+                    <i class="bi bi-plus-lg me-1"></i> Upload More
+                </button>
+                <span id="signOffBtnWrapper" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="{% if comp.get('status') != 'approved' or mlro_a.get('status') != 'approved' %}Both Compliance and MLRO sign-off required{% endif %}">
+                    <button type="button" class="btn btn-primary" id="signOffBtn" disabled>
+                        Sign Off & Continue <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </span>
             </div>
         </div>
+        {% if comp.get('status') != 'approved' or mlro_a.get('status') != 'approved' %}
+        <div class="text-end mb-4">
+            <small class="text-muted" id="signOffGateMessage">
+                <i class="bi bi-info-circle me-1"></i>Both Compliance and MLRO sign-off required before continuing
+            </small>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Progress Card -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-check2-square me-2"></i>
-                Phase 5 Checklist
+                Documentation Progress
             </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Acceptance memo generated</span>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Overall Progress</span>
+                    <strong id="progressPercent">0%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" id="overallProgress" style="width: 0%"></div>
+                </div>
+                <ul class="list-unstyled mb-0 small" id="progressDetails">
+                    <li class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-circle text-muted me-1"></i> Pending</span>
+                        <span id="pendingCount">0</span>
                     </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Compliance review complete</span>
+                    <li class="d-flex justify-content-between mb-1">
+                        <span><i class="bi bi-check-circle text-success me-1"></i> Complete</span>
+                        <span id="completeCount">0</span>
                     </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>MLRO approval</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2">
-                        <i class="bi bi-dash text-muted"></i>
-                        <span class="text-muted">Board approval (if required)</span>
+                    <li class="d-flex justify-content-between">
+                        <span><i class="bi bi-exclamation-circle text-warning me-1"></i> Review Needed</span>
+                        <span id="reviewCount">0</span>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-info-circle me-2"></i>
-                Approval Requirements
+        <!-- Outstanding Documents Card -->
+        <div class="card mb-4 border-warning d-none" id="outstandingDocsCard">
+            <div class="card-header bg-warning bg-opacity-10">
+                <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                Outstanding JFSC Requirements
             </div>
-            <div class="card-body small">
-                <table class="table table-sm mb-0">
-                    <tr>
-                        <td><span class="badge badge-risk-low">Low</span></td>
-                        <td>Compliance + MLRO</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-risk-medium">Medium</span></td>
-                        <td>Compliance + MLRO</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-risk-high">High</span></td>
-                        <td>Compliance + MLRO + Board</td>
-                    </tr>
-                </table>
+            <div class="card-body">
+                <p class="small mb-2"><strong>Missing documents:</strong></p>
+                <div id="outstandingDocsList" class="small"></div>
+                <hr class="my-2">
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    MLRO/MLCO can override with justification
+                </p>
             </div>
         </div>
 
-        <div class="card border-warning">
-            <div class="card-header bg-warning bg-opacity-10">
-                <i class="bi bi-hourglass-split me-2 text-warning"></i>
-                Awaiting Approval
+        <!-- Risk Assessment Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-shield-check me-2"></i>
+                Risk Assessment
             </div>
-            <div class="card-body text-center">
-                <p class="small text-muted mb-2">
-                    This onboarding is pending MLRO approval.
-                </p>
-                <p class="small text-muted mb-0">
-                    Submitted: 02 Feb 2026, 14:30
-                </p>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="display-6 fw-bold">{{ risk_score or '28' }}</div>
+                    <span class="badge {% if risk_rating == 'High' %}bg-danger{% elif risk_rating == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ risk_rating or 'Low' }}</span>
+                    <p class="text-muted small mt-1">Overall Risk Score</p>
+                </div>
+                <h6 class="small">Risk Factors:</h6>
+                <ul class="small mb-0">
+                    <li>Jurisdiction: {{ jurisdiction_risk or 'Low risk' }}</li>
+                    <li>Business Type: {{ business_risk or 'Low risk' }}</li>
+                    <li>Screening: {{ screening_risk or 'No adverse findings' }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Phase 5 Checklist Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-list-check me-2"></i>
+                Phase 5 Checklist
+            </div>
+            <div class="card-body">
+                <div id="checklistSummary">
+                    <p class="text-muted small">Upload documents to see checklist</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- JFSC Guidance -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>
+                JFSC Certification Requirements
+            </div>
+            <div class="card-body small text-muted">
+                <p><strong>Acceptable Certifiers:</strong></p>
+                <ul class="mb-3">
+                    <li>Lawyer / Solicitor</li>
+                    <li>Notary Public</li>
+                    <li>Chartered Accountant</li>
+                </ul>
+                <p><strong>Required Elements:</strong></p>
+                <ul class="mb-0">
+                    <li>"I certify this is a true copy of the original"</li>
+                    <li>Certifier's signature</li>
+                    <li>Certifier's printed name & qualification</li>
+                    <li>Date of certification</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- JFSC Requirements Checklist -->
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-clipboard-check me-2"></i>
+                Outstanding JFSC Requirements
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush" id="jfscRequirementsList">
+                    <li class="list-group-item">
+                        <div class="spinner-border spinner-border-sm me-2"></div>
+                        Loading requirements...
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer small text-muted" id="requirementsUpdated">
+                Updated: <span id="lastUpdateTime">--:--</span>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Document Detail Modal -->
+<div class="modal fade" id="docDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Document Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="docDetailContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning d-none" id="overrideBtn">
+                    <i class="bi bi-check-lg me-1"></i> Override Warning
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Override Reason Modal -->
+<div class="modal fade" id="overrideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Override Warning</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Provide a reason for overriding this warning. This will be recorded in the audit trail.</p>
+                <textarea class="form-control" id="overrideReason" rows="3" placeholder="Enter justification..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmOverrideBtn">
+                    <i class="bi bi-check-lg me-1"></i> Confirm Override
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MLRO/MLCO Sign-off Override Modal -->
+<div class="modal fade" id="mlroOverrideModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-warning bg-warning bg-opacity-10">
+                <h5 class="modal-title text-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>MLRO/MLCO Override Required
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Documentation Incomplete</strong><br>
+                    The following JFSC-required documents are missing or incomplete. As MLRO/MLCO, you may sign off with a justification, which will be recorded in the audit trail.
+                </div>
+
+                <h6 class="mb-2">Outstanding Documents:</h6>
+                <div id="mlroOutstandingList" class="mb-3 small"></div>
+
+                <hr>
+
+                <label class="form-label fw-bold">
+                    MLRO/MLCO Justification <span class="text-danger">*</span>
+                </label>
+                <p class="small text-muted">Explain why sign-off is appropriate despite missing documentation. This explanation will be included in the compliance audit trail.</p>
+                <textarea class="form-control" id="mlroJustification" rows="4"
+                          placeholder="Example: Client has provided equivalent documentation from Luxembourg regulator which satisfies KYC requirements. Confirmed with external counsel that this meets JFSC standards for EU-based entities..." required></textarea>
+                <div class="form-text">Minimum 50 characters required</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmMlroOverride">
+                    <i class="bi bi-shield-check me-1"></i> Sign Off with Override
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Document Modal -->
+<div class="modal fade" id="editDocumentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil me-2"></i>Edit Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editDocumentForm">
+                    <input type="hidden" id="editDocId" name="doc_id">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Document Type</label>
+                        <select class="form-select" id="editDocType" name="doc_type" required>
+                            <option value="">Select type...</option>
+                            <option value="passport">Passport</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="certificate_of_incorporation">Certificate of Incorporation</option>
+                            <option value="certificate_of_registration">Certificate of Registration</option>
+                            <option value="memorandum_articles">Memorandum & Articles</option>
+                            <option value="llp_agreement">LLP Agreement</option>
+                            <option value="register_of_directors">Register of Directors</option>
+                            <option value="register_of_shareholders">Register of Shareholders</option>
+                            <option value="board_resolution">Board Resolution</option>
+                            <option value="partnership_agreement">Partnership Agreement</option>
+                            <option value="trust_deed">Trust Deed</option>
+                            <option value="financial_statements">Financial Statements</option>
+                            <option value="bank_reference">Bank Reference</option>
+                            <option value="source_of_funds">Source of Funds</option>
+                            <option value="source_of_wealth">Source of Wealth</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Assign To</label>
+                        <select class="form-select" id="editAssignTo" name="assign_to" required>
+                            <option value="">Select person...</option>
+                            <option value="sponsor">Sponsor</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select class="form-select" id="editDocStatus" name="status" required>
+                            <option value="pending">Pending</option>
+                            <option value="pass">Approved</option>
+                            <option value="review_needed">Review Needed</option>
+                            <option value="fail">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea class="form-control" id="editDocNotes" name="notes" rows="3"
+                                  placeholder="Add any notes or comments about this document..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveDocumentBtn">
+                    <i class="bi bi-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-zone {
+    border: 2px dashed #dee2e6;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+.doc-status-pass { color: #198754; }
+.doc-status-review_needed { color: #ffc107; }
+.doc-status-fail { color: #dc3545; }
+.doc-status-pending { color: #6c757d; }
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+.confidence-badge {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+}
+</style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const onboardingId = '{{ onboarding_id }}';
-    const commentsTextarea = document.getElementById('approval-comments');
-    const btnApprove = document.getElementById('btn-approve');
-    const btnRequestInfo = document.getElementById('btn-request-info');
-    const btnReject = document.getElementById('btn-reject');
-    const btnContinue = document.getElementById('btn-continue');
-    const statusText = document.getElementById('approval-status-text');
-    const approvalForm = document.getElementById('approval-form');
+const onboardingId = '{{ onboarding_id }}';
+const enquiryId = '{{ enquiry.id if enquiry else "" }}';
+let uploadedDocuments = [];
+let checklist = null;
+let docDetailModal = null;
+let overrideModal = null;
+let statusPollInterval;
 
-    async function handleApprovalAction(action) {
-        const comments = commentsTextarea ? commentsTextarea.value : '';
+// Track sign-off states (initialized from server-rendered Jinja2 values)
+let complianceApproved = {{ 'true' if kyc_approvals is defined and kyc_approvals.get('compliance', {}).get('status') == 'approved' else 'false' }};
+let mlroApproved = {{ 'true' if kyc_approvals is defined and kyc_approvals.get('mlro', {}).get('status') == 'approved' else 'false' }};
 
-        try {
-            // Disable buttons during request
-            if (btnApprove) btnApprove.disabled = true;
-            if (btnRequestInfo) btnRequestInfo.disabled = true;
-            if (btnReject) btnReject.disabled = true;
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
 
-            const response = await fetch(`/api/onboarding/${onboardingId}/approve`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: action,
-                    comments: comments
-                })
+async function updateJFSCRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements`);
+        const data = await response.json();
+
+        if (data.success) {
+            const requirementsList = document.getElementById('jfscRequirementsList');
+            const requirements = data.requirements;
+
+            if (requirements.length === 0) {
+                requirementsList.innerHTML = `
+                    <li class="list-group-item text-center text-info py-3">
+                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+                        <strong>No Requirements Yet</strong>
+                        <p class="small text-muted mb-0">Complete Phase 2 and generate requirements</p>
+                    </li>
+                `;
+            } else {
+                // Check if all requirements are met
+                const outstandingReqs = data.outstanding || [];
+                if (outstandingReqs.length === 0) {
+                    requirementsList.innerHTML = `
+                        <li class="list-group-item text-center text-success py-4">
+                            <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                            <strong>All Requirements Met</strong>
+                            <p class="small text-muted mb-0">Ready for approval</p>
+                        </li>
+                    `;
+                    return;
+                }
+                // Show outstanding requirements
+                requirementsList.innerHTML = outstandingReqs.map(req => `
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-circle text-warning me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold small">${escapeHtml(req.category)}</div>
+                                <div class="small text-muted">${escapeHtml(req.description)}</div>
+                            </div>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            // Update timestamp
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent =
+                now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+    } catch (error) {
+        console.error('Requirements update error:', error);
+    }
+}
+
+function startStatusPolling() {
+    // Poll every 3 seconds
+    statusPollInterval = setInterval(async () => {
+        await updateDocumentStatus();
+        await updateJFSCRequirements();
+    }, 3000);
+}
+
+async function updateDocumentStatus() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/documents/status`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Update document status badges
+            data.documents.forEach(doc => {
+                const statusBadge = document.querySelector(`[data-doc-id="${doc.id}"] .status-badge`);
+                if (statusBadge) {
+                    statusBadge.className = `badge status-badge ${getStatusBadgeClass(doc.status)}`;
+                    statusBadge.textContent = doc.status;
+                }
             });
 
-            const result = await response.json();
+            // Update progress summary
+            updateProgressSummary(data.summary);
+        }
+    } catch (error) {
+        console.error('Status polling error:', error);
+    }
+}
 
-            if (result.status === 'ok') {
-                // Update UI based on action
-                if (action === 'approve') {
-                    // Enable continue button
-                    if (btnContinue) {
-                        btnContinue.classList.remove('disabled');
-                        btnContinue.removeAttribute('aria-disabled');
-                    }
-                    if (statusText) {
-                        statusText.innerHTML = '<span class="text-success">Approved - Ready to continue</span>';
-                    }
-                    // Hide approval form
-                    if (approvalForm) {
-                        approvalForm.innerHTML = '<div class="alert alert-success mb-0"><i class="bi bi-check-circle me-2"></i>Approved by ' + result.approved_by + '</div>';
-                    }
-                    // Show success toast
-                    showToast('Onboarding approved successfully', 'success');
-                } else if (action === 'reject') {
-                    if (statusText) {
-                        statusText.innerHTML = '<span class="text-danger">Rejected</span>';
-                    }
-                    if (approvalForm) {
-                        approvalForm.innerHTML = '<div class="alert alert-danger mb-0"><i class="bi bi-x-circle me-2"></i>Rejected by ' + result.approved_by + '</div>';
-                    }
-                    showToast('Onboarding rejected', 'warning');
-                } else if (action === 'request_info') {
-                    if (statusText) {
-                        statusText.innerHTML = '<span class="text-warning">Additional info requested</span>';
-                    }
-                    showToast('Information request sent', 'info');
-                    // Re-enable buttons for further action
-                    if (btnApprove) btnApprove.disabled = false;
-                    if (btnRequestInfo) btnRequestInfo.disabled = false;
-                    if (btnReject) btnReject.disabled = false;
-                }
+function getStatusBadgeClass(status) {
+    const statusClasses = {
+        'Verified': 'bg-success',
+        'Pending Review': 'bg-warning',
+        'Rejected': 'bg-danger',
+        'Unassigned': 'bg-secondary'
+    };
+    return statusClasses[status] || 'bg-secondary';
+}
+
+function updateProgressSummary(summary) {
+    const summaryElement = document.getElementById('documentationStatusContent');
+    if (summaryElement && summary) {
+        summaryElement.innerHTML = `
+            <div class="d-flex justify-content-between mb-2">
+                <span>Verified:</span>
+                <strong class="text-success">${summary.verified}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Pending:</span>
+                <strong class="text-warning">${summary.pending}</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Total:</span>
+                <strong>${summary.total}</strong>
+            </div>
+            <div class="progress mt-3" style="height: 8px;">
+                <div class="progress-bar bg-success" style="width: ${summary.progress}%"></div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Sync documents from session to requirements in database
+ * Links verified documents to their matching requirements and updates status
+ */
+async function syncDocumentsToRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/sync-documents`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`[SYNC] Synced ${data.linked} documents to requirements`);
+        } else {
+            console.error('[SYNC] Error:', data.error);
+        }
+    } catch (error) {
+        console.error('[SYNC] Exception:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Cache Bootstrap modal instances
+    docDetailModal = new bootstrap.Modal(document.getElementById('docDetailModal'));
+    overrideModal = new bootstrap.Modal(document.getElementById('overrideModal'));
+
+    // Initialize tooltip on sign-off button wrapper
+    const signOffWrapper = document.getElementById('signOffBtnWrapper');
+    if (signOffWrapper && signOffWrapper.getAttribute('title')) {
+        new bootstrap.Tooltip(signOffWrapper);
+    }
+
+    // Load checklist FIRST (required for rendering documents)
+    await loadChecklist();
+
+    // Then load existing documents for this onboarding
+    await loadExistingDocuments();
+
+    // Sync documents to requirements after loading
+    await syncDocumentsToRequirements();
+
+    // Reload documents to get updated status from sync and recalculate progress
+    await loadExistingDocuments();
+
+    // Setup drag and drop
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'));
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+    });
+
+    dropZone.addEventListener('drop', handleDrop);
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+
+    document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+    document.getElementById('signOffBtn').addEventListener('click', signOff);
+    document.getElementById('uploadMoreBtn').addEventListener('click', () => {
+        document.getElementById('uploadSection').classList.remove('d-none');
+        document.getElementById('selectedFiles').classList.add('d-none');
+    });
+    document.getElementById('saveDocumentBtn').addEventListener('click', saveDocumentChanges);
+
+    // Load requirements tracker first, then JFSC sidebar, then start polling
+    await loadRequirements();
+    await updateJFSCRequirements();
+    startStatusPolling();
+
+    // Compliance/MLRO KYC Sign-off
+    const compBtn = document.getElementById('complianceSignOffBtn');
+    const mlroBtn = document.getElementById('mlroSignOffBtn');
+
+    async function kycRoleSignOff(role) {
+        const comments = prompt(role.toUpperCase() + ' review comments (optional):') || '';
+        try {
+            const response = await fetch('/api/kyc/' + onboardingId + '/compliance-signoff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: role, action: 'approve', comments: comments })
+            });
+            const data = await response.json();
+            if (data.status === 'ok') {
+                showToast('success', role.toUpperCase() + ' sign-off recorded');
+                setTimeout(() => window.location.reload(), 500);
             } else {
-                // Show error
-                showToast(result.message || 'Action failed', 'danger');
-                // Re-enable buttons
-                if (btnApprove) btnApprove.disabled = false;
-                if (btnRequestInfo) btnRequestInfo.disabled = false;
-                if (btnReject) btnReject.disabled = false;
+                showToast('error', data.message || 'Sign-off failed');
             }
         } catch (error) {
-            console.error('Approval error:', error);
-            showToast('Network error - please try again', 'danger');
-            // Re-enable buttons
-            if (btnApprove) btnApprove.disabled = false;
-            if (btnRequestInfo) btnRequestInfo.disabled = false;
-            if (btnReject) btnReject.disabled = false;
+            showToast('error', 'Network error');
         }
     }
 
-    // Bind click handlers
-    if (btnApprove) {
-        btnApprove.addEventListener('click', () => handleApprovalAction('approve'));
+    if (compBtn) compBtn.addEventListener('click', () => kycRoleSignOff('compliance'));
+    if (mlroBtn) mlroBtn.addEventListener('click', () => kycRoleSignOff('mlro'));
+});
+
+// Requirements Tracker Functions
+async function loadRequirements() {
+    try {
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements`);
+        const data = await response.json();
+
+        if (data.success) {
+            // If no requirements exist, auto-generate them
+            if (!data.requirements || data.requirements.length === 0) {
+                console.log('[REQUIREMENTS] No requirements found, auto-generating...');
+                await generateRequirements();
+                return; // generateRequirements will call loadRequirements again
+            }
+            renderRequirements(data.requirements);
+        } else {
+            document.getElementById('requirementsTrackerContent').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Failed to load requirements. Click "Generate Requirements" to create them.
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading requirements:', error);
+        document.getElementById('requirementsTrackerContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle me-2"></i>
+                Error loading requirements. Please try again.
+            </div>
+        `;
     }
-    if (btnRequestInfo) {
-        btnRequestInfo.addEventListener('click', () => handleApprovalAction('request_info'));
-    }
-    if (btnReject) {
-        btnReject.addEventListener('click', () => handleApprovalAction('reject'));
+}
+
+function renderRequirements(requirements) {
+    const container = document.getElementById('requirementsTrackerContent');
+
+    if (!requirements || requirements.length === 0) {
+        // Check if this is because there are no principals (Phase 2 not completed)
+        // or because all requirements are genuinely met
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>No Requirements Generated</strong>
+                <p class="mb-0 mt-2">Requirements will be generated automatically based on the principals added in Phase 2.
+                If Phase 2 is complete, click "Generate Requirements" to create the document checklist.</p>
+            </div>
+        `;
+        return;
     }
 
-    // Toast helper
-    function showToast(message, type) {
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-        toast.style.zIndex = '9999';
-        toast.innerHTML = message;
-        document.body.appendChild(toast);
-
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
+    // Check if all requirements are met
+    const allMet = requirements.every(req => req.status === 'submitted');
+    if (allMet) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-check-circle text-success fs-1 d-block mb-3"></i>
+                <h5 class="text-success">All Requirements Met</h5>
+                <p class="text-muted">All required documents have been submitted.</p>
+            </div>
+        `;
+        return;
     }
 
-    // PDF Download handlers
-    const downloadPdfBtn = document.querySelector('.btn-outline-secondary:has(.bi-download)');
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            try {
-                const response = await fetch(`/api/report/generate/${onboardingId}?type=compliance`);
-                if (!response.ok) throw new Error('Failed to generate PDF');
+    // Group requirements by person
+    const groupedReqs = {};
 
-                const blob = await response.blob();
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'compliance_report.pdf';
-                if (contentDisposition) {
-                    const match = contentDisposition.match(/filename="?([^"]+)"?/);
-                    if (match) filename = match[1];
+    requirements.forEach(req => {
+        const person = req.person_name || 'Sponsor';
+        if (!groupedReqs[person]) {
+            groupedReqs[person] = [];
+        }
+        groupedReqs[person].push(req);
+    });
+
+    let html = '';
+
+    Object.keys(groupedReqs).forEach(person => {
+        const reqs = groupedReqs[person];
+        const submitted = reqs.filter(r => r.status === 'submitted').length;
+        const total = reqs.length;
+
+        html += `
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi ${person === 'Sponsor' ? 'bi-building' : 'bi-person'} me-2"></i>
+                        <strong>${escapeHtml(person)}</strong>
+                    </span>
+                    <span class="badge ${submitted === total ? 'bg-success' : 'bg-warning'}">
+                        ${submitted}/${total} submitted
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+        `;
+
+        reqs.forEach(req => {
+            const statusIcon = req.status === 'submitted' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+            const statusText = req.status === 'submitted' ? 'Submitted' : 'Outstanding';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi ${statusIcon} me-2"></i>
+                            <strong>${escapeHtml(req.document_type)}</strong>
+                        </div>
+                        ${req.description ? `<small class="text-muted">${escapeHtml(req.description)}</small>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-2">
+                            <span class="badge ${req.status === 'submitted' ? 'bg-success' : 'bg-secondary'}">${statusText}</span>
+                        </div>
+            `;
+
+            if (req.status === 'submitted' && req.document_id) {
+                html += `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(req.document_id)}')" title="View">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(req.document_id)}')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
+                `;
+            } else {
+                html += `
+                        <button class="btn btn-sm btn-outline-primary" onclick="uploadForRequirement('${escapeHtml(req.requirement_id)}')" title="Upload">
+                            <i class="bi bi-upload"></i> Upload
+                        </button>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+async function generateRequirements() {
+    try {
+        const container = document.getElementById('requirementsTrackerContent');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <p class="text-muted">Generating requirements...</p>
+            </div>
+        `;
+
+        const response = await fetch(`/api/onboarding/${onboardingId}/requirements/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('success', 'Requirements generated successfully');
+            renderRequirements(data.requirements);
+
+            // Reload documents to auto-assign them to newly generated requirements
+            console.log('[REQUIREMENTS] Re-loading documents to auto-assign to requirements');
+            updateJFSCRequirements();
+            loadExistingDocuments();
+        } else {
+            showToast('error', data.error || 'Failed to generate requirements');
+            loadRequirements();
+        }
+    } catch (error) {
+        console.error('Error generating requirements:', error);
+        showToast('error', 'Error generating requirements');
+        loadRequirements();
+    }
+}
+
+function uploadForRequirement(requirementId) {
+    alert(`Upload functionality for requirement ${requirementId} will be implemented in the next phase.`);
+}
+
+async function editDocument(docId) {
+    // Find the document in uploaded documents
+    const doc = uploadedDocuments.find(d => d.document_id === docId);
+
+    if (!doc) {
+        console.error('Document not found:', docId);
+        alert('Document not found');
+        return;
+    }
+
+    // Populate the form with current values
+    document.getElementById('editDocId').value = docId;
+    document.getElementById('editDocType').value = doc.analysis?.detected_type || '';
+
+    // Set assignment
+    const assignment = doc.suggested_assignment;
+    if (assignment.type === 'sponsor') {
+        document.getElementById('editAssignTo').value = 'sponsor';
+    } else if (assignment.type === 'key_party') {
+        document.getElementById('editAssignTo').value = assignment.person_id;
+    } else {
+        document.getElementById('editAssignTo').value = '';
+    }
+
+    // Set status from analysis
+    document.getElementById('editDocStatus').value = doc.analysis?.overall_status || 'pending';
+
+    // Set notes if available
+    document.getElementById('editDocNotes').value = doc.notes || '';
+
+    // Populate assign_to dropdown with key parties
+    const assignToSelect = document.getElementById('editAssignTo');
+    assignToSelect.innerHTML = '<option value="">Select person...</option><option value="sponsor">Sponsor</option>';
+
+    if (checklist && checklist.key_parties) {
+        checklist.key_parties.forEach(party => {
+            const option = document.createElement('option');
+            option.value = party.person_id;
+            option.textContent = party.name;
+            assignToSelect.appendChild(option);
+        });
+    }
+
+    // Re-set the value after populating options
+    if (assignment.type === 'key_party') {
+        assignToSelect.value = assignment.person_id;
+    } else if (assignment.type === 'sponsor') {
+        assignToSelect.value = 'sponsor';
+    }
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editDocumentModal'));
+    modal.show();
+}
+
+async function saveDocumentChanges() {
+    const docId = document.getElementById('editDocId').value;
+    const docType = document.getElementById('editDocType').value;
+    const assignTo = document.getElementById('editAssignTo').value;
+    const status = document.getElementById('editDocStatus').value;
+    const notes = document.getElementById('editDocNotes').value;
+
+    if (!docType || !assignTo || !status) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    // Prepare update payload
+    const updateData = {
+        doc_type: docType,
+        status: status,
+        notes: notes
+    };
+
+    // Handle assignment
+    if (assignTo === 'sponsor') {
+        updateData.assignment_type = 'sponsor';
+    } else {
+        updateData.assignment_type = 'key_party';
+        updateData.person_id = assignTo;
+    }
+
+    try {
+        const response = await fetch(`/api/documents/${docId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            // Update local document data
+            const doc = uploadedDocuments.find(d => d.document_id === docId);
+            if (doc) {
+                doc.analysis.detected_type = docType;
+                doc.analysis.overall_status = status;
+                doc.notes = notes;
+                doc.suggested_assignment = {
+                    type: updateData.assignment_type,
+                    person_id: updateData.person_id,
+                    confidence: doc.suggested_assignment.confidence
+                };
+            }
+
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editDocumentModal'));
+            modal.hide();
+
+            // Refresh display
+            displayResults(uploadedDocuments);
+
+            // Show success message
+            showToast('success', 'Document updated successfully');
+        } else {
+            alert('Update failed: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error updating document:', error);
+        alert('Failed to update document. Please try again.');
+    }
+}
+
+// Stop polling when page unloads
+window.addEventListener('beforeunload', () => {
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+    }
+});
+
+function handleDrop(e) {
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+}
+
+function handleFileSelect(e) {
+    handleFiles(e.target.files);
+}
+
+function handleFiles(files) {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+
+    Array.from(files).forEach(file => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            <span><i class="bi bi-file-earmark me-2"></i>${escapeHtml(file.name)}</span>
+            <span class="badge bg-secondary">${(file.size / 1024).toFixed(1)} KB</span>
+        `;
+        fileList.appendChild(li);
+    });
+
+    document.getElementById('selectedFiles').classList.remove('d-none');
+    window.selectedFiles = files;
+}
+
+async function loadExistingDocuments() {
+    try {
+        console.log('[LOAD DOCS] Loading existing documents for onboarding:', onboardingId);
+        const response = await fetch(`/api/kyc/${onboardingId}/documents`);
+        if (!response.ok) {
+            console.log('[LOAD DOCS] No existing documents found');
+            return;
+        }
+        const data = await response.json();
+
+        if (data.status === 'ok' && data.documents && data.documents.length > 0) {
+            console.log(`[LOAD DOCS] Loaded ${data.documents.length} existing documents`);
+            uploadedDocuments = data.documents;
+            displayResults(uploadedDocuments);
+        } else {
+            console.log('[LOAD DOCS] No documents to display');
+        }
+    } catch (err) {
+        console.error('[LOAD DOCS] Error loading existing documents:', err);
+    }
+}
+
+async function loadChecklist() {
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/checklist?enquiry_id=${enquiryId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            checklist = data.checklist;
+            updateChecklistDisplay(checklist);
+            updateDocumentationStatus(checklist);
+            updateOutstandingDocsDisplay();
+            // Don't call updateProgress(data.progress) here - it's stale!
+            // Progress is calculated from actual documents via updateProgressFromDocs()
+
+            // Show EDD section if required
+            if (checklist.edd_required) {
+                document.getElementById('eddSection').classList.remove('d-none');
+                document.getElementById('eddReason').textContent = checklist.edd_trigger_reason;
+            }
+        }
+    } catch (err) {
+        console.error('Error loading checklist:', err);
+    }
+}
+
+function updateChecklistDisplay(checklist) {
+    const summary = document.getElementById('checklistSummary');
+
+    let html = '<h6 class="mb-2">Sponsor Documents</h6><ul class="list-unstyled mb-3">';
+    checklist.sponsor_documents.filter(doc => doc.required).forEach(doc => {
+        const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+        html += `<li class="small"><i class="bi ${icon} me-1"></i>${escapeHtml(doc.label)}</li>`;
+    });
+    html += '</ul>';
+
+    checklist.key_parties.forEach(party => {
+        html += `<h6 class="mb-2">${escapeHtml(party.name)}</h6><ul class="list-unstyled mb-3">`;
+        party.documents.forEach(doc => {
+            const icon = doc.status === 'complete' ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+            html += `<li class="small"><i class="bi ${icon} me-1"></i>${escapeHtml(doc.label)}</li>`;
+        });
+        html += '</ul>';
+    });
+
+    summary.innerHTML = html;
+}
+
+function updateDocumentationStatus(checklist) {
+    const container = document.getElementById('documentationStatusContent');
+
+    let html = '<div class="row g-3">';
+
+    // Sponsor Documents Column
+    html += '<div class="col-md-6">';
+    html += '<h6 class="mb-3"><i class="bi bi-building me-2"></i>Sponsor Documents</h6>';
+    html += '<div class="list-group list-group-flush">';
+
+    checklist.sponsor_documents.forEach(doc => {
+        const statusClass = doc.status === 'complete' ? 'success' :
+                           doc.status === 'review_needed' ? 'warning' : 'secondary';
+        const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                          doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                          'bi-circle';
+        const statusText = doc.status === 'complete' ? 'Complete' :
+                          doc.status === 'review_needed' ? 'Review Needed' :
+                          'Pending';
+        const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${escapeHtml(doc.label)}${requiredBadge}</div>
+                </div>
+                <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                    <i class="bi ${statusIcon}"></i> ${statusText}
+                </span>
+            </div>`;
+    });
+
+    html += '</div></div>';
+
+    // Key Parties Documents Column
+    html += '<div class="col-md-6">';
+    html += '<h6 class="mb-3"><i class="bi bi-person-badge me-2"></i>Key Parties</h6>';
+
+    if (checklist.key_parties.length === 0) {
+        html += '<p class="text-muted small">No key parties identified</p>';
+    } else {
+        checklist.key_parties.forEach(party => {
+            html += `<div class="mb-3">`;
+            html += `<div class="small fw-semibold text-muted mb-2">${escapeHtml(party.name)} - ${escapeHtml(party.role)}</div>`;
+            html += '<div class="list-group list-group-flush">';
+
+            party.documents.forEach(doc => {
+                const statusClass = doc.status === 'complete' ? 'success' :
+                                   doc.status === 'review_needed' ? 'warning' : 'secondary';
+                const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                                  doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                                  'bi-circle';
+                const statusText = doc.status === 'complete' ? 'Complete' :
+                                  doc.status === 'review_needed' ? 'Review Needed' :
+                                  'Pending';
+                const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-start py-2">
+                        <div class="flex-grow-1 small">
+                            <div>${escapeHtml(doc.label)}${requiredBadge}</div>
+                        </div>
+                        <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                            <i class="bi ${statusIcon}"></i> ${statusText}
+                        </span>
+                    </div>`;
+            });
+
+            html += '</div></div>';
+        });
+    }
+
+    html += '</div>';
+
+    // EDD Documents (if required)
+    if (checklist.edd_required && checklist.edd_documents) {
+        html += '<div class="col-12 mt-3">';
+        html += '<div class="alert alert-warning">';
+        html += '<h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Enhanced Due Diligence Required</h6>';
+        html += `<p class="small mb-2">${escapeHtml(checklist.edd_trigger_reason)}</p>`;
+        html += '<div class="list-group list-group-flush">';
+
+        checklist.edd_documents.forEach(doc => {
+            const statusClass = doc.status === 'complete' ? 'success' :
+                               doc.status === 'review_needed' ? 'warning' : 'secondary';
+            const statusIcon = doc.status === 'complete' ? 'bi-check-circle-fill' :
+                              doc.status === 'review_needed' ? 'bi-exclamation-circle-fill' :
+                              'bi-circle';
+            const statusText = doc.status === 'complete' ? 'Complete' :
+                              doc.status === 'review_needed' ? 'Review Needed' :
+                              'Pending';
+            const requiredBadge = doc.required ? '<span class="badge bg-danger ms-2">Required</span>' : '';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="fw-medium">${escapeHtml(doc.label)}${requiredBadge}</div>
+                    </div>
+                    <span class="badge bg-${statusClass} d-flex align-items-center gap-1">
+                        <i class="bi ${statusIcon}"></i> ${statusText}
+                    </span>
+                </div>`;
+        });
+
+        html += '</div></div></div>';
+    }
+
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+function updateProgress(progress) {
+    console.log('[UPDATE PROGRESS] Called with:', progress);
+    document.getElementById('progressPercent').textContent = progress.percentage + '%';
+    document.getElementById('overallProgress').style.width = progress.percentage + '%';
+    document.getElementById('pendingCount').textContent = progress.pending;
+    document.getElementById('completeCount').textContent = progress.complete;
+    document.getElementById('reviewCount').textContent = progress.review_needed;
+
+    console.log('[UPDATE PROGRESS] Updated DOM - complete:', progress.complete, 'percentage:', progress.percentage + '%');
+
+    // Update outstanding docs display
+    updateOutstandingDocsDisplay();
+
+    // Enable sign off if: (docs ready OR user is MLRO/MLCO) AND both compliance+MLRO have signed off
+    const userRole = '{{ current_user.role if current_user else "" }}';
+    const docsReady = progress.can_sign_off || (userRole === 'mlro' || userRole === 'compliance');
+    const bothSignedOff = complianceApproved && mlroApproved;
+    const canSignOff = docsReady && bothSignedOff;
+    document.getElementById('signOffBtn').disabled = !canSignOff;
+
+    // Update the gate message visibility
+    const gateMsg = document.getElementById('signOffGateMessage');
+    if (gateMsg) {
+        gateMsg.style.display = bothSignedOff ? 'none' : '';
+    }
+
+    // Update tooltip on wrapper
+    const wrapper = document.getElementById('signOffBtnWrapper');
+    if (wrapper) {
+        if (bothSignedOff) {
+            wrapper.removeAttribute('title');
+            wrapper.setAttribute('data-bs-original-title', '');
+        } else {
+            wrapper.setAttribute('title', 'Both Compliance and MLRO sign-off required');
+            wrapper.setAttribute('data-bs-original-title', 'Both Compliance and MLRO sign-off required');
+        }
+    }
+
+    console.log('[UPDATE PROGRESS] Sign off button disabled:', !canSignOff, 'docsReady:', docsReady, 'bothSignedOff:', bothSignedOff);
+}
+
+async function uploadFiles() {
+    if (!window.selectedFiles || window.selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    Array.from(window.selectedFiles).forEach(file => {
+        formData.append('files', file);
+    });
+    formData.append('enquiry_id', enquiryId);
+
+    // Show processing
+    document.getElementById('selectedFiles').classList.add('d-none');
+    document.getElementById('processingIndicator').classList.remove('d-none');
+
+    // Animate progress bar
+    let progress = 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+    }, 300);
+
+    try {
+        const response = await fetch(`/api/kyc/${onboardingId}/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        if (data.status === 'ok') {
+            uploadedDocuments = data.documents;
+            setTimeout(() => {
+                document.getElementById('processingIndicator').classList.add('d-none');
+                displayResults(uploadedDocuments);
+            }, 500);
+        } else {
+            alert('Upload failed: ' + data.message);
+            document.getElementById('processingIndicator').classList.add('d-none');
+            document.getElementById('selectedFiles').classList.remove('d-none');
+        }
+    } catch (err) {
+        clearInterval(progressInterval);
+        console.error('Upload error:', err);
+        alert('Upload failed. Please try again.');
+        document.getElementById('processingIndicator').classList.add('d-none');
+        document.getElementById('selectedFiles').classList.remove('d-none');
+    }
+}
+
+function displayResults(documents) {
+    document.getElementById('resultsSection').classList.remove('d-none');
+    document.getElementById('uploadMoreBtn').disabled = false;
+
+    const sponsorDocs = [];
+    const keyPartyDocs = {};
+    const unassigned = [];
+
+    documents.forEach(doc => {
+        const assignment = doc.suggested_assignment;
+        if (assignment.type === 'sponsor') {
+            sponsorDocs.push(doc);
+        } else if (assignment.type === 'key_party') {
+            const personId = assignment.person_id;
+            if (!keyPartyDocs[personId]) keyPartyDocs[personId] = [];
+            keyPartyDocs[personId].push(doc);
+        } else {
+            unassigned.push(doc);
+        }
+    });
+
+    // Render sponsor documents
+    renderDocumentList('sponsorDocsList', sponsorDocs);
+    document.getElementById('sponsorDocsCount').textContent = `${sponsorDocs.length} uploaded`;
+
+    // Render key party documents
+    renderKeyPartyDocs(keyPartyDocs);
+
+    // Render unassigned
+    if (unassigned.length > 0) {
+        document.getElementById('unassignedSection').classList.remove('d-none');
+        renderUnassignedDocuments('unassignedDocsList', unassigned);
+    }
+
+    // Update progress
+    updateProgressFromDocs(documents);
+
+    // Sync uploaded docs to requirements, then refresh all data sources
+    syncDocumentsToRequirements().then(() => {
+        loadChecklist();
+        loadRequirements();
+        updateJFSCRequirements();
+    });
+}
+
+function renderDocumentList(containerId, docs) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    docs.forEach(doc => {
+        const status = doc.analysis.overall_status;
+        const statusIcon = status === 'pass' ? 'bi-check-circle-fill text-success' :
+                          status === 'review_needed' ? 'bi-exclamation-circle-fill text-warning' :
+                          'bi-x-circle-fill text-danger';
+
+        // Map status to display format
+        const statusDisplay = status === 'pass' ? 'Verified' :
+                            status === 'review_needed' ? 'Pending Review' :
+                            status === 'fail' ? 'Rejected' : 'Pending Review';
+
+        const statusBadgeClass = getStatusBadgeClass(statusDisplay);
+
+        const confidence = Math.round((doc.suggested_assignment.confidence || 0) * 100);
+
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+        item.setAttribute('data-doc-id', doc.document_id);
+        item.innerHTML = `
+            <div>
+                <i class="bi ${statusIcon} me-2"></i>
+                <strong>${escapeHtml(doc.analysis.detected_type || 'Unknown')}</strong>
+                <small class="text-muted ms-2">${escapeHtml(doc.filename)}</small>
+                <span class="badge bg-light text-dark confidence-badge ms-2">${confidence}% match</span>
+                <span class="badge status-badge ${statusBadgeClass} ms-2">${statusDisplay}</span>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
+                    <i class="bi bi-eye"></i> View
+                </button>
+                <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(doc.document_id)}')">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function renderUnassignedDocuments(containerId, docs) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    docs.forEach(doc => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item';
+        item.setAttribute('data-doc-id', doc.document_id);
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">${escapeHtml(doc.filename)}</h6>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewDocument('${escapeHtml(doc.document_id)}')">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editDocument('${escapeHtml(doc.document_id)}')">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-2">Could not automatically classify</p>
+
+                    <div class="mb-2">
+                        <label class="small fw-semibold">Manually assign document type:</label>
+                        <select class="form-select form-select-sm manual-assign-type-select"
+                                data-doc-id="${escapeHtml(doc.document_id)}"
+                                onchange="handleDocTypeSelection('${escapeHtml(doc.document_id)}', this.value)">
+                            <option value="">-- Select Type --</option>
+                            <option value="passport">Passport</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="source_of_wealth">Source of Wealth</option>
+                            <option value="certificate_of_incorporation">Certificate of Incorporation</option>
+                            <option value="certificate_of_registration">Certificate of Registration</option>
+                            <option value="memorandum_articles">Memorandum & Articles</option>
+                            <option value="llp_agreement">LLP Agreement</option>
+                            <option value="register_of_directors">Register of Directors</option>
+                            <option value="register_of_shareholders">Register of Shareholders</option>
+                            <option value="structure_chart">Structure Chart</option>
+                            <option value="trust_deed">Trust Deed</option>
+                            <option value="regulatory_license">Regulatory License</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2 d-none" id="person-select-${escapeHtml(doc.document_id)}">
+                        <label class="small fw-semibold">Assign to person:</label>
+                        <select class="form-select form-select-sm manual-assign-person-select"
+                                data-doc-id="${escapeHtml(doc.document_id)}">
+                            <option value="">-- Select Person --</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-sm btn-primary d-none"
+                            id="assign-btn-${escapeHtml(doc.document_id)}"
+                            onclick="confirmReassignment('${escapeHtml(doc.document_id)}')">
+                        Assign Document
+                    </button>
+                </div>
+                <span class="badge bg-warning">Unassigned</span>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function handleDocTypeSelection(docId, docType) {
+    if (!docType) return;
+
+    const personalDocTypes = ['passport', 'address_proof'];
+    const personSelectDiv = document.getElementById(`person-select-${docId}`);
+    const assignBtn = document.getElementById(`assign-btn-${docId}`);
+
+    if (personalDocTypes.includes(docType)) {
+        // Personal document - show person selector
+        const personSelect = personSelectDiv.querySelector('select');
+        personSelect.innerHTML = '<option value="">-- Select Person --</option>';
+
+        if (checklist && checklist.key_parties && checklist.key_parties.length > 0) {
+            checklist.key_parties.forEach(party => {
+                const option = document.createElement('option');
+                option.value = party.person_id;
+                option.textContent = `${party.name} (${party.role})`;
+                personSelect.appendChild(option);
+            });
+            personSelectDiv.classList.remove('d-none');
+            assignBtn.classList.remove('d-none');
+        } else {
+            showToast('error', 'No key parties defined. Add directors/UBOs in Phase 1 first.');
+        }
+    } else {
+        // Sponsor document - assign immediately
+        personSelectDiv.classList.add('d-none');
+        assignBtn.classList.add('d-none');
+        reassignDocument(docId, docType, 'sponsor', null);
+    }
+}
+
+async function confirmReassignment(docId) {
+    const typeSelect = document.querySelector(`select.manual-assign-type-select[data-doc-id="${docId}"]`);
+    const personSelect = document.querySelector(`#person-select-${docId} select`);
+
+    const docType = typeSelect.value;
+    const personId = personSelect.value;
+
+    if (!docType) {
+        showToast('error', 'Please select a document type');
+        return;
+    }
+
+    if (!personId) {
+        showToast('error', 'Please select a person');
+        return;
+    }
+
+    await reassignDocument(docId, docType, 'key_party', personId);
+}
+
+async function reassignDocument(docId, newType, assignmentType, personId) {
+    if (!newType) return;
+
+    console.log(`[REASSIGN START] docId=${docId}, type=${newType}, assignment=${assignmentType}, person=${personId}`);
+
+    try {
+        const payload = {
+            type: assignmentType,
+            document_type: newType
+        };
+
+        if (assignmentType === 'key_party' && personId) {
+            payload.person_id = personId;
+        }
+
+        console.log(`[REASSIGN] Calling API with payload:`, payload);
+
+        const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/reassign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        console.log(`[REASSIGN] API response status:`, response.status);
+        const result = await response.json();
+        console.log(`[REASSIGN] API result:`, result);
+
+        if (result.status === 'ok') {
+            showToast('success', 'Document reassigned successfully. Refresh the page to see the updated document list.');
+
+            // Remove the document from unassigned list in the UI
+            const docElement = document.querySelector(`[data-doc-id="${docId}"]`);
+            if (docElement) {
+                console.log(`[REASSIGN] Removing document element from DOM`);
+                docElement.remove();
+            }
+
+            // Update the unassigned section visibility
+            const unassignedList = document.getElementById('unassignedDocsList');
+            if (unassignedList && unassignedList.children.length === 0) {
+                const unassignedSection = document.getElementById('unassignedSection');
+                if (unassignedSection) {
+                    console.log(`[REASSIGN] Hiding unassigned section`);
+                    unassignedSection.classList.add('d-none');
+                }
+            }
+
+            // Immediately update UI without page reload to preserve form data
+            console.log(`[REASSIGN] Calling updateDocumentStatus()`);
+            await updateDocumentStatus();
+            console.log(`[REASSIGN] Calling updateJFSCRequirements()`);
+            await updateJFSCRequirements();
+            console.log(`[REASSIGN] Reloading documents to update progress`);
+            await loadExistingDocuments();
+            console.log(`[REASSIGN] Complete`);
+        } else {
+            console.error(`[REASSIGN] API returned error:`, result.message);
+            showToast('error', result.message || 'Failed to reassign document');
+        }
+    } catch (error) {
+        console.error('[REASSIGN] Exception:', error);
+        showToast('error', 'Network error reassigning document');
+    }
+}
+
+function showToast(type, message) {
+    // Simple toast notification
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle';
+
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi ${icon} me-2"></i>${escapeHtml(message)}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function renderKeyPartyDocs(keyPartyDocs) {
+    const container = document.getElementById('keyPartiesSection');
+    container.innerHTML = '';
+
+    if (!checklist) return;
+
+    checklist.key_parties.forEach(party => {
+        const docs = keyPartyDocs[party.person_id] || [];
+
+        const card = document.createElement('div');
+        card.className = 'card mb-4';
+        card.innerHTML = `
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person me-2"></i>${escapeHtml(party.name)} <small class="text-muted">(${escapeHtml(party.role)})</small></span>
+                <span class="badge bg-secondary">${docs.length} uploaded</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="keyParty_${escapeHtml(party.person_id)}"></div>
+            </div>
+        `;
+        container.appendChild(card);
+
+        renderDocumentList(`keyParty_${escapeHtml(party.person_id)}`, docs);
+    });
+}
+
+function updateProgressFromDocs(documents) {
+    console.log(`[PROGRESS] Calculating progress for ${documents.length} documents`);
+    let complete = 0;
+    let reviewNeeded = 0;
+
+    documents.forEach(doc => {
+        console.log(`[PROGRESS] Doc ${doc.document_id}: overall_status = ${doc.analysis?.overall_status}`);
+        if (doc.analysis.overall_status === 'pass') complete++;
+        else if (doc.analysis.overall_status === 'review_needed') reviewNeeded++;
+    });
+
+    const total = checklist ?
+        checklist.sponsor_documents.filter(d => d.required !== false).length +
+        checklist.key_parties.reduce((sum, p) => sum + p.documents.filter(d => d.required !== false).length, 0) :
+        documents.length;
+
+    console.log(`[PROGRESS] Results: complete=${complete}, reviewNeeded=${reviewNeeded}, total=${total}`);
+
+    updateProgress({
+        total: total,
+        complete: complete,
+        review_needed: reviewNeeded,
+        pending: total - complete - reviewNeeded,
+        percentage: Math.round(complete / total * 100),
+        can_sign_off: reviewNeeded === 0 && complete >= total
+    });
+}
+
+async function viewDocument(docId) {
+    // Open the actual PDF document in a new tab
+    window.open(`/api/documents/${docId}/view`, '_blank');
+}
+
+function showOverrideModal(docId) {
+    docDetailModal.hide();
+
+    document.getElementById('overrideReason').value = '';
+
+    document.getElementById('confirmOverrideBtn').onclick = async () => {
+        const reason = document.getElementById('overrideReason').value.trim();
+        if (!reason) {
+            alert('Please provide a reason for the override.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/kyc/${onboardingId}/document/${docId}/override`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Update local data
+                const doc = uploadedDocuments.find(d => d.document_id === docId);
+                if (doc) {
+                    doc.override = data.document.override;
+                    doc.analysis.overall_status = 'pass';
                 }
 
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
+                overrideModal.hide();
+                displayResults(uploadedDocuments);
+            } else {
+                alert('Override failed: ' + data.message);
+            }
+        } catch (err) {
+            console.error('Override error:', err);
+            alert('Override failed. Please try again.');
+        }
+    };
 
-                showToast('PDF downloaded successfully', 'success');
-            } catch (error) {
-                console.error('PDF download error:', error);
-                showToast('Failed to download PDF', 'danger');
+    overrideModal.show();
+}
+
+function getOutstandingDocuments() {
+    if (!checklist) return [];
+
+    const outstanding = [];
+
+    // Check sponsor documents
+    checklist.sponsor_documents.forEach(doc => {
+        if (doc.required && doc.status !== 'complete') {
+            outstanding.push({ type: 'Sponsor', label: doc.label });
+        }
+    });
+
+    // Check key party documents
+    checklist.key_parties.forEach(party => {
+        party.documents.forEach(doc => {
+            if (doc.required && doc.status !== 'complete') {
+                outstanding.push({ type: party.name, label: doc.label });
+            }
+        });
+    });
+
+    // Check EDD documents if required
+    if (checklist.edd_required && checklist.edd_documents) {
+        checklist.edd_documents.forEach(doc => {
+            if (doc.required && doc.status !== 'complete') {
+                outstanding.push({ type: 'EDD', label: doc.label });
             }
         });
     }
 
-    // Save Progress function
-    window.saveProgress = async function() {
-        const onboardingId = '{{ onboarding_id }}';
-        const comments = document.getElementById('approval-comments')?.value || '';
-        const saveBtn = document.getElementById('btn-save-progress');
+    return outstanding;
+}
 
-        try {
-            // Disable button during save
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
-            }
+function updateOutstandingDocsDisplay() {
+    const outstanding = getOutstandingDocuments();
+    const card = document.getElementById('outstandingDocsCard');
+    const list = document.getElementById('outstandingDocsList');
 
-            const response = await fetch(`/api/onboarding/${onboardingId}/save-progress`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phase: 5,
-                    approval_comments: comments
-                })
-            });
+    if (outstanding.length > 0) {
+        card.classList.remove('d-none');
+        let html = '<ul class="list-unstyled mb-0">';
+        outstanding.forEach(doc => {
+            html += `<li class="mb-1"><i class="bi bi-x-circle text-danger me-1"></i><strong>${escapeHtml(doc.type)}:</strong> ${escapeHtml(doc.label)}</li>`;
+        });
+        html += '</ul>';
+        list.innerHTML = html;
+    } else {
+        card.classList.add('d-none');
+    }
+}
 
-            const result = await response.json();
+async function signOff() {
+    const outstanding = getOutstandingDocuments();
 
-            if (result.status === 'ok') {
-                showToast('Progress saved successfully', 'success');
-            } else {
-                showToast(result.message || 'Failed to save progress', 'danger');
-            }
-        } catch (error) {
-            console.error('Save progress error:', error);
-            showToast('Network error saving progress', 'danger');
-        } finally {
-            // Re-enable button
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Progress';
-            }
+    // If there are outstanding docs, check if user is MLRO/MLCO
+    if (outstanding.length > 0) {
+        const userRole = '{{ current_user.role if current_user else "" }}';
+        if (userRole !== 'mlro' && userRole !== 'compliance') {
+            alert('Documentation is incomplete. Only MLRO/MLCO can sign off with missing documents.');
+            return;
         }
+
+        // Show MLRO override modal
+        showMlroOverrideModal(outstanding);
+        return;
+    }
+
+    // All docs complete - proceed with normal sign-off
+    if (!confirm('Sign off KYC documentation and proceed to approval phase?')) return;
+
+    performSignOff(null);
+}
+
+function showMlroOverrideModal(outstanding) {
+    const modal = new bootstrap.Modal(document.getElementById('mlroOverrideModal'));
+    const list = document.getElementById('mlroOutstandingList');
+    const justificationField = document.getElementById('mlroJustification');
+
+    // Populate outstanding docs list
+    let html = '<ul class="list-unstyled">';
+    outstanding.forEach(doc => {
+        html += `<li><i class="bi bi-x-circle text-danger me-2"></i><strong>${escapeHtml(doc.type)}:</strong> ${escapeHtml(doc.label)}</li>`;
+    });
+    html += '</ul>';
+    list.innerHTML = html;
+
+    justificationField.value = '';
+
+    // Setup confirm button
+    document.getElementById('confirmMlroOverride').onclick = async () => {
+        const justification = justificationField.value.trim();
+        if (!justification || justification.length < 50) {
+            alert('Please provide a detailed justification (minimum 50 characters).');
+            return;
+        }
+
+        modal.hide();
+        await performSignOff(justification);
     };
-});
+
+    modal.show();
+}
+
+async function performSignOff(mlroOverrideJustification) {
+    try {
+        const payload = mlroOverrideJustification ? {
+            mlro_override: true,
+            justification: mlroOverrideJustification,
+            outstanding_documents: getOutstandingDocuments()
+        } : {};
+
+        const response = await fetch(`/api/kyc/${onboardingId}/signoff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.status === 'ok') {
+            window.location.href = `/onboarding/${onboardingId}/phase/6`;
+        } else {
+            alert('Sign off failed: ' + data.message);
+        }
+    } catch (err) {
+        console.error('Sign off error:', err);
+        alert('Sign off failed. Please try again.');
+    }
+}
+
+// Save Progress function
+window.saveProgress = async function() {
+    const saveBtn = document.getElementById('saveProgressBtn');
+
+    try {
+        // Disable button during save
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
+        }
+
+        // Collect MLRO justification and override reasons if present
+        const mlroJustification = document.getElementById('mlroJustification')?.value || '';
+        const overrideReasons = {};
+
+        // Collect any override reasons that may have been entered
+        document.querySelectorAll('[id^="overrideReason"]').forEach(textarea => {
+            if (textarea.value) {
+                overrideReasons[textarea.id] = textarea.value;
+            }
+        });
+
+        const response = await fetch(`/api/onboarding/${onboardingId}/save-progress`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phase: 5,
+                mlro_justification: mlroJustification,
+                override_reasons: overrideReasons,
+                saved_at: new Date().toISOString()
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'ok') {
+            showToast('success', 'Progress saved successfully');
+        } else {
+            showToast('error', result.message || 'Failed to save progress');
+        }
+    } catch (error) {
+        console.error('Save progress error:', error);
+        showToast('error', 'Network error saving progress');
+    } finally {
+        // Re-enable button
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Progress';
+        }
+    }
+};
 </script>
 {% endblock %}

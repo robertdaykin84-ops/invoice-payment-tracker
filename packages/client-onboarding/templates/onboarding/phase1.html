@@ -442,10 +442,102 @@
                 </div>
             </div>
 
-            <!-- Section 7: Fund GP Directors -->
+            <!-- Section 7: Services Required -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-list-check me-2"></i>7. Services Required
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Select the administration and corporate services required for the fund.
+                    </p>
+                    <h5 class="mb-3 text-primary"><i class="bi bi-building me-1"></i>Fund Administration</h5>
+                    <h6 class="mb-3">Administration Services</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_nav" value="nav"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'nav' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_nav">
+                                    <strong>NAV Calculation</strong>
+                                    <small class="text-muted d-block">Monthly/Quarterly valuations</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_investor" value="investor"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'investor' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_investor">
+                                    <strong>Investor Services</strong>
+                                    <small class="text-muted d-block">Investor communications & reporting</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_accounting" value="accounting"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'accounting' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_accounting">
+                                    <strong>Fund Accounting</strong>
+                                    <small class="text-muted d-block">Management & performance fees</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_aml" value="aml"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'aml' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_aml">
+                                    <strong>AML/KYC Services</strong>
+                                    <small class="text-muted d-block">Ongoing investor due diligence</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_ta" value="ta"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'ta' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_ta">
+                                    <strong>Transfer Agency</strong>
+                                    <small class="text-muted d-block">Subscription & redemption processing</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_reg" value="reg"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'reg' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_reg">
+                                    <strong>Regulatory Filings</strong>
+                                    <small class="text-muted d-block">JFSC notifications & reporting</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-3">Corporate Services</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_director" value="director"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'director' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_director">
+                                    <strong>Director Services (GP)</strong>
+                                    <small class="text-muted d-block">2 independent directors provided</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input service-check" type="checkbox" id="svc_cosec" value="cosec"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'cosec' in enquiry.services_required }}>
+                                <label class="form-check-label" for="svc_cosec">
+                                    <strong>Company Secretary</strong>
+                                    <small class="text-muted d-block">GP company secretarial services</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="services_required_json" id="servicesRequiredJson" value="[]">
+                </div>
+            </div>
+
+            <!-- Section 8: Fund GP Directors -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-person-badge me-2"></i>7. Fund GP Directors</span>
+                    <span><i class="bi bi-person-badge me-2"></i>8. Fund GP Directors</span>
                     <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#gpDirectorModal">
                         <i class="bi bi-plus-lg me-1"></i>Add GP Director
                     </button>
@@ -481,11 +573,11 @@
             <!-- Hidden input to store GP directors JSON for form submission -->
             <input type="hidden" name="gp_directors_json" id="gpDirectorsJson" value="[]">
 
-            <!-- Section 8: Initial Investors -->
+            <!-- Section 9: Initial Investors -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>
-                        <i class="bi bi-wallet2 me-2"></i>8. Initial/Seed Investors
+                        <i class="bi bi-wallet2 me-2"></i>9. Initial/Seed Investors
                         <span id="investorCommitmentBadge" class="badge bg-secondary ms-2">No investors</span>
                     </span>
                     <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#investorModal">
@@ -533,7 +625,7 @@
                 </div>
             </div>
 
-            <!-- Section 9: Primary Contact -->
+            <!-- Section 10: Primary Contact -->
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-person-lines-fill me-2"></i>
@@ -563,7 +655,7 @@
                 </div>
             </div>
 
-            <!-- Section 10: Referral Source -->
+            <!-- Section 11: Referral Source -->
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-megaphone me-2"></i>
@@ -592,7 +684,7 @@
                 </div>
             </div>
 
-            <!-- Section 11: Declaration -->
+            <!-- Section 12: Declaration -->
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="bi bi-check2-square me-2"></i>
@@ -600,8 +692,7 @@
                 </div>
                 <div class="card-body">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required
-       {% if enquiry and enquiry.declaration_accepted %}checked{% endif %}>
+                        <input class="form-check-input" type="checkbox" id="declaration" name="declaration" required>
                         <label class="form-check-label" for="declaration">
                             I confirm that the information provided is accurate and complete to the best of my knowledge.
                             I understand that this information will be used for due diligence and regulatory compliance purposes.
@@ -923,6 +1014,23 @@
         </div>
     </div>
 </div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailModal" tabindex="-1" aria-labelledby="viewDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewDetailModalLabel">Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewDetailModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -1067,6 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // SPONSOR PRINCIPALS MANAGEMENT
 // ============================================================
 let sponsorPrincipals = [];
+let editingSponsorPrincipalIndex = -1;
 
 function addSponsorPrincipal() {
     const fullName = document.getElementById('sponsorPrincipalFullName').value.trim();
@@ -1092,7 +1201,7 @@ function addSponsorPrincipal() {
         return;
     }
 
-    sponsorPrincipals.push({
+    const principalData = {
         full_name: fullName,
         former_names: formerNames,
         dob: dob,
@@ -1103,7 +1212,14 @@ function addSponsorPrincipal() {
         ownership_pct: ownership ? parseFloat(ownership) : null,
         is_ubo: isUbo,
         entity_type: 'sponsor'
-    });
+    };
+
+    if (editingSponsorPrincipalIndex >= 0) {
+        sponsorPrincipals[editingSponsorPrincipalIndex] = principalData;
+        editingSponsorPrincipalIndex = -1;
+    } else {
+        sponsorPrincipals.push(principalData);
+    }
 
     renderSponsorPrincipalsTable();
     updateSponsorPrincipalsJson();
@@ -1120,13 +1236,76 @@ function removeSponsorPrincipal(index) {
 }
 
 function viewSponsorPrincipal(index) {
-    const principal = sponsorPrincipals[index];
-    alert(`View principal: ${principal.full_name}`);
+    const p = sponsorPrincipals[index];
+    const roleLabels = {
+        'controller': 'Controller',
+        'ubo': 'UBO (Ultimate Beneficial Owner)',
+        'both': 'Controller & UBO'
+    };
+    document.getElementById('viewDetailModalLabel').textContent = 'Sponsor Director/UBO Details';
+    document.getElementById('viewDetailModalBody').innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Full Legal Name</label>
+                <p class="mb-0">${escapeHtml(p.full_name)}</p>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Former Names</label>
+                <p class="mb-0">${escapeHtml(p.former_names) || '<span class="text-muted">None</span>'}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Date of Birth</label>
+                <p class="mb-0">${escapeHtml(p.dob) || '-'}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Nationality</label>
+                <p class="mb-0">${escapeHtml(p.nationality)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Country of Residence</label>
+                <p class="mb-0">${escapeHtml(p.country_of_residence)}</p>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold">Residential Address</label>
+                <p class="mb-0">${escapeHtml(p.residential_address)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Role</label>
+                <p class="mb-0">${roleLabels[p.role] || escapeHtml(p.role)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Ownership %</label>
+                <p class="mb-0">${p.ownership_pct !== null ? p.ownership_pct + '%' : '<span class="text-muted">N/A</span>'}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">UBO Status</label>
+                <p class="mb-0">${p.is_ubo ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Yes</span>' : '<span class="text-muted">No</span>'}</p>
+            </div>
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('viewDetailModal')).show();
 }
 
 function editSponsorPrincipal(index) {
-    const principal = sponsorPrincipals[index];
-    alert(`Edit principal: ${principal.full_name}`);
+    const p = sponsorPrincipals[index];
+    editingSponsorPrincipalIndex = index;
+
+    // Pre-populate form fields
+    document.getElementById('sponsorPrincipalFullName').value = p.full_name || '';
+    document.getElementById('sponsorPrincipalFormerNames').value = p.former_names || '';
+    document.getElementById('sponsorPrincipalDob').value = p.dob || '';
+    document.getElementById('sponsorPrincipalNationality').value = p.nationality || '';
+    document.getElementById('sponsorPrincipalResidenceCountry').value = p.country_of_residence || '';
+    document.getElementById('sponsorPrincipalResidentialAddress').value = p.residential_address || '';
+    document.getElementById('sponsorPrincipalRole').value = p.role || '';
+    document.getElementById('sponsorPrincipalOwnership').value = p.ownership_pct !== null ? p.ownership_pct : '';
+
+    // Update modal title and button
+    document.getElementById('sponsorPrincipalModalLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Sponsor Director/UBO';
+    const saveBtn = document.querySelector('#sponsorPrincipalModal .modal-footer .btn-primary');
+    saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Save Changes';
+
+    new bootstrap.Modal(document.getElementById('sponsorPrincipalModal')).show();
 }
 
 function renderSponsorPrincipalsTable() {
@@ -1193,6 +1372,7 @@ function clearSponsorPrincipalForm() {
 // GP DIRECTORS MANAGEMENT
 // ============================================================
 let gpDirectors = [];
+let editingGpDirectorIndex = -1;
 
 // Auto-populate GP directors from enquiry data if available
 {% if enquiry and enquiry.gp_directors %}
@@ -1232,7 +1412,7 @@ function addGpDirector() {
         return;
     }
 
-    gpDirectors.push({
+    const directorData = {
         full_name: fullName,
         former_names: formerNames,
         dob: dob,
@@ -1241,7 +1421,14 @@ function addGpDirector() {
         residential_address: residentialAddress,
         position: position,
         entity_type: 'gp'
-    });
+    };
+
+    if (editingGpDirectorIndex >= 0) {
+        gpDirectors[editingGpDirectorIndex] = directorData;
+        editingGpDirectorIndex = -1;
+    } else {
+        gpDirectors.push(directorData);
+    }
 
     renderGpDirectorsTable();
     updateGpDirectorsJson();
@@ -1286,6 +1473,12 @@ function renderGpDirectorsTable() {
             <td>${d.nationality}</td>
             <td>${positionLabels[d.position] || d.position}</td>
             <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="viewGpDirector(${index})">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editGpDirector(${index})">
+                    <i class="bi bi-pencil"></i>
+                </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGpDirector(${index})">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -1293,6 +1486,70 @@ function renderGpDirectorsTable() {
         `;
         tbody.appendChild(row);
     });
+}
+
+function viewGpDirector(index) {
+    const d = gpDirectors[index];
+    const positionLabels = {
+        'director': 'Director',
+        'chairman': 'Chairman',
+        'independent_director': 'Independent Director'
+    };
+    document.getElementById('viewDetailModalLabel').textContent = 'GP Director Details';
+    document.getElementById('viewDetailModalBody').innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Full Legal Name</label>
+                <p class="mb-0">${escapeHtml(d.full_name)}</p>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Former Names</label>
+                <p class="mb-0">${escapeHtml(d.former_names) || '<span class="text-muted">None</span>'}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Date of Birth</label>
+                <p class="mb-0">${escapeHtml(d.dob) || '-'}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Nationality</label>
+                <p class="mb-0">${escapeHtml(d.nationality)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Country of Residence</label>
+                <p class="mb-0">${escapeHtml(d.country_of_residence)}</p>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold">Residential Address</label>
+                <p class="mb-0">${escapeHtml(d.residential_address)}</p>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Position</label>
+                <p class="mb-0">${positionLabels[d.position] || escapeHtml(d.position)}</p>
+            </div>
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('viewDetailModal')).show();
+}
+
+function editGpDirector(index) {
+    const d = gpDirectors[index];
+    editingGpDirectorIndex = index;
+
+    // Pre-populate form fields
+    document.getElementById('gpDirectorFullName').value = d.full_name || '';
+    document.getElementById('gpDirectorFormerNames').value = d.former_names || '';
+    document.getElementById('gpDirectorDob').value = d.dob || '';
+    document.getElementById('gpDirectorNationality').value = d.nationality || '';
+    document.getElementById('gpDirectorResidenceCountry').value = d.country_of_residence || '';
+    document.getElementById('gpDirectorResidentialAddress').value = d.residential_address || '';
+    document.getElementById('gpDirectorPosition').value = d.position || '';
+
+    // Update modal title and button
+    document.getElementById('gpDirectorModalLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit GP Director';
+    const saveBtn = document.querySelector('#gpDirectorModal .modal-footer .btn-success');
+    saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Save Changes';
+
+    new bootstrap.Modal(document.getElementById('gpDirectorModal')).show();
 }
 
 function updateGpDirectorsJson() {
@@ -1313,6 +1570,7 @@ function clearGpDirectorForm() {
 // INVESTORS MANAGEMENT
 // ============================================================
 let investors = [];
+let editingInvestorIndex = -1;
 
 // Auto-populate investors from enquiry data if available
 {% if enquiry and enquiry.initial_investors %}
@@ -1352,7 +1610,11 @@ function addInvestor() {
     }
 
     const newCommitment = parseFloat(commitmentPct);
-    const currentTotal = getTotalInvestorCommitment();
+    // When editing, exclude the investor being edited from the total
+    let currentTotal = getTotalInvestorCommitment();
+    if (editingInvestorIndex >= 0) {
+        currentTotal -= (investors[editingInvestorIndex].commitment_pct || 0);
+    }
     const newTotal = currentTotal + newCommitment;
 
     if (newTotal > 100) {
@@ -1360,13 +1622,20 @@ function addInvestor() {
         return;
     }
 
-    investors.push({
+    const investorData = {
         name: name,
         type: type,
         jurisdiction: jurisdiction,
         commitment_pct: newCommitment,
         commitment_amount: commitmentAmount
-    });
+    };
+
+    if (editingInvestorIndex >= 0) {
+        investors[editingInvestorIndex] = investorData;
+        editingInvestorIndex = -1;
+    } else {
+        investors.push(investorData);
+    }
 
     renderInvestorsTable();
     updateInvestorsJson();
@@ -1416,6 +1685,12 @@ function renderInvestorsTable() {
             <td>${inv.commitment_pct}%</td>
             <td>${inv.commitment_amount ? '$' + inv.commitment_amount : '-'}</td>
             <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="viewInvestor(${index})">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editInvestor(${index})">
+                    <i class="bi bi-pencil"></i>
+                </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeInvestor(${index})">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -1474,6 +1749,105 @@ function clearInvestorForm() {
     document.getElementById('investorCommitmentAmount').value = '';
 }
 
+function viewInvestor(index) {
+    const inv = investors[index];
+    const typeLabels = {
+        'institutional': 'Institutional Investor',
+        'pension_fund': 'Pension Fund',
+        'family_office': 'Family Office',
+        'hnw': 'High Net Worth Individual',
+        'fund_of_funds': 'Fund of Funds',
+        'sponsor_affiliate': 'Sponsor/Affiliate',
+        'other': 'Other'
+    };
+    document.getElementById('viewDetailModalLabel').textContent = 'Investor Details';
+    document.getElementById('viewDetailModalBody').innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Investor Name</label>
+                <p class="mb-0">${escapeHtml(inv.name)}</p>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Investor Type</label>
+                <p class="mb-0">${typeLabels[inv.type] || escapeHtml(inv.type)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Jurisdiction</label>
+                <p class="mb-0">${escapeHtml(inv.jurisdiction)}</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Commitment %</label>
+                <p class="mb-0">${inv.commitment_pct}%</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Commitment Amount</label>
+                <p class="mb-0">${inv.commitment_amount ? '$' + escapeHtml(inv.commitment_amount) : '<span class="text-muted">Not specified</span>'}</p>
+            </div>
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('viewDetailModal')).show();
+}
+
+function editInvestor(index) {
+    const inv = investors[index];
+    editingInvestorIndex = index;
+
+    // Pre-populate form fields
+    document.getElementById('investorName').value = inv.name || '';
+    document.getElementById('investorType').value = inv.type || '';
+    document.getElementById('investorJurisdiction').value = inv.jurisdiction || '';
+    document.getElementById('investorCommitmentPct').value = inv.commitment_pct !== undefined ? inv.commitment_pct : '';
+    document.getElementById('investorCommitmentAmount').value = inv.commitment_amount || '';
+
+    // Update modal title and button
+    document.getElementById('investorModalLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Investor';
+    const saveBtn = document.querySelector('#investorModal .modal-footer .btn-success');
+    saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Save Changes';
+
+    new bootstrap.Modal(document.getElementById('investorModal')).show();
+}
+
+// ============================================================
+// MODAL CLOSE EVENT LISTENERS (Reset edit state)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset Sponsor Principal modal on close
+    const sponsorPrincipalModalEl = document.getElementById('sponsorPrincipalModal');
+    if (sponsorPrincipalModalEl) {
+        sponsorPrincipalModalEl.addEventListener('hidden.bs.modal', function() {
+            editingSponsorPrincipalIndex = -1;
+            clearSponsorPrincipalForm();
+            document.getElementById('sponsorPrincipalModalLabel').innerHTML = '<i class="bi bi-person-plus me-2"></i>Add Sponsor Director/UBO';
+            const saveBtn = document.querySelector('#sponsorPrincipalModal .modal-footer .btn-primary');
+            if (saveBtn) saveBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add Person';
+        });
+    }
+
+    // Reset GP Director modal on close
+    const gpDirectorModalEl = document.getElementById('gpDirectorModal');
+    if (gpDirectorModalEl) {
+        gpDirectorModalEl.addEventListener('hidden.bs.modal', function() {
+            editingGpDirectorIndex = -1;
+            clearGpDirectorForm();
+            document.getElementById('gpDirectorModalLabel').innerHTML = '<i class="bi bi-person-badge me-2"></i>Add GP Director';
+            const saveBtn = document.querySelector('#gpDirectorModal .modal-footer .btn-success');
+            if (saveBtn) saveBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add GP Director';
+        });
+    }
+
+    // Reset Investor modal on close
+    const investorModalEl = document.getElementById('investorModal');
+    if (investorModalEl) {
+        investorModalEl.addEventListener('hidden.bs.modal', function() {
+            editingInvestorIndex = -1;
+            clearInvestorForm();
+            document.getElementById('investorModalLabel').innerHTML = '<i class="bi bi-wallet2 me-2"></i>Add Initial Investor';
+            const saveBtn = document.querySelector('#investorModal .modal-footer .btn-success');
+            if (saveBtn) saveBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add Investor';
+        });
+    }
+});
+
 // ============================================================
 // TARGET COUNTRIES MANAGEMENT
 // ============================================================
@@ -1523,6 +1897,22 @@ function getSelectedHighRiskCountries() {
 
 // Initialize on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', initTargetCountries);
+
+// ============================================================
+// SERVICES REQUIRED
+// ============================================================
+function updateServicesJson() {
+    const selected = [];
+    document.querySelectorAll('.service-check:checked').forEach(cb => selected.push(cb.value));
+    document.getElementById('servicesRequiredJson').value = JSON.stringify(selected);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.service-check').forEach(cb => {
+        cb.addEventListener('change', updateServicesJson);
+    });
+    updateServicesJson();
+});
 
 // ============================================================
 // DOCUMENT UPLOAD HANDLING

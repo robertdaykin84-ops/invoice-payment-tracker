@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certified Address Proof - Robert Jones - Council Tax Bill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+        }
+        .document {
+            border: 2px solid #333;
+            padding: 30px;
+        }
+        .council-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #2e7d32;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .council-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .council-logo span {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+        }
+        .bill-info {
+            text-align: right;
+        }
+        .bill-type {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .address-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .address-section h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .address {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .account-details {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .detail-box {
+            background: #f5f5f5;
+            padding: 15px;
+            flex: 1;
+            margin: 0 10px;
+        }
+        .detail-box:first-child {
+            margin-left: 0;
+        }
+        .detail-box:last-child {
+            margin-right: 0;
+        }
+        .detail-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .detail-value {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .charges-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .charges-table th, .charges-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .charges-table th {
+            background: #f5f5f5;
+            font-weight: normal;
+            color: #666;
+        }
+        .charges-table .total {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .certification {
+            border: 2px solid #c62828;
+            padding: 20px;
+            margin-top: 30px;
+            background: #fff;
+        }
+        .certification h3 {
+            color: #c62828;
+            margin-top: 0;
+            border-bottom: 1px solid #c62828;
+            padding-bottom: 10px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            width: 250px;
+            height: 40px;
+            margin: 10px 0;
+            font-style: italic;
+            padding-top: 20px;
+        }
+        .certifier-details {
+            margin-top: 15px;
+        }
+        .field {
+            margin: 8px 0;
+            display: flex;
+        }
+        .field-label {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+        .field-value {
+            flex: 1;
+        }
+        .stamp {
+            border: 3px solid #c62828;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 10px;
+            color: #c62828;
+            float: right;
+            margin-top: -80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="council-header">
+            <div>
+                <div class="council-logo">
+                    City of Westminster
+                    <span>Council Tax Department</span>
+                </div>
+            </div>
+            <div class="bill-info">
+                <div class="bill-type">Council Tax Bill</div>
+                <p style="margin: 5px 0;">Bill Date: 01 December 2025</p>
+            </div>
+        </div>
+
+        <div class="address-section">
+            <h3>Liable Person & Property Address</h3>
+            <div class="address">
+                <strong>Mr Robert William Jones</strong><br>
+                78 Mayfair Gardens<br>
+                London<br>
+                W1K 3AB<br>
+                United Kingdom
+            </div>
+        </div>
+
+        <div class="account-details">
+            <div class="detail-box">
+                <div class="detail-label">Account Reference</div>
+                <div class="detail-value">CT-7812-4903</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Council Tax Band</div>
+                <div class="detail-value">Band H</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Payment Due</div>
+                <div class="detail-value">01 January 2026</div>
+            </div>
+        </div>
+
+        <table class="charges-table">
+            <tr>
+                <th>Description</th>
+                <th>Period</th>
+                <th>Amount</th>
+            </tr>
+            <tr>
+                <td>Council Tax - Band H</td>
+                <td>01 Dec 2025 - 31 Dec 2025</td>
+                <td>£412.50</td>
+            </tr>
+            <tr>
+                <td>Adult Social Care Precept</td>
+                <td>01 Dec 2025 - 31 Dec 2025</td>
+                <td>£48.75</td>
+            </tr>
+            <tr>
+                <td>GLA Precept (Mayor of London)</td>
+                <td>01 Dec 2025 - 31 Dec 2025</td>
+                <td>£36.20</td>
+            </tr>
+            <tr>
+                <td class="total">Total Amount Due</td>
+                <td></td>
+                <td class="total">£497.45</td>
+            </tr>
+        </table>
+
+        <p style="font-size: 12px; color: #666;">
+            If you have any queries about this bill, please contact us on 020 7641 2000 or visit westminster.gov.uk/council-tax
+        </p>
+
+        <div class="certification">
+            <h3>CERTIFICATION</h3>
+
+            <p><strong>I certify this is a true copy of the original document.</strong></p>
+
+            <p>I have seen the original council tax bill and confirm that this copy is a true and accurate representation of the original document.</p>
+
+            <div class="signature-line">J. Roberts</div>
+            <p style="margin: 0;"><strong>Signature of Certifier</strong></p>
+
+            <div class="certifier-details">
+                <div class="field">
+                    <span class="field-label">Name:</span>
+                    <span class="field-value">James Roberts</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Qualification:</span>
+                    <span class="field-value">Solicitor</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Firm:</span>
+                    <span class="field-value">Roberts & Partners LLP</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Date:</span>
+                    <span class="field-value">20 January 2026</span>
+                </div>
+            </div>
+
+            <div class="stamp">
+                ROBERTS &<br>PARTNERS<br>SOLICITORS<br>CERTIFIED
+            </div>
+        </div>
+    </div>
+</body>
+</html>

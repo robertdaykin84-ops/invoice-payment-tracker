@@ -47,12 +47,13 @@ DOCUMENT_TYPES = {
     'passport': ['passport', 'travel document', 'laissez-passer'],
     'address_proof': ['address proof', 'utility bill', 'bank statement', 'council tax', 'electricity', 'gas bill', 'water bill'],
     'source_of_wealth': ['source of wealth', 'sow', 'wealth declaration', 'sow declaration', 'origin of funds'],
+    'proof_of_address': ['proof of registered office', 'registered office', 'proof of address'],
     'certificate_of_incorporation': ['certificate of incorporation', 'incorporation certificate'],
     'certificate_of_registration': ['certificate of registration', 'registration certificate'],
     'memorandum_articles': ['memorandum', 'articles of association', 'm&a', 'constitution'],
     'llp_agreement': ['llp agreement', 'limited liability partnership agreement', 'partnership deed'],
     'register_of_directors': ['register of directors', 'directors register', 'list of directors'],
-    'register_of_shareholders': ['register of shareholders', 'shareholders register', 'register of members'],
+    'register_of_shareholders': ['register of shareholders', 'shareholders register'],
     'register_of_members': ['register of members', 'members register'],
     'structure_chart': ['structure chart', 'ownership structure', 'org chart', 'organisational structure'],
     'trust_deed': ['trust deed', 'deed of trust', 'trust instrument'],
@@ -422,7 +423,7 @@ Respond ONLY with valid JSON, no additional text."""
         extracted_name = analysis.get('extracted_data', {}).get('name')
 
         # Check if it's a personal ID document
-        personal_doc_types = ['passport', 'address_proof']
+        personal_doc_types = ['passport', 'address_proof', 'source_of_wealth']
         if detected_type in personal_doc_types and extracted_name:
             # Try to match to a key party
             for party in key_parties:
@@ -442,7 +443,7 @@ Respond ONLY with valid JSON, no additional text."""
             'certificate_of_incorporation', 'certificate_of_registration',
             'memorandum_articles', 'llp_agreement', 'register_of_directors',
             'register_of_shareholders', 'register_of_members', 'structure_chart',
-            'trust_deed', 'regulatory_license'
+            'trust_deed', 'regulatory_license', 'proof_of_address'
         ]
         if detected_type in entity_doc_types:
             return {
@@ -496,7 +497,7 @@ Respond ONLY with valid JSON, no additional text."""
         Example: 'passport-sarah-johnson-certified.pdf' -> 'Sarah Johnson'
         """
         # Only extract names for personal document types
-        personal_doc_types = ['passport', 'address_proof']
+        personal_doc_types = ['passport', 'address_proof', 'source_of_wealth']
         if detected_type not in personal_doc_types:
             return None
 

@@ -68,13 +68,17 @@ EDD_DOCUMENTS = [
 ]
 
 
-def generate_checklist(enquiry: Dict, risk_assessment: Optional[Dict] = None) -> Dict:
+def generate_checklist(enquiry: Dict, risk_assessment: Optional[Dict] = None,
+                       fund_principals: Optional[List] = None,
+                       additional_entities: Optional[List] = None) -> Dict:
     """
     Generate a KYC document checklist based on enquiry data.
 
     Args:
         enquiry: Enquiry data from Phase 1
         risk_assessment: Risk assessment from Phase 3 (for EDD trigger)
+        fund_principals: Additional fund principals (e.g. from Phase 2)
+        additional_entities: Additional entities requiring documentation (e.g. sponsor LLP)
 
     Returns:
         Checklist structure with sponsor docs, key party docs, and EDD status
@@ -98,9 +102,10 @@ def generate_checklist(enquiry: Dict, risk_assessment: Optional[Dict] = None) ->
         party_docs = [dict(d, document_id=None, status='pending') for d in KEY_PARTY_DOCUMENTS]
 
         # UBOs (25%+ ownership) need source of wealth documentation
-        ownership = principal.get('ownership_percentage', 0)
+        ownership = principal.get('ownership_pct', 0) or principal.get('ownership_percentage', 0)
         role_lower = str(principal.get('role', '')).lower()
-        is_ubo = ownership >= 25 or 'ubo' in role_lower or 'beneficial owner' in role_lower
+        is_ubo = (ownership >= 25 or 'ubo' in role_lower or 'beneficial owner' in role_lower
+                  or principal.get('is_ubo', False))
 
         if is_ubo:
             party_docs.append({
@@ -117,6 +122,21 @@ def generate_checklist(enquiry: Dict, risk_assessment: Optional[Dict] = None) ->
             'role': _format_role(principal.get('role', 'director')),
             'documents': party_docs
         })
+
+    # Add fund principals (e.g. directors added in Phase 2)
+    seen_names = {p.get('full_name') or p.get('name', '') for p in principals}
+    if fund_principals:
+        for fp in fund_principals:
+            fp_name = fp.get('full_name') or fp.get('name', '')
+            if fp_name and fp_name not in seen_names:
+                seen_names.add(fp_name)
+                fp_docs = [dict(d, document_id=None, status='pending') for d in KEY_PARTY_DOCUMENTS]
+                key_parties.append({
+                    'person_id': fp.get('principal_id', f'fund_principal_{len(key_parties)}'),
+                    'name': fp_name,
+                    'role': _format_role(fp.get('position', 'director')),
+                    'documents': fp_docs
+                })
 
     # Determine if EDD is required
     edd_required = False

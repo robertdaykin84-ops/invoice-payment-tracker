@@ -28,7 +28,8 @@
     {% endfor %}
 </ul>
 
-<!-- Success Banner -->
+<!-- Success Banner - conditional on signed agreement -->
+{% if signed_agreement and signed_agreement.confirmed %}
 <div class="alert alert-success border-0 shadow-sm mb-4">
     <div class="d-flex align-items-center">
         <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
@@ -36,10 +37,23 @@
         </div>
         <div>
             <h5 class="alert-heading mb-1">Onboarding Successfully Completed!</h5>
-            <p class="mb-0">Granite Capital Fund III LP is now fully onboarded and ready for operations.</p>
+            <p class="mb-0">{{ enquiry.fund_name or 'Fund' }} is now fully onboarded and ready for operations.</p>
         </div>
     </div>
 </div>
+{% else %}
+<div class="alert alert-warning border-0 shadow-sm mb-4">
+    <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+            <i class="bi bi-hourglass-split" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h5 class="alert-heading mb-1">Awaiting Signed Administration Agreement</h5>
+            <p class="mb-0">Upload the fully signed Administration Agreement to complete the onboarding process.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="row">
     <div class="col-lg-8">
@@ -56,23 +70,23 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td class="text-muted" style="width: 40%;">Sponsor</td>
-                                <td><strong>Granite Capital Partners LLP</strong></td>
+                                <td><strong>{{ enquiry.sponsor_name or 'Unknown' }}</strong></td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Fund</td>
-                                <td><strong>Granite Capital Fund III LP</strong></td>
+                                <td><strong>{{ enquiry.fund_name or 'Unknown' }}</strong></td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Fund Type</td>
-                                <td>Jersey Private Fund (JPF)</td>
+                                <td>{{ 'Jersey Private Fund (JPF)' if enquiry.fund_type == 'jpf' else enquiry.fund_type|upper if enquiry else 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Jurisdiction</td>
-                                <td>Jersey</td>
+                                <td>{{ enquiry.jurisdiction or 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Target Size</td>
-                                <td>$500,000,000</td>
+                                <td>${{ enquiry.target_size or 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -81,11 +95,11 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td class="text-muted" style="width: 40%;">Risk Rating</td>
-                                <td><span class="badge badge-risk-low">Low (28)</span></td>
+                                <td><span class="badge badge-risk-{{ (risk_rating or 'low')|lower }}">{{ risk_rating or 'Low' }} ({{ risk_score or 28 }})</span></td>
                             </tr>
                             <tr>
                                 <td class="text-muted">EDD Required</td>
-                                <td>No</td>
+                                <td>{{ 'Yes' if risk_score and risk_score >= 70 else 'No' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Approval Level</td>
@@ -93,11 +107,11 @@
                             </tr>
                             <tr>
                                 <td class="text-muted">Start Date</td>
-                                <td>01 Feb 2026</td>
+                                <td>{{ phase_dates.phase1.strftime('%d %b %Y') if phase_dates and phase_dates.phase1 else 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Completion Date</td>
-                                <td>03 Feb 2026</td>
+                                <td>{{ phase_dates.completed.strftime('%d %b %Y') if phase_dates and phase_dates.completed else 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -110,44 +124,120 @@
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">1</span>
                         <span>Enquiry Verified</span>
-                        <small class="text-muted ms-auto">01 Feb, 09:00</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase1.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase1 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">2</span>
                         <span>Sponsor CDD Complete</span>
-                        <small class="text-muted ms-auto">01 Feb, 14:30</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase2.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase2 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">3</span>
                         <span>Fund Structure Configured</span>
-                        <small class="text-muted ms-auto">02 Feb, 10:00</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase3.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase3 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">4</span>
                         <span>Screening Clear</span>
-                        <small class="text-muted ms-auto">02 Feb, 11:30</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase4.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase4 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if risk_score and risk_score >= 70 %}
+                        <span class="badge bg-success rounded-pill">5</span>
+                        <span>EDD Complete</span>
+                        {% else %}
                         <span class="badge bg-secondary rounded-pill">5</span>
                         <span class="text-muted">EDD Skipped (Low Risk)</span>
-                        <small class="text-muted ms-auto">—</small>
+                        {% endif %}
+                        <small class="text-muted ms-auto">{{ phase_dates.phase5.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase5 else '—' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">6</span>
                         <span>MLRO Approved</span>
-                        <small class="text-muted ms-auto">02 Feb, 15:00</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase6.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase6 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge bg-success rounded-pill">7</span>
                         <span>Commercial Terms Agreed</span>
-                        <small class="text-muted ms-auto">03 Feb, 09:30</small>
+                        <small class="text-muted ms-auto">{{ phase_dates.phase7.strftime('%d %b, %H:%M') if phase_dates and phase_dates.phase7 else '' }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        {% if signed_agreement and signed_agreement.confirmed %}
                         <span class="badge bg-success rounded-pill">8</span>
                         <span><strong>Onboarding Complete</strong></span>
-                        <small class="text-muted ms-auto">03 Feb, 10:00</small>
+                        {% else %}
+                        <span class="badge bg-warning rounded-pill">8</span>
+                        <span class="text-muted"><strong>Awaiting Signed Agreement</strong></span>
+                        {% endif %}
+                        <small class="text-muted ms-auto">{{ phase_dates.completed.strftime('%d %b, %H:%M') if phase_dates and phase_dates.completed and signed_agreement and signed_agreement.confirmed else '—' }}</small>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Signed Administration Agreement Upload -->
+        <div class="card mb-4 {% if signed_agreement and signed_agreement.confirmed %}border-success{% else %}border-warning{% endif %}">
+            <div class="card-header {% if signed_agreement and signed_agreement.confirmed %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                <i class="bi bi-file-earmark-check me-2"></i>
+                Signed Administration Agreement
+                {% if signed_agreement and signed_agreement.confirmed %}
+                <span class="badge bg-white text-success ms-2">Confirmed</span>
+                {% elif signed_agreement %}
+                <span class="badge bg-white text-warning ms-2">Uploaded - Pending Confirmation</span>
+                {% else %}
+                <span class="badge bg-white text-warning ms-2">Required</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if signed_agreement and signed_agreement.confirmed %}
+                <!-- Confirmed state -->
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-check-circle-fill" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <strong>{{ signed_agreement.filename }}</strong>
+                        <small class="text-muted d-block">Uploaded by {{ signed_agreement.uploaded_by }} on {{ signed_agreement.uploaded_at }}</small>
+                        <small class="text-success d-block">Confirmed by {{ signed_agreement.confirmed_by }} on {{ signed_agreement.confirmed_at }}</small>
+                    </div>
+                </div>
+                {% elif signed_agreement %}
+                <!-- Uploaded but not confirmed -->
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-file-earmark-arrow-up" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <strong>{{ signed_agreement.filename }}</strong>
+                        <small class="text-muted d-block">Uploaded by {{ signed_agreement.uploaded_by }} on {{ signed_agreement.uploaded_at }}</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Please review the uploaded agreement and confirm it has been fully executed by all parties.</p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success" onclick="confirmAgreement()">
+                        <i class="bi bi-check-lg me-1"></i> Confirm Signed Agreement
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeAgreement()">
+                        <i class="bi bi-trash me-1"></i> Remove
+                    </button>
+                </div>
+                {% else %}
+                <!-- Not yet uploaded -->
+                <p class="mb-3">The Administration Agreement has been sent to the sponsor for signing. Once the fully executed copy is received, upload it below to complete the onboarding.</p>
+                <div class="upload-zone p-4 rounded-3 text-center mb-3" id="agreementDropZone" style="border: 2px dashed #dee2e6; cursor: pointer;">
+                    <i class="bi bi-cloud-upload display-6 text-muted mb-2 d-block"></i>
+                    <p class="mb-1"><strong>Drop signed agreement here</strong></p>
+                    <p class="text-muted small mb-2">or click to browse</p>
+                    <p class="text-muted small mb-0">Accepted: PDF, DOCX (max 25MB)</p>
+                    <input type="file" id="agreementFileInput" accept=".pdf,.docx,.doc" class="d-none">
+                </div>
+                <div id="uploadProgress" class="d-none mb-3">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">Uploading...</small>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -169,19 +259,19 @@
                         <ul class="list-unstyled">
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-pdf text-danger"></i>
-                                <a href="#" class="text-decoration-none">Client Acceptance Memo.pdf</a>
+                                <a href="{{ url_for('generate_memo', onboarding_id=onboarding_id) }}" target="_blank" class="text-decoration-none">Client Acceptance Memo.pdf</a>
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-pdf text-danger"></i>
-                                <a href="#" class="text-decoration-none">Screening Report.pdf</a>
+                                <a href="{{ url_for('api_screening_report', onboarding_id=onboarding_id) }}" target="_blank" class="text-decoration-none">Screening Report.pdf</a>
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-pdf text-danger"></i>
-                                <a href="#" class="text-decoration-none">Risk Assessment.pdf</a>
+                                <a href="{{ url_for('api_generate_report', onboarding_id=onboarding_id) }}" target="_blank" class="text-decoration-none">Risk Assessment.pdf</a>
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-earmark-spreadsheet text-success"></i>
-                                <a href="#" class="text-decoration-none">CDD Checklist.xlsx</a>
+                                <a href="#" class="text-decoration-none text-muted" title="Available in Google Drive">CDD Checklist.xlsx</a>
                             </li>
                         </ul>
                     </div>
@@ -190,25 +280,25 @@
                         <ul class="list-unstyled">
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-pdf text-danger"></i>
-                                <a href="#" class="text-decoration-none">Fee Proposal.pdf</a>
-                            </li>
-                            <li class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-file-word text-primary"></i>
-                                <a href="#" class="text-decoration-none">Administration Agreement.docx</a>
+                                <a href="#" class="text-decoration-none text-muted" title="Available in Google Drive">Fee Proposal.pdf</a>
                             </li>
                             <li class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-file-pdf text-danger"></i>
-                                <a href="#" class="text-decoration-none">Structure Chart.pdf</a>
+                                <a href="{{ url_for('api_admin_agreement', onboarding_id=onboarding_id) }}" target="_blank" class="text-decoration-none">Administration Agreement.pdf</a>
+                            </li>
+                            <li class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-file-pdf text-danger"></i>
+                                <a href="#" class="text-decoration-none text-muted" title="Available in Google Drive">Structure Chart.pdf</a>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2 mt-4">
-                    <button class="btn btn-outline-primary">
+                    <a href="https://drive.google.com" target="_blank" class="btn btn-outline-primary">
                         <i class="bi bi-folder2-open me-1"></i> Open in Google Drive
-                    </button>
-                    <button class="btn btn-outline-secondary">
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="downloadAllDocuments()">
                         <i class="bi bi-download me-1"></i> Download All
                     </button>
                 </div>
@@ -271,9 +361,9 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Phase 6
             </a>
             <div>
-                <button class="btn btn-outline-primary me-2">
+                <a href="{{ url_for('new_onboarding') }}" class="btn btn-outline-primary me-2">
                     <i class="bi bi-plus-circle me-1"></i> Start New Onboarding
-                </button>
+                </a>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
                     <i class="bi bi-house me-1"></i> Return to Dashboard
                 </a>
@@ -283,6 +373,7 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        {% if signed_agreement and signed_agreement.confirmed %}
         <div class="card mb-4 border-success">
             <div class="card-header bg-success text-white">
                 <i class="bi bi-trophy me-2"></i>
@@ -298,6 +389,23 @@
                 </p>
             </div>
         </div>
+        {% else %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-hourglass-split me-2"></i>
+                Awaiting Completion
+            </div>
+            <div class="card-body text-center">
+                <div class="display-1 text-warning mb-3">
+                    <i class="bi bi-clock-fill"></i>
+                </div>
+                <h5>Signed Agreement Required</h5>
+                <p class="text-muted mb-0">
+                    Upload signed Administration Agreement to finalise
+                </p>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="card mb-4">
             <div class="card-header">
@@ -307,24 +415,32 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Enquiry Received</span>
-                    <span>28 Jan 2026</span>
+                    <span>{{ phase_dates.enquiry_received.strftime('%d %b %Y') if phase_dates and phase_dates.enquiry_received else 'N/A' }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Onboarding Started</span>
-                    <span>01 Feb 2026</span>
+                    <span>{{ phase_dates.phase1.strftime('%d %b %Y') if phase_dates and phase_dates.phase1 else 'N/A' }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">MLRO Approved</span>
-                    <span>02 Feb 2026</span>
+                    <span>{{ phase_dates.phase6.strftime('%d %b %Y') if phase_dates and phase_dates.phase6 else 'N/A' }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted">Completed</span>
-                    <strong class="text-success">03 Feb 2026</strong>
+                    {% if signed_agreement and signed_agreement.confirmed %}
+                    <strong class="text-success">{{ phase_dates.completed.strftime('%d %b %Y') if phase_dates and phase_dates.completed else 'N/A' }}</strong>
+                    {% else %}
+                    <span class="text-muted">Pending</span>
+                    {% endif %}
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted">Total Duration</span>
-                    <strong>3 business days</strong>
+                    {% if phase_dates and phase_dates.phase1 and phase_dates.completed %}
+                    <strong>{{ (phase_dates.completed - phase_dates.phase1).days + 1 }} business days</strong>
+                    {% else %}
+                    <strong>N/A</strong>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -340,11 +456,15 @@
                 </p>
                 <div class="d-flex justify-content-between align-items-center">
                     <span>Annual Review</span>
-                    <strong>Feb 2027</strong>
+                    {% if phase_dates and phase_dates.completed %}
+                    <strong>{{ phase_dates.completed.strftime('%b') }} {{ phase_dates.completed.year + 1 }}</strong>
+                    {% else %}
+                    <strong>N/A</strong>
+                    {% endif %}
                 </div>
-                <button class="btn btn-outline-primary btn-sm w-100 mt-3">
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ (enquiry.fund_name or 'Fund')|urlencode }}%20-%20Annual%20Review&details=Annual%20periodic%20review%20for%20{{ (enquiry.fund_name or 'Fund')|urlencode }}" target="_blank" class="btn btn-outline-primary btn-sm w-100 mt-3">
                     <i class="bi bi-calendar-plus me-1"></i> Add to Calendar
-                </button>
+                </a>
             </div>
         </div>
 
@@ -393,5 +513,130 @@
     font-weight: 600;
     font-size: 0.85rem;
 }
+.upload-zone:hover {
+    border-color: #0d6efd !important;
+    background-color: #f8f9ff;
+}
+.upload-zone.drag-over {
+    border-color: #0d6efd !important;
+    background-color: #e8f0fe;
+}
 </style>
+
+<script>
+const onboardingId = '{{ onboarding_id }}';
+
+// ---- Signed Agreement Upload ----
+const dropZone = document.getElementById('agreementDropZone');
+const fileInput = document.getElementById('agreementFileInput');
+
+if (dropZone && fileInput) {
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+            uploadAgreement(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            uploadAgreement(fileInput.files[0]);
+        }
+    });
+}
+
+function uploadAgreement(file) {
+    const progressEl = document.getElementById('uploadProgress');
+    if (progressEl) {
+        progressEl.classList.remove('d-none');
+        progressEl.querySelector('.progress-bar').style.width = '30%';
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch(`/api/onboarding/${onboardingId}/signed-agreement`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            if (progressEl) progressEl.querySelector('.progress-bar').style.width = '100%';
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert('Upload failed: ' + (data.message || 'Unknown error'));
+            if (progressEl) progressEl.classList.add('d-none');
+        }
+    })
+    .catch(err => {
+        alert('Upload error: ' + err.message);
+        if (progressEl) progressEl.classList.add('d-none');
+    });
+}
+
+function confirmAgreement() {
+    if (!confirm('Confirm that the Administration Agreement has been fully signed by all parties?')) return;
+
+    fetch(`/api/onboarding/${onboardingId}/signed-agreement/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+function removeAgreement() {
+    if (!confirm('Remove the uploaded signed agreement?')) return;
+
+    fetch(`/api/onboarding/${onboardingId}/signed-agreement`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            location.reload();
+        }
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+// ---- Download All Documents ----
+function downloadAllDocuments() {
+    const links = [
+        `/api/onboarding/${onboardingId}/generate-memo`,
+        `/api/onboarding/${onboardingId}/screening-report`,
+        `/api/report/generate/${onboardingId}`,
+        `/api/onboarding/${onboardingId}/admin-agreement?download=1`
+    ];
+
+    links.forEach((url, i) => {
+        setTimeout(() => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.click();
+        }, i * 500);
+    });
+}
+</script>
 {% endblock %}

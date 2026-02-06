@@ -564,8 +564,8 @@ def notify_phase_completed(
         next_phase_num = phase_num + 1
     if next_phase_name is None:
         phase_names = {
-            1: 'Enquiry', 2: 'Sponsor', 3: 'Fund', 4: 'Screening',
-            5: 'EDD', 6: 'Approval', 7: 'Commercial', 8: 'Complete'
+            1: 'Enquiry', 2: 'Fund', 3: 'Commercial', 4: 'Screening',
+            5: 'KYC & CDD', 6: 'Approval', 7: 'Complete'
         }
         next_phase_name = phase_names.get(next_phase_num, 'Next Step')
 

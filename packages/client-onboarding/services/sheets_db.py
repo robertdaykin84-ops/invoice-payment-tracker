@@ -108,6 +108,11 @@ ID_PREFIXES = {
 class SheetsDB:
     """Google Sheets database client for persistent storage"""
 
+    # Class-level storage for demo mode updates (persists across requests)
+    _demo_updates = {}
+    _demo_inserts = {}  # table_name -> [records]
+    _demo_deletes = {}  # table_name -> set(record_ids)
+
     def __init__(self):
         # Check if DEMO_MODE is forced via environment variable
         force_demo = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
@@ -685,7 +690,7 @@ class SheetsDB:
             logger.info(f"[DEMO] Would get onboarding {onboarding_id}")
             # Return mock data for demo onboardings
             demo_onboardings = {
-                'ONB-001': {'onboarding_id': 'ONB-001', 'enquiry_id': 'ENQ-001', 'sponsor_name': 'Granite Capital Partners LLP', 'status': 'in_progress', 'current_phase': 4, 'assigned_to': 'James Smith'},
+                'ONB-001': {'onboarding_id': 'ONB-001', 'enquiry_id': 'ENQ-001', 'sponsor_name': 'Granite Capital Partners LLP', 'status': 'in_progress', 'current_phase': 5, 'assigned_to': 'James Smith'},
                 'ONB-002': {'onboarding_id': 'ONB-002', 'enquiry_id': 'ENQ-002', 'sponsor_name': 'Ashford Capital Advisors Ltd', 'status': 'pending_mlro', 'current_phase': 6, 'assigned_to': 'James Smith'},
                 'ONB-003': {'onboarding_id': 'ONB-003', 'enquiry_id': 'ENQ-003', 'sponsor_name': 'Bluewater Asset Management', 'status': 'approved', 'current_phase': 7, 'assigned_to': 'Sarah Johnson'},
                 'ONB-004': {'onboarding_id': 'ONB-004', 'enquiry_id': 'ENQ-001', 'sponsor_name': 'Granite Capital Partners LLP', 'status': 'in_progress', 'current_phase': 2, 'assigned_to': 'James Smith'},
@@ -1065,47 +1070,84 @@ class SheetsDB:
             # Return demo data for FundPrincipals
             if table_name == 'FundPrincipals' and filters and filters.get('onboarding_id'):
                 onboarding_id = filters.get('onboarding_id')
-                return [
+                principal_id_filter = filters.get('principal_id')
+
+                # Demo principals with IDs matching template-generated IDs
+                results = [
                     {
-                        'principal_id': 'PRI-001',
+                        'principal_id': 'principal_js_enq001',
                         'onboarding_id': onboarding_id,
                         'name': 'John Smith',
                         'full_name': 'John Edward Smith',
+                        'former_names': '',
                         'role': 'Director & UBO',
+                        'position': 'director',
                         'dob': '1972-05-15',
                         'nationality': 'British',
                         'residential_address': '45 Kensington Gardens, London, W8 4QS',
+                        'country_of_residence': 'UK',
                         'ownership_pct': '35',
                         'is_ubo': True,
                         'source': 'enquiry'
                     },
                     {
-                        'principal_id': 'PRI-002',
+                        'principal_id': 'principal_saj_enq001',
                         'onboarding_id': onboarding_id,
                         'name': 'Sarah Johnson',
                         'full_name': 'Sarah Anne Johnson',
+                        'former_names': 'Sarah Anne Williams (maiden name)',
                         'role': 'Director & UBO',
+                        'position': 'director',
                         'dob': '1978-09-22',
                         'nationality': 'British',
                         'residential_address': '12 Chelsea Embankment, London, SW3 4LF',
+                        'country_of_residence': 'UK',
                         'ownership_pct': '35',
                         'is_ubo': True,
                         'source': 'enquiry'
                     },
                     {
-                        'principal_id': 'PRI-003',
+                        'principal_id': 'principal_rj_123',
                         'onboarding_id': onboarding_id,
-                        'name': 'Michael Brown',
-                        'full_name': 'Michael James Brown',
-                        'role': 'Director & UBO',
-                        'dob': '1980-01-10',
+                        'name': 'Robert Jones',
+                        'full_name': 'Robert Jones',
+                        'former_names': '',
+                        'role': 'Director',
+                        'position': 'director',
+                        'dob': '1975-08-20',
                         'nationality': 'British',
-                        'residential_address': '8 Hampstead Heath, London, NW3 1AA',
-                        'ownership_pct': '30',
-                        'is_ubo': True,
+                        'residential_address': '78 Mayfair Gardens, London, W1K 3AB',
+                        'country_of_residence': 'UK',
+                        'ownership_pct': '0',
+                        'is_ubo': False,
                         'source': 'enquiry'
                     }
                 ]
+
+                # Include any dynamically inserted principals
+                if 'FundPrincipals' in self._demo_inserts:
+                    for inserted in self._demo_inserts['FundPrincipals']:
+                        if inserted.get('onboarding_id') == onboarding_id:
+                            # Avoid duplicates
+                            existing_ids = {r['principal_id'] for r in results}
+                            if inserted.get('principal_id') not in existing_ids:
+                                results.append(inserted.copy())
+
+                # Merge any stored demo updates into results
+                for result in results:
+                    key = f"FundPrincipals:{result.get('principal_id', '')}"
+                    if key in self._demo_updates:
+                        result.update(self._demo_updates[key])
+
+                # Remove any deleted principals
+                deleted_ids = self._demo_deletes.get('FundPrincipals', set())
+                results = [r for r in results if r.get('principal_id') not in deleted_ids]
+
+                # Filter by principal_id if specified
+                if principal_id_filter:
+                    results = [p for p in results if p.get('principal_id') == principal_id_filter]
+
+                return results
 
             # Return requirements from session in demo mode
             if table_name == 'DocumentRequirements':
@@ -1172,6 +1214,13 @@ class SheetsDB:
                     session['demo_requirements'] = []
                 session['demo_requirements'].append(data)
                 session.modified = True
+
+            # Store inserted records in class-level dict for demo persistence
+            if table_name not in self._demo_inserts:
+                self._demo_inserts[table_name] = []
+            self._demo_inserts[table_name].append(data.copy())
+            logger.info(f"[DEMO] Stored insert for {table_name}: {data}")
+
             return True
 
         try:
@@ -1208,6 +1257,21 @@ class SheetsDB:
                         break
                 session['demo_requirements'] = requirements
                 session.modified = True
+
+            # Store update in class-level dict for all table types
+            key = f"{table_name}:{record_id}"
+            if key not in self._demo_updates:
+                self._demo_updates[key] = {}
+            self._demo_updates[key].update(data)
+            logger.info(f"[DEMO] Stored update for {key}: {data}")
+
+            # Also update any inserted demo records
+            if table_name in self._demo_inserts:
+                for record in self._demo_inserts[table_name]:
+                    if record.get('principal_id') == record_id or record.get('id') == record_id:
+                        record.update(data)
+                        break
+
             return True
 
         try:
@@ -1243,6 +1307,20 @@ class SheetsDB:
                 requirements = session.get('demo_requirements', [])
                 session['demo_requirements'] = [r for r in requirements if r.get('requirement_id') != record_id]
                 session.modified = True
+
+            # Track deletions in class-level set
+            if table_name not in self._demo_deletes:
+                self._demo_deletes[table_name] = set()
+            self._demo_deletes[table_name].add(record_id)
+
+            # Also remove from demo inserts if it was an inserted record
+            if table_name in self._demo_inserts:
+                self._demo_inserts[table_name] = [
+                    r for r in self._demo_inserts[table_name]
+                    if r.get('principal_id') != record_id and r.get('id') != record_id
+                ]
+
+            logger.info(f"[DEMO] Stored delete for {table_name}:{record_id}")
             return True
 
         try:

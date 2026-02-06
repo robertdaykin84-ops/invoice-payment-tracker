@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 6: Commercial{% endblock %}
+{% block title %}Phase 6: Approval{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,11 +8,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 6: Commercial</li>
+                <li class="breadcrumb-item active">Phase 6: Approval</li>
             </ol>
         </nav>
-        <h1 class="h3 mb-1">Commercial Terms</h1>
-        <p class="text-muted">Service agreement and fee schedule</p>
+        <h1 class="h3 mb-1">Approval</h1>
+        <p class="text-muted">Client acceptance memo and sign-off</p>
     </div>
 </div>
 
@@ -34,188 +34,255 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- Service Selection -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-list-check me-2"></i>
-                Services Required
-            </div>
-            <div class="card-body">
-                <form id="commercialForm">
-                    <h6 class="mb-3">Administration Services</h6>
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_nav" checked>
-                                <label class="form-check-label" for="service_nav">
-                                    <strong>NAV Calculation</strong>
-                                    <small class="text-muted d-block">Monthly/Quarterly valuations</small>
-                                </label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_investor" checked>
-                                <label class="form-check-label" for="service_investor">
-                                    <strong>Investor Services</strong>
-                                    <small class="text-muted d-block">Investor communications & reporting</small>
-                                </label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_accounting" checked>
-                                <label class="form-check-label" for="service_accounting">
-                                    <strong>Fund Accounting</strong>
-                                    <small class="text-muted d-block">Management & performance fees</small>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_aml">
-                                <label class="form-check-label" for="service_aml">
-                                    <strong>AML/KYC Services</strong>
-                                    <small class="text-muted d-block">Ongoing investor due diligence</small>
-                                </label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_ta" checked>
-                                <label class="form-check-label" for="service_ta">
-                                    <strong>Transfer Agency</strong>
-                                    <small class="text-muted d-block">Subscription & redemption processing</small>
-                                </label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_reg">
-                                <label class="form-check-label" for="service_reg">
-                                    <strong>Regulatory Filings</strong>
-                                    <small class="text-muted d-block">JFSC notifications & reporting</small>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="mb-3">Corporate Services</h6>
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_director" checked>
-                                <label class="form-check-label" for="service_director">
-                                    <strong>Director Services (GP)</strong>
-                                    <small class="text-muted d-block">2 independent directors provided</small>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="service_cosec" checked>
-                                <label class="form-check-label" for="service_cosec">
-                                    <strong>Company Secretary</strong>
-                                    <small class="text-muted d-block">GP company secretarial services</small>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Fee Schedule -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-currency-pound me-2"></i>Fee Schedule</span>
-                <span class="badge bg-primary"><i class="bi bi-robot me-1"></i>AI Generated</span>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info mb-4">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Fee proposal generated based on fund size ($500M), structure complexity (Low), and services selected.
-                </div>
-
-                <table class="table table-hover mb-4" id="fee-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Service</th>
-                            <th>Fee Type</th>
-                            <th class="text-end">Annual Fee</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fee-table-body">
-                        <!-- Dynamic content populated by JavaScript -->
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="2">Total Annual Fee</th>
-                            <th class="text-end text-primary" id="annual-total">£148,000</th>
-                        </tr>
-                        <tr>
-                            <td colspan="2"><small>Effective rate on NAV (at target)</small></td>
-                            <td class="text-end"><small class="text-muted" id="effective-bps">2.96 bps</small></td>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <h6 class="mb-3">One-Time Setup Fees</h6>
-                <table class="table table-sm mb-4" id="setup-table">
-                    <tbody id="setup-table-body">
-                        <!-- Dynamic content populated by JavaScript -->
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th>Total Setup</th>
-                            <th class="text-end" id="setup-total">£20,000</th>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary btn-sm" id="btn-recalculate" type="button">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Recalculate Fees
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" type="button">
-                        <i class="bi bi-pencil me-1"></i> Customize Proposal
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" type="button">
-                        <i class="bi bi-download me-1"></i> Export Proposal
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Service Agreement -->
+        <!-- Client Summary -->
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-file-earmark-text me-2"></i>
-                Service Agreement
+                Client Acceptance Memo
             </div>
             <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div class="bg-light rounded p-3 text-center" style="width: 80px;">
-                        <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                <!-- AI Generated Memo -->
+                <div class="border rounded p-4 bg-light mb-4" id="memoContent">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="mb-0">CLIENT ACCEPTANCE MEMORANDUM</h5>
+                        <span class="badge bg-primary"><i class="bi bi-robot me-1"></i>AI Generated</span>
                     </div>
-                    <div>
-                        <h6 class="mb-1">Administration Agreement</h6>
-                        <small class="text-muted">Standard AIFM administration agreement template</small>
-                        <div class="mt-2">
-                            <button class="btn btn-outline-primary btn-sm me-2">
-                                <i class="bi bi-eye me-1"></i> Preview
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-download me-1"></i> Download
-                            </button>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="small mb-1"><strong>Sponsor:</strong></p>
+                            <p class="mb-2">Granite Capital Partners LLP</p>
+
+                            <p class="small mb-1"><strong>Fund:</strong></p>
+                            <p class="mb-2">Granite Capital Fund III LP (JPF)</p>
+
+                            <p class="small mb-1"><strong>Jurisdiction:</strong></p>
+                            <p class="mb-2">Jersey</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="small mb-1"><strong>Risk Rating:</strong></p>
+                            <p class="mb-2"><span class="badge badge-risk-low">Low (28)</span></p>
+
+                            <p class="small mb-1"><strong>EDD Required:</strong></p>
+                            <p class="mb-2">No</p>
+
+                            <p class="small mb-1"><strong>Prepared By:</strong></p>
+                            <p class="mb-2">James Smith, Compliance</p>
                         </div>
                     </div>
+
+                    <hr>
+
+                    <h6>1. BACKGROUND</h6>
+                    <p class="small">
+                        Granite Capital Partners LLP is an established UK-based private equity firm seeking to
+                        appoint us as administrator for their third fund, Granite Capital Fund III LP, structured
+                        as a Jersey Private Fund (JPF).
+                    </p>
+
+                    <h6>2. SPONSOR OVERVIEW</h6>
+                    <p class="small">
+                        The sponsor is FCA-authorised (FRN: 123456) with permissions for managing AIFs and advising
+                        on investments. Incorporated in 2012, the firm has a 10+ year track record managing two
+                        prior funds. The three founding partners (John Smith, Sarah Johnson, Michael Brown) each
+                        hold approximately one-third ownership.
+                    </p>
+
+                    <h6>3. FUND STRUCTURE</h6>
+                    <p class="small">
+                        Simple LP structure with Granite Capital GP III Limited (Jersey) as General Partner.
+                        Target fund size of $500M. Investment strategy focused on mid-market buyouts in UK and
+                        European technology and healthcare sectors.
+                    </p>
+
+                    <h6>4. DUE DILIGENCE SUMMARY</h6>
+                    <p class="small">
+                        <strong>CDD:</strong> Complete for sponsor entity and all three principals.<br>
+                        <strong>Screening:</strong> All principals cleared - no PEP, sanctions, or adverse media matches.<br>
+                        <strong>Regulatory:</strong> FCA registration verified; Companies House records current.<br>
+                        <strong>Source of Wealth:</strong> Documented from prior fund management fees and carried interest.
+                    </p>
+
+                    <h6>5. RISK ASSESSMENT</h6>
+                    <p class="small">
+                        Overall risk rated <strong>Low (28/100)</strong>. Key factors:<br>
+                        &bull; UK jurisdiction and FCA regulation (low risk)<br>
+                        &bull; All British principals with clear backgrounds<br>
+                        &bull; Simple fund structure<br>
+                        &bull; Investment focus on low-risk geographies<br>
+                        &bull; No EDD triggers identified
+                    </p>
+
+                    <h6>6. RECOMMENDATION</h6>
+                    <p class="small mb-0">
+                        Based on the due diligence conducted, this client presents an acceptable risk profile.
+                        <strong>Recommendation: APPROVE</strong> for standard onboarding with annual periodic review.
+                    </p>
                 </div>
 
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="terms_confirm" checked>
-                    <label class="form-check-label" for="terms_confirm">
-                        I confirm the fee schedule has been reviewed and approved by the sponsor
-                    </label>
+                <div class="d-flex gap-2 mb-4">
+                    <button class="btn btn-outline-primary" id="btn-regenerate-memo">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Memo
+                    </button>
+                    <button class="btn btn-outline-secondary" id="btn-edit-memo">
+                        <i class="bi bi-pencil me-1"></i> Edit Memo
+                    </button>
+                    <button class="btn btn-outline-secondary" id="btn-download-pdf">
+                        <i class="bi bi-download me-1"></i> Download PDF
+                    </button>
                 </div>
+            </div>
+        </div>
 
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="agreement_confirm" checked>
-                    <label class="form-check-label" for="agreement_confirm">
-                        Service agreement terms have been agreed in principle
-                    </label>
+        <!-- Risk Assessment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-shield-check me-2"></i>
+                Risk Assessment
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <div class="display-5 fw-bold" id="overall-risk-score">{{ risk_score or '28' }}</div>
+                        <span class="badge fs-6 {% if risk_rating == 'Low' %}badge-risk-low{% elif risk_rating == 'Medium' %}badge-risk-medium{% else %}badge-risk-high{% endif %}">
+                            {{ risk_rating or 'Low' }}
+                        </span>
+                        <p class="small text-muted mt-2">Overall Risk Score</p>
+                    </div>
+                    <div class="col-md-8">
+                        <h6>Risk Factors:</h6>
+                        <ul class="small">
+                            <li>Jurisdiction: {{ jurisdiction_risk or 'Low risk' }}</li>
+                            <li>Business Type: {{ business_risk or 'Low risk' }}</li>
+                            <li>Screening: {{ screening_risk or 'No adverse findings' }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screening Report Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-search me-2"></i>
+                Sanctions Screening Report
+            </div>
+            <div class="card-body">
+                {% if screening_results %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Findings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in screening_results %}
+                            <tr>
+                                <td>{{ result.name }}</td>
+                                <td>{{ result.role }}</td>
+                                <td>
+                                    <span class="badge {% if result.status == 'Clear' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ result.status }}
+                                    </span>
+                                </td>
+                                <td>{{ result.findings or 'No adverse findings' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Screening must be completed in Phase 3 before approval.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Approval Workflow -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-check-circle me-2"></i>
+                Approval Workflow
+            </div>
+            <div class="card-body">
+                <div class="approval-flow" id="approvalWorkflow">
+                    {% set board = approvals.get('board', {}) %}
+                    {% set user_role = current_user.role if current_user else '' %}
+                    {% set is_admin = user_role in ['admin', 'mlro', 'compliance'] %}
+
+                    <!-- Board Approval -->
+                    <div class="d-flex align-items-start gap-3" id="step-board">
+                        {% if board.get('status') == 'approved' %}
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-check"></i>
+                        </div>
+                        {% elif board.get('status') == 'rejected' %}
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-x"></i>
+                        </div>
+                        {% else %}
+                        <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Board Approval</h6>
+                                    <p class="text-muted small mb-0">
+                                        {% if board.get('approved_by') %}
+                                        {{ board.approved_by }}, {{ board.get('approver_role', 'Board')|title }}
+                                        {% else %}
+                                        Board Member / Administrator
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if board.get('status') == 'approved' %}
+                                <span class="badge bg-success">Approved</span>
+                                {% elif board.get('status') == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% endif %}
+                            </div>
+                            {% if board.get('timestamp') %}
+                            <small class="text-muted">{{ board.timestamp }}</small>
+                            {% else %}
+                            <small class="text-muted">Awaiting board review</small>
+                            {% endif %}
+                            {% if board.get('comments') %}
+                            <p class="small mt-2 mb-0 fst-italic">"{{ board.comments }}"</p>
+                            {% endif %}
+
+                            {% if board.get('status') == 'pending' and is_admin %}
+                            <div class="mt-3 p-3 border rounded bg-light" id="form-board">
+                                <div class="mb-3">
+                                    <label class="form-label small">Board Approval Comments</label>
+                                    <textarea class="form-control" id="comments-board" rows="2" placeholder="Board decision and rationale..."></textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-success btn-sm btn-step-approve" data-step="board">
+                                        <i class="bi bi-check-circle me-1"></i> Approve
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm btn-step-request-info" data-step="board">
+                                        <i class="bi bi-question-circle me-1"></i> Request Info
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-step-reject" data-step="board">
+                                        <i class="bi bi-x-circle me-1"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -226,12 +293,23 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Phase 5
             </a>
             <div>
-                <button class="btn btn-outline-primary me-2" type="button">
-                    <i class="bi bi-save me-1"></i> Save Draft
+                <button type="button" class="btn btn-outline-primary me-2" id="btn-save-progress" onclick="saveProgress()">
+                    <i class="bi bi-save me-1"></i> Save Progress
                 </button>
-                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=7) }}" class="btn btn-primary">
-                    Complete Onboarding <i class="bi bi-arrow-right ms-1"></i>
+                {% set all_approved = approvals.get('board', {}).get('status') == 'approved' %}
+                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=7) }}"
+                   class="btn btn-primary me-2 {% if not all_approved %}disabled{% endif %}"
+                   id="btn-continue"
+                   {% if not all_approved %}aria-disabled="true"{% endif %}>
+                    Continue to Phase 7 <i class="bi bi-arrow-right ms-1"></i>
                 </a>
+                <small class="text-muted d-block text-end mt-1" id="approval-status-text">
+                    {% if all_approved %}
+                    <span class="text-success">All approvals complete - Ready to continue</span>
+                    {% else %}
+                    Requires Board approval
+                    {% endif %}
+                </small>
             </div>
         </div>
     </div>
@@ -244,22 +322,14 @@
                 Phase 6 Checklist
             </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0">
+                <ul class="list-unstyled mb-0" id="phase6Checklist">
                     <li class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-check-circle text-success"></i>
-                        <span>Services selected</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Fee schedule generated</span>
-                    </li>
-                    <li class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Terms confirmed</span>
+                        <span>Acceptance memo generated</span>
                     </li>
                     <li class="d-flex align-items-center gap-2">
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span>Agreement prepared</span>
+                        <i class="bi {% if approvals.get('board', {}).get('status') == 'approved' %}bi-check-circle text-success{% else %}bi-circle text-muted{% endif %}"></i>
+                        <span>Board approval</span>
                     </li>
                 </ul>
             </div>
@@ -267,177 +337,311 @@
 
         <div class="card mb-4">
             <div class="card-header">
-                <i class="bi bi-calculator me-2"></i>
-                Fee Summary
+                <i class="bi bi-info-circle me-2"></i>
+                Approval Requirements
             </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Annual Fees</span>
-                    <strong id="sidebar-annual">£148,000</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Setup Fees</span>
-                    <strong id="sidebar-setup">£20,000</strong>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted">Year 1 Total</span>
-                    <strong class="text-primary" id="sidebar-year1">£168,000</strong>
-                </div>
+            <div class="card-body small">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td><span class="badge badge-risk-low">Low</span></td>
+                        <td>Board Approval Required</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-risk-medium">Medium</span></td>
+                        <td>Board Approval Required</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-risk-high">High</span></td>
+                        <td>Board Approval Required</td>
+                    </tr>
+                </table>
             </div>
         </div>
 
+        {% if fee_data %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-currency-pound me-2"></i>
+                Proposed Services & Fees
+            </div>
+            <div class="card-body">
+                <h6 class="small text-muted mb-2">ANNUAL SERVICES</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-3">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th class="text-end">Annual Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for svc in fee_data.service_breakdown %}
+                            <tr>
+                                <td>
+                                    {{ svc.name }}
+                                    {% if svc.per_unit %}
+                                    <span class="text-muted">(per {{ svc.per_unit }})</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">&pound;{{ "{:,.0f}".format(svc.adjusted_fee) }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="fw-bold border-top">
+                                <td>Annual Total</td>
+                                <td class="text-end">{{ fee_data.annual_total_formatted }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if fee_data.setup_breakdown %}
+                <h6 class="small text-muted mb-2">SETUP FEES (ONE-TIME)</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-3">
+                        <tbody>
+                            {% for setup in fee_data.setup_breakdown %}
+                            {% if setup.amount > 0 %}
+                            <tr>
+                                <td>{{ setup.name }}</td>
+                                <td class="text-end">&pound;{{ "{:,.0f}".format(setup.amount) }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                            <tr class="fw-bold border-top">
+                                <td>Setup Total</td>
+                                <td class="text-end">{{ fee_data.setup_total_formatted }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <div class="bg-light rounded p-3 text-center">
+                    <div class="small text-muted">Year 1 Total</div>
+                    <div class="h5 mb-0 text-primary">{{ fee_data.year1_total_formatted }}</div>
+                    <div class="small text-muted mt-1">
+                        Effective rate: {{ fee_data.effective_bps }} bps on {{ fee_data.fund_size_formatted }} AUM
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not all_approved %}
+        <div class="card border-warning" id="awaitingCard">
+            <div class="card-header bg-warning bg-opacity-10">
+                <i class="bi bi-hourglass-split me-2 text-warning"></i>
+                Awaiting Approval
+            </div>
+            <div class="card-body text-center">
+                <p class="small text-muted mb-2" id="awaitingText">
+                    Pending Board approval.
+                </p>
+                {% if current_user.role == 'admin' %}
+                <p class="small text-primary mb-0">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Admin: You can approve on behalf of the Board.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
         <div class="card border-success">
             <div class="card-header bg-success bg-opacity-10">
                 <i class="bi bi-check-circle me-2 text-success"></i>
-                Approval Status
+                Fully Approved
             </div>
             <div class="card-body text-center">
-                <span class="badge bg-success mb-2">APPROVED</span>
                 <p class="small text-muted mb-0">
-                    MLRO approved on 02 Feb 2026
+                    Board approval complete. Ready to proceed.
                 </p>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Service checkbox mappings
-    const serviceCheckboxes = {
-        'service_nav': 'nav',
-        'service_investor': 'investor',
-        'service_accounting': 'accounting',
-        'service_aml': 'aml',
-        'service_ta': 'ta',
-        'service_reg': 'reg',
-        'service_director': 'director',
-        'service_cosec': 'cosec'
-    };
+    const onboardingId = '{{ onboarding_id }}';
+    const btnContinue = document.getElementById('btn-continue');
+    const statusText = document.getElementById('approval-status-text');
 
-    // Default parameters
-    const fundSize = 500000000;  // $500M - could be dynamic from session
-    const numInvestors = 50;
-    const numDirectors = 2;
+    // Handle step approval actions (board only)
+    document.querySelectorAll('.btn-step-approve').forEach(btn => {
+        btn.addEventListener('click', () => handleStepAction(btn.dataset.step, 'approve'));
+    });
+    document.querySelectorAll('.btn-step-request-info').forEach(btn => {
+        btn.addEventListener('click', () => handleStepAction(btn.dataset.step, 'request_info'));
+    });
+    document.querySelectorAll('.btn-step-reject').forEach(btn => {
+        btn.addEventListener('click', () => handleStepAction(btn.dataset.step, 'reject'));
+    });
 
-    // Get selected services
-    function getSelectedServices() {
-        const services = [];
-        for (const [checkboxId, serviceId] of Object.entries(serviceCheckboxes)) {
-            const checkbox = document.getElementById(checkboxId);
-            if (checkbox && checkbox.checked) {
-                services.push(serviceId);
-            }
+    async function handleStepAction(step, action) {
+        const comments = document.getElementById(`comments-${step}`)?.value || '';
+        const form = document.getElementById(`form-${step}`);
+
+        // Disable all buttons in this form
+        if (form) {
+            form.querySelectorAll('button').forEach(b => b.disabled = true);
         }
-        return services;
-    }
-
-    // Format currency
-    function formatCurrency(amount) {
-        return '£' + amount.toLocaleString('en-GB');
-    }
-
-    // Update fee tables
-    async function updateFees() {
-        const services = getSelectedServices();
 
         try {
-            const response = await fetch('/api/fees/calculate', {
+            const response = await fetch(`/api/onboarding/${onboardingId}/approve`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    fund_size: fundSize,
-                    services: services,
-                    num_investors: numInvestors,
-                    num_directors: numDirectors,
-                    complexity: 'low',
-                    include_setup: true
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step, action, comments })
             });
 
             const result = await response.json();
 
             if (result.status === 'ok') {
-                // Update service breakdown table
-                const feeTableBody = document.getElementById('fee-table-body');
-                if (feeTableBody) {
-                    let html = '';
-                    for (const service of result.service_breakdown) {
-                        const feeType = service.per_unit ?
-                            `Per ${service.per_unit} (${service.per_unit === 'investor' ? numInvestors : numDirectors})` :
-                            'Fixed annual';
-                        html += `
-                            <tr>
-                                <td>${service.name}</td>
-                                <td><small class="text-muted">${feeType}</small></td>
-                                <td class="text-end">${formatCurrency(service.adjusted_fee)}</td>
-                            </tr>
-                        `;
-                    }
-                    feeTableBody.innerHTML = html;
-                }
-
-                // Update setup table
-                const setupTableBody = document.getElementById('setup-table-body');
-                if (setupTableBody) {
-                    let html = '';
-                    for (const setup of result.setup_breakdown) {
-                        html += `
-                            <tr>
-                                <td>${setup.name}</td>
-                                <td class="text-end">${setup.amount > 0 ? formatCurrency(setup.amount) : 'Included'}</td>
-                            </tr>
-                        `;
-                    }
-                    setupTableBody.innerHTML = html;
-                }
-
-                // Update totals
-                const annualTotal = document.getElementById('annual-total');
-                if (annualTotal) annualTotal.textContent = result.annual_total_formatted;
-
-                const setupTotal = document.getElementById('setup-total');
-                if (setupTotal) setupTotal.textContent = result.setup_total_formatted;
-
-                const effectiveBps = document.getElementById('effective-bps');
-                if (effectiveBps) effectiveBps.textContent = result.effective_bps + ' bps';
-
-                // Update sidebar
-                const sidebarAnnual = document.getElementById('sidebar-annual');
-                if (sidebarAnnual) sidebarAnnual.textContent = result.annual_total_formatted;
-
-                const sidebarSetup = document.getElementById('sidebar-setup');
-                if (sidebarSetup) sidebarSetup.textContent = result.setup_total_formatted;
-
-                const sidebarYear1 = document.getElementById('sidebar-year1');
-                if (sidebarYear1) sidebarYear1.textContent = result.year1_total_formatted;
+                showToast(`Board ${action}d successfully`, action === 'approve' ? 'success' : 'warning');
+                // Reload page to reflect new state
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                showToast(result.message || 'Action failed', 'danger');
+                if (form) form.querySelectorAll('button').forEach(b => b.disabled = false);
             }
         } catch (error) {
-            console.error('Fee calculation error:', error);
+            console.error('Approval error:', error);
+            showToast('Network error - please try again', 'danger');
+            if (form) form.querySelectorAll('button').forEach(b => b.disabled = false);
         }
     }
 
-    // Bind change listeners to all service checkboxes
-    for (const checkboxId of Object.keys(serviceCheckboxes)) {
-        const checkbox = document.getElementById(checkboxId);
-        if (checkbox) {
-            checkbox.addEventListener('change', updateFees);
+    // Memo buttons
+    document.getElementById('btn-regenerate-memo').addEventListener('click', async function() {
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Generating...';
+        try {
+            const response = await fetch(`/api/onboarding/${onboardingId}/generate-memo`, { method: 'POST' });
+            if (response.ok) {
+                const result = await response.json();
+                if (result.memo_html) {
+                    document.getElementById('memoContent').innerHTML = result.memo_html;
+                    showToast('Memo regenerated successfully', 'success');
+                } else {
+                    showToast('Memo regenerated', 'success');
+                    setTimeout(() => window.location.reload(), 500);
+                }
+            } else {
+                const err = await response.json().catch(() => ({}));
+                showToast(err.message || 'Failed to regenerate memo', 'danger');
+            }
+        } catch (e) {
+            console.error('Memo regeneration error:', e);
+            showToast('Network error - please try again', 'danger');
         }
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Regenerate Memo';
+    });
+
+    document.getElementById('btn-edit-memo').addEventListener('click', function() {
+        const memo = document.getElementById('memoContent');
+        if (memo.contentEditable === 'true') {
+            memo.contentEditable = 'false';
+            memo.classList.remove('border-primary');
+            this.innerHTML = '<i class="bi bi-pencil me-1"></i> Edit Memo';
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline-secondary');
+            showToast('Memo editing disabled', 'info');
+        } else {
+            memo.contentEditable = 'true';
+            memo.classList.add('border-primary');
+            memo.focus();
+            this.innerHTML = '<i class="bi bi-check me-1"></i> Done Editing';
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-primary');
+            showToast('Memo is now editable - click Done Editing when finished', 'info');
+        }
+    });
+
+    document.getElementById('btn-download-pdf').addEventListener('click', async function() {
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Generating...';
+        try {
+            const response = await fetch(`/api/report/generate/${onboardingId}?type=compliance`);
+            if (!response.ok) {
+                // Try opening in new tab as fallback
+                window.open(`/api/report/generate/${onboardingId}?type=compliance`, '_blank');
+                showToast('Opening PDF in new tab', 'info');
+                throw new Error('Fallback to new tab');
+            }
+
+            const blob = await response.blob();
+            if (blob.type !== 'application/pdf') {
+                // Response isn't a PDF, try new tab
+                window.open(`/api/report/generate/${onboardingId}?type=compliance`, '_blank');
+                showToast('Opening PDF in new tab', 'info');
+            } else {
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'compliance_report.pdf';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                    if (match) filename = match[1];
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                showToast('PDF downloaded successfully', 'success');
+            }
+        } catch (error) {
+            if (error.message !== 'Fallback to new tab') {
+                console.error('PDF download error:', error);
+                showToast('Opening PDF report...', 'info');
+                window.open(`/api/report/generate/${onboardingId}?type=compliance`, '_blank');
+            }
+        }
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-download me-1"></i> Download PDF';
+    });
+
+    // Toast helper
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible position-fixed top-0 end-0 m-3 shadow`;
+        toast.style.zIndex = '9999';
+        toast.style.minWidth = '300px';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>`;
+        document.body.appendChild(toast);
+        setTimeout(() => { if (toast.parentElement) toast.remove(); }, 5000);
     }
 
-    // Bind recalculate button
-    const btnRecalculate = document.getElementById('btn-recalculate');
-    if (btnRecalculate) {
-        btnRecalculate.addEventListener('click', updateFees);
-    }
-
-    // Initial calculation on page load
-    updateFees();
+    // Save Progress
+    window.saveProgress = async function() {
+        const saveBtn = document.getElementById('btn-save-progress');
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
+            }
+            const response = await fetch(`/api/onboarding/${onboardingId}/save-progress`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phase: 6 })
+            });
+            const result = await response.json();
+            showToast(result.status === 'ok' ? 'Progress saved' : (result.message || 'Save failed'), result.status === 'ok' ? 'success' : 'danger');
+        } catch (error) {
+            showToast('Network error saving progress', 'danger');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Progress';
+            }
+        }
+    };
 });
 </script>
-{% endblock %}
+{% endblock extra_js %}

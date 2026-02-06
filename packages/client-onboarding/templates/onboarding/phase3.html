@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Phase 3: Screening & Risk{% endblock %}
+{% block title %}Phase 3: Commercial{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -8,11 +8,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
                 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Phase 3: Screening & Risk</li>
+                <li class="breadcrumb-item active">Phase 3: Commercial</li>
             </ol>
         </nav>
-        <h1 class="h3 mb-1">Screening & Risk Assessment</h1>
-        <p class="text-muted">PEP, Sanctions, Adverse Media screening via OpenSanctions</p>
+        <h1 class="h3 mb-1">Commercial Terms</h1>
+        <p class="text-muted">Service agreement and fee schedule</p>
     </div>
 </div>
 
@@ -34,181 +34,245 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- Screening Configuration -->
+        <!-- Service Selection -->
         <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-shield-check me-2"></i>Sanctions & PEP Screening</span>
-                <span class="badge bg-primary"><i class="bi bi-plug me-1"></i>OpenSanctions API</span>
-            </div>
-            <!-- Demo Mode Banner (shown after screening if in demo mode) -->
-            <div id="demo-mode-banner" class="alert alert-info m-3 mb-0 d-none" role="alert">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Demo Mode:</strong> Using simulated screening data. In production, results come from the live OpenSanctions API.
-                <br><small class="text-muted">Demo entities: Vladimir Putin (sanctions), Boris Johnson (PEP), Sam Bankman-Fried (adverse)</small>
+            <div class="card-header">
+                <i class="bi bi-list-check me-2"></i>
+                Services Required
             </div>
             <div class="card-body">
-                <!-- Entities to Screen -->
-                <h6 class="small text-uppercase text-muted mb-3">Entities to Screen</h6>
-
-                <div id="entities-list">
-                    <!-- Sponsor Principals -->
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="bi bi-people me-2"></i>Sponsor Principals</h6>
-                            <span class="badge bg-secondary" id="principals-count">3 persons</span>
+                <form id="commercialForm">
+                    <h6 class="mb-3">Administration Services</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_nav"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'nav' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_nav">
+                                    <strong>NAV Calculation</strong>
+                                    <small class="text-muted d-block">Monthly/Quarterly valuations</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_investor"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'investor' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_investor">
+                                    <strong>Investor Services</strong>
+                                    <small class="text-muted d-block">Investor communications & reporting</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_accounting"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'accounting' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_accounting">
+                                    <strong>Fund Accounting</strong>
+                                    <small class="text-muted d-block">Management & performance fees</small>
+                                </label>
+                            </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm mb-0" id="principals-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 30px;"><input type="checkbox" class="form-check-input" checked id="select-all-principals"></th>
-                                        <th>Name</th>
-                                        <th>Nationality</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr data-name="John Smith" data-type="person" data-nationality="gb">
-                                        <td><input type="checkbox" class="form-check-input entity-checkbox" checked></td>
-                                        <td>John Smith</td>
-                                        <td>British</td>
-                                        <td>Managing Partner</td>
-                                        <td class="screening-status"><span class="badge bg-secondary">Pending</span></td>
-                                    </tr>
-                                    <tr data-name="Sarah Johnson" data-type="person" data-nationality="gb">
-                                        <td><input type="checkbox" class="form-check-input entity-checkbox" checked></td>
-                                        <td>Sarah Johnson</td>
-                                        <td>British</td>
-                                        <td>Partner</td>
-                                        <td class="screening-status"><span class="badge bg-secondary">Pending</span></td>
-                                    </tr>
-                                    <tr data-name="Michael Brown" data-type="person" data-nationality="gb">
-                                        <td><input type="checkbox" class="form-check-input entity-checkbox" checked></td>
-                                        <td>Michael Brown</td>
-                                        <td>British</td>
-                                        <td>Partner</td>
-                                        <td class="screening-status"><span class="badge bg-secondary">Pending</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Sponsor Entity -->
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="bi bi-building me-2"></i>Sponsor Entity</h6>
-                            <span class="badge bg-secondary">1 company</span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm mb-0" id="companies-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 30px;"><input type="checkbox" class="form-check-input" checked></th>
-                                        <th>Company Name</th>
-                                        <th>Jurisdiction</th>
-                                        <th>Reg. Number</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr data-name="Granite Capital Partners LLP" data-type="company" data-jurisdiction="gb">
-                                        <td><input type="checkbox" class="form-check-input entity-checkbox" checked></td>
-                                        <td>Granite Capital Partners LLP</td>
-                                        <td>United Kingdom</td>
-                                        <td>OC123456</td>
-                                        <td class="screening-status"><span class="badge bg-secondary">Pending</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_aml"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'aml' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_aml">
+                                    <strong>AML/KYC Services</strong>
+                                    <small class="text-muted d-block">Ongoing investor due diligence</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_ta"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'ta' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_ta">
+                                    <strong>Transfer Agency</strong>
+                                    <small class="text-muted d-block">Subscription & redemption processing</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_reg"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'reg' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_reg">
+                                    <strong>Regulatory Filings</strong>
+                                    <small class="text-muted d-block">JFSC notifications & reporting</small>
+                                </label>
+                            </div>
                         </div>
                     </div>
+
+                    <h6 class="mb-3">Corporate Services</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_director"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'director' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_director">
+                                    <strong>Director Services (GP)</strong>
+                                    <small class="text-muted d-block">2 independent directors provided</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="service_cosec"
+                                       {{ 'checked' if enquiry and enquiry.services_required and 'cosec' in enquiry.services_required }}>
+                                <label class="form-check-label" for="service_cosec">
+                                    <strong>Company Secretary</strong>
+                                    <small class="text-muted d-block">GP company secretarial services</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Fee Structure Selection -->
+                    <h6 class="mb-3">Fee Structure</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Fee Structure</label>
+                            <select class="form-select" id="feeStructure">
+                                <option value="fixed" selected>Fixed Annual</option>
+                                <option value="per_transaction">Per Transaction</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="transactionsField" style="display: none;">
+                            <label class="form-label">Estimated Transactions (Year 1)</label>
+                            <input type="number" class="form-control" id="estimatedTransactions" value="100" min="1">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Fee Schedule -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-currency-pound me-2"></i>Fee Schedule</span>
+                <span class="badge bg-primary"><i class="bi bi-robot me-1"></i>AI Generated</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Fee proposal generated based on fund size (${{ enquiry.target_size|default('500,000,000') if enquiry else '500,000,000' }}), structure complexity (Low), and services selected.
                 </div>
 
-                <!-- Run Screening Button -->
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div class="small text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Screening checks against global sanctions lists, PEP databases, and adverse media sources.
-                    </div>
-                    <button class="btn btn-primary" id="run-screening-btn">
-                        <i class="bi bi-play-fill me-1"></i> Run Screening
+                <div class="table-responsive">
+                <table class="table table-hover mb-4" id="fee-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Service</th>
+                            <th>Fee Type</th>
+                            <th class="text-end">Annual Fee</th>
+                            <th class="text-end">Cost Per TX</th>
+                            <th class="text-end">TX/Year</th>
+                            <th class="text-end">Total TX Fee</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="fee-table-body">
+                        <!-- Dynamic content populated by JavaScript -->
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="2">Total Fixed Fee</th>
+                            <th class="text-end" id="total-fixed-fee">£0</th>
+                            <th colspan="4"></th>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Total Approx TX Fee</th>
+                            <th colspan="3"></th>
+                            <th class="text-end" id="total-tx-fee">£0</th>
+                            <th></th>
+                        </tr>
+                        <tr class="table-primary">
+                            <th colspan="2">Total Approx Fee</th>
+                            <th class="text-end text-primary" id="annual-total">£148,000</th>
+                            <th colspan="4"></th>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><small>Effective rate on NAV (at target)</small></td>
+                            <td class="text-end"><small class="text-muted" id="effective-bps">2.96 bps</small></td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+                <button type="button" class="btn btn-outline-success btn-sm mb-3" id="btn-add-service">
+                    <i class="bi bi-plus-circle me-1"></i> Add Service
+                </button>
+
+                <h6 class="mb-3">One-Time Setup Fees</h6>
+                <table class="table table-sm mb-4" id="setup-table">
+                    <tbody id="setup-table-body">
+                        <!-- Dynamic content populated by JavaScript -->
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Total Setup</th>
+                            <th class="text-end" id="setup-total">£20,000</th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" id="btn-export" type="button">
+                        <i class="bi bi-download me-1"></i> Export Proposal
                     </button>
-                </div>
-
-                <!-- Screening Progress -->
-                <div id="screening-progress" class="mt-4 d-none">
-                    <div class="progress mb-2" style="height: 8px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <div class="small text-muted text-center" id="progress-text">Initializing screening...</div>
                 </div>
             </div>
         </div>
 
-        <!-- Screening Results -->
-        <div class="card mb-4" id="results-card" style="display: none;">
+        <!-- Service Agreement -->
+        <div class="card mb-4">
             <div class="card-header">
-                <i class="bi bi-clipboard-data me-2"></i>
-                Screening Results
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Service Agreement
             </div>
             <div class="card-body">
-                <!-- Summary -->
-                <div class="row g-3 mb-4" id="results-summary">
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Total Screened</div>
-                            <div class="h4 mb-0" id="total-screened">-</div>
-                        </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="bg-light rounded p-3 text-center" style="width: 80px;">
+                        <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Clear</div>
-                            <div class="h4 mb-0 text-success" id="total-clear">-</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Review Required</div>
-                            <div class="h4 mb-0 text-warning" id="total-review">-</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <div class="small text-muted mb-1">Hits</div>
-                            <div class="h4 mb-0 text-danger" id="total-hits">-</div>
+                    <div>
+                        <h6 class="mb-1">Administration Agreement</h6>
+                        <small class="text-muted">Standard AIFM administration agreement template</small>
+                        <div class="mt-2">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.open('/api/onboarding/{{ onboarding_id }}/admin-agreement', '_blank')">
+                                <i class="bi bi-eye me-1"></i> Preview
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="window.location.href='/api/onboarding/{{ onboarding_id }}/admin-agreement?download=1'">
+                                <i class="bi bi-download me-1"></i> Download
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Detailed Results -->
-                <h6 class="small text-uppercase text-muted mb-3">Detailed Results</h6>
-                <div id="detailed-results">
-                    <!-- Results will be populated by JavaScript -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms_confirm" checked>
+                    <label class="form-check-label" for="terms_confirm">
+                        I confirm the fee schedule has been reviewed and approved by the sponsor
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="agreement_confirm" checked>
+                    <label class="form-check-label" for="agreement_confirm">
+                        Service agreement terms have been agreed in principle
+                    </label>
                 </div>
             </div>
         </div>
 
         <!-- Form Actions -->
-        <form method="POST" action="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=3) }}">
-            <!-- Hidden fields for audit trail -->
-            <input type="hidden" name="sponsor_name" id="form-sponsor-name" value="{{ session.get('current_sponsor', 'Granite Capital Partners LLP') }}">
-            <input type="hidden" name="fund_name" id="form-fund-name" value="{{ session.get('current_fund', 'Granite Capital Fund III LP') }}">
-            <div class="d-flex justify-content-between mb-4">
-                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=2) }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Back to Phase 2
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=2) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Phase 2
+            </a>
+            <div>
+                <button class="btn btn-outline-primary me-2" type="button" id="btn-save-draft">
+                    <i class="bi bi-save me-1"></i> Save Draft
+                </button>
+                <a href="{{ url_for('onboarding_phase', onboarding_id=onboarding_id, phase=4) }}" class="btn btn-primary">
+                    Continue to Phase 4 <i class="bi bi-arrow-right ms-1"></i>
                 </a>
-                <div>
-                    <button type="submit" name="action" value="save" class="btn btn-outline-primary me-2">
-                        <i class="bi bi-save me-1"></i> Save Draft
-                    </button>
-                    <button type="submit" name="action" value="next" class="btn btn-primary" id="continue-btn" disabled>
-                        Continue to Phase 4 <i class="bi bi-arrow-right ms-1"></i>
-                    </button>
-                </div>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Sidebar -->
@@ -219,14 +283,22 @@
                 Phase 3 Checklist
             </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0" id="checklist">
-                    <li class="d-flex align-items-center gap-2 mb-2" id="check-screening">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Run sanctions screening</span>
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Services selected</span>
                     </li>
-                    <li class="d-flex align-items-center gap-2 mb-2" id="check-review">
-                        <i class="bi bi-circle text-muted"></i>
-                        <span>Review any matches</span>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Fee schedule generated</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Terms confirmed</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>Agreement prepared</span>
                     </li>
                 </ul>
             </div>
@@ -234,241 +306,386 @@
 
         <div class="card mb-4">
             <div class="card-header">
-                <i class="bi bi-database me-2"></i>
-                Data Sources
-            </div>
-            <div class="card-body small">
-                <p class="text-muted mb-2">OpenSanctions aggregates:</p>
-                <ul class="text-muted mb-0">
-                    <li>UN Security Council Sanctions</li>
-                    <li>EU Financial Sanctions</li>
-                    <li>US OFAC SDN List</li>
-                    <li>UK HMT Sanctions</li>
-                    <li>Politically Exposed Persons (PEPs)</li>
-                    <li>Interpol Notices</li>
-                    <li>National Crime Databases</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card mb-4" id="edd-trigger-card" style="display: none;">
-            <div class="card-header bg-warning bg-opacity-10">
-                <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
-                EDD May Be Required
+                <i class="bi bi-calculator me-2"></i>
+                Fee Summary
             </div>
             <div class="card-body">
-                <p class="small text-muted mb-0" id="edd-reason">
-                    Enhanced Due Diligence may be required based on screening results.
-                </p>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Annual Fees</span>
+                    <strong id="sidebar-annual">£148,000</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Setup Fees</span>
+                    <strong id="sidebar-setup">£20,000</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Year 1 Total</span>
+                    <strong class="text-primary" id="sidebar-year1">£168,000</strong>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const runBtn = document.getElementById('run-screening-btn');
-    const progressDiv = document.getElementById('screening-progress');
-    const progressBar = progressDiv.querySelector('.progress-bar');
-    const progressText = document.getElementById('progress-text');
-    const resultsCard = document.getElementById('results-card');
-    const continueBtn = document.getElementById('continue-btn');
+    const onboardingId = '{{ onboarding_id }}';
 
-    runBtn.addEventListener('click', async function() {
-        // Collect selected entities
-        const entities = [];
-        document.querySelectorAll('tr[data-name]').forEach(row => {
-            const checkbox = row.querySelector('.entity-checkbox');
-            if (checkbox && checkbox.checked) {
-                entities.push({
-                    name: row.dataset.name,
-                    type: row.dataset.type,
-                    nationality: row.dataset.nationality || null,
-                    jurisdiction: row.dataset.jurisdiction || null
-                });
+    // Service checkbox mappings
+    const serviceCheckboxes = {
+        'service_nav': 'nav',
+        'service_investor': 'investor',
+        'service_accounting': 'accounting',
+        'service_aml': 'aml',
+        'service_ta': 'ta',
+        'service_reg': 'reg',
+        'service_director': 'director',
+        'service_cosec': 'cosec'
+    };
+
+    // Parameters from enquiry data (dynamic)
+    const fundSize = parseInt('{{ enquiry.target_size|default("500000000") if enquiry else "500000000" }}'.replace(/,/g, ''));
+    const numInvestors = {{ enquiry.initial_investors|length if enquiry and enquiry.initial_investors else 50 }};
+    const numDirectors = {{ num_directors|default(3) }};
+
+    // Track custom rows added by user
+    let customRows = [];
+    let isEditable = false;
+
+    // Fee structure toggle
+    const feeStructureSelect = document.getElementById('feeStructure');
+    const transactionsField = document.getElementById('transactionsField');
+    const estimatedTransactionsInput = document.getElementById('estimatedTransactions');
+
+    if (feeStructureSelect) {
+        feeStructureSelect.addEventListener('change', function() {
+            if (transactionsField) {
+                transactionsField.style.display = this.value === 'per_transaction' ? '' : 'none';
             }
+            updateFees();
+        });
+    }
+
+    if (estimatedTransactionsInput) {
+        estimatedTransactionsInput.addEventListener('change', updateFees);
+    }
+
+    // Get selected services
+    function getSelectedServices() {
+        const services = [];
+        for (const [checkboxId, serviceId] of Object.entries(serviceCheckboxes)) {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox && checkbox.checked) {
+                services.push(serviceId);
+            }
+        }
+        return services;
+    }
+
+    // Format currency
+    function formatCurrency(amount) {
+        return '£' + amount.toLocaleString('en-GB');
+    }
+
+    // Parse currency string to number
+    function parseCurrency(str) {
+        return parseInt(String(str).replace(/[^0-9.-]/g, '')) || 0;
+    }
+
+    // Recalculate totals from editable cells
+    function recalcTotals() {
+        let totalFixed = 0;
+        let totalTx = 0;
+        document.querySelectorAll('#fee-table-body tr').forEach(row => {
+            const feeTypeSelect = row.querySelector('.fee-type-select');
+            const feeInput = row.querySelector('.fee-annual');
+            const costPerTxInput = row.querySelector('.fee-cost-per-tx');
+            const txPerYearInput = row.querySelector('.fee-tx-per-year');
+            const totalTxCell = row.querySelector('.fee-total-tx');
+
+            const feeType = feeTypeSelect ? feeTypeSelect.value : 'fixed';
+            const annualFee = feeInput ? parseCurrency(feeInput.value) : 0;
+            const costPerTx = costPerTxInput ? parseCurrency(costPerTxInput.value) : 0;
+            const txPerYear = txPerYearInput ? parseCurrency(txPerYearInput.value) : 0;
+            const rowTxFee = costPerTx * txPerYear;
+
+            // Update Total TX Fee cell
+            if (totalTxCell) {
+                totalTxCell.textContent = rowTxFee > 0 ? formatCurrency(rowTxFee) : '-';
+            }
+
+            if (feeType === 'fixed') {
+                totalFixed += annualFee;
+            }
+            totalTx += rowTxFee;
         });
 
-        if (entities.length === 0) {
-            alert('Please select at least one entity to screen.');
-            return;
+        const totalApprox = totalFixed + totalTx;
+
+        // Update footer totals
+        const totalFixedEl = document.getElementById('total-fixed-fee');
+        if (totalFixedEl) totalFixedEl.textContent = formatCurrency(totalFixed);
+
+        const totalTxEl = document.getElementById('total-tx-fee');
+        if (totalTxEl) totalTxEl.textContent = formatCurrency(totalTx);
+
+        const annualTotal = document.getElementById('annual-total');
+        if (annualTotal) annualTotal.textContent = formatCurrency(totalApprox);
+
+        const sidebarAnnual = document.getElementById('sidebar-annual');
+        if (sidebarAnnual) sidebarAnnual.textContent = formatCurrency(totalApprox);
+
+        // Setup total
+        let setupTotal = 0;
+        document.querySelectorAll('#setup-table-body tr').forEach(row => {
+            const input = row.querySelector('.setup-fee-input');
+            if (input) {
+                setupTotal += parseCurrency(input.value);
+            } else {
+                const td = row.querySelector('td:last-child');
+                if (td) setupTotal += parseCurrency(td.textContent);
+            }
+        });
+        const setupTotalEl = document.getElementById('setup-total');
+        if (setupTotalEl) setupTotalEl.textContent = formatCurrency(setupTotal);
+
+        const sidebarSetup = document.getElementById('sidebar-setup');
+        if (sidebarSetup) sidebarSetup.textContent = formatCurrency(setupTotal);
+
+        const sidebarYear1 = document.getElementById('sidebar-year1');
+        if (sidebarYear1) sidebarYear1.textContent = formatCurrency(totalApprox + setupTotal);
+
+        // Effective bps
+        if (fundSize > 0) {
+            const bps = (totalApprox / fundSize * 10000).toFixed(2);
+            const effectiveBps = document.getElementById('effective-bps');
+            if (effectiveBps) effectiveBps.textContent = bps + ' bps';
         }
+    }
 
-        // Show progress
-        runBtn.disabled = true;
-        runBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Screening...';
-        progressDiv.classList.remove('d-none');
+    // Render a fee row (editable)
+    function renderFeeRow(service, isCustom, index) {
+        const isTransaction = service.fee_type === 'transaction' || (service.per_unit && service.per_unit !== null);
+        const feeTypeVal = isTransaction ? 'transaction' : 'fixed';
+        const fee = service.adjusted_fee || 0;
+        const costPerTx = service.cost_per_transaction || 0;
+        const txPerYear = service.transactions_per_year || 0;
+        const totalTxFee = costPerTx * txPerYear;
 
-        // Animate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += Math.random() * 15;
-            if (progress > 90) progress = 90;
-            progressBar.style.width = progress + '%';
-            progressText.textContent = `Screening ${Math.floor(progress / 100 * entities.length)} of ${entities.length} entities...`;
-        }, 300);
+        const deleteBtn = isCustom ?
+            `<button class="btn btn-sm btn-outline-danger" onclick="removeCustomRow(${index})" title="Remove"><i class="bi bi-x"></i></button>` :
+            '';
+
+        return `
+            <tr data-custom="${isCustom}" data-index="${index}">
+                <td>${isCustom ?
+                    `<input type="text" class="form-control form-control-sm fee-name" value="${service.name}" style="min-width:120px;">` :
+                    service.name}</td>
+                <td>
+                    <select class="form-select form-select-sm fee-type-select" onchange="window.recalcTotals()" style="width:130px;">
+                        <option value="fixed" ${feeTypeVal === 'fixed' ? 'selected' : ''}>Fixed Fee</option>
+                        <option value="transaction" ${feeTypeVal === 'transaction' ? 'selected' : ''}>Transaction</option>
+                    </select>
+                </td>
+                <td class="text-end">
+                    <input type="number" class="form-control form-control-sm text-end fee-annual" value="${fee}" style="width:110px;display:inline-block;" onchange="window.recalcTotals()">
+                </td>
+                <td class="text-end">
+                    <input type="number" class="form-control form-control-sm text-end fee-cost-per-tx" value="${costPerTx}" style="width:100px;display:inline-block;" onchange="window.recalcTotals()">
+                </td>
+                <td class="text-end">
+                    <input type="number" class="form-control form-control-sm text-end fee-tx-per-year" value="${txPerYear}" style="width:100px;display:inline-block;" onchange="window.recalcTotals()">
+                </td>
+                <td class="text-end fee-total-tx">${totalTxFee > 0 ? formatCurrency(totalTxFee) : '-'}</td>
+                <td>${deleteBtn}</td>
+            </tr>
+        `;
+    }
+
+    // Update fee tables
+    async function updateFees() {
+        const services = getSelectedServices();
 
         try {
-            // Get sponsor and fund info for audit trail
-            const sponsorName = document.getElementById('form-sponsor-name').value;
-            const fundName = document.getElementById('form-fund-name').value;
+            const feeStructure = feeStructureSelect ? feeStructureSelect.value : 'fixed';
+            const estimatedTransactions = estimatedTransactionsInput ? parseInt(estimatedTransactionsInput.value) || 100 : 100;
 
-            const response = await fetch('/api/screening/run', {
+            const response = await fetch('/api/fees/calculate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
-                    entities,
-                    sponsor_name: sponsorName,
-                    fund_name: fundName,
-                    jurisdiction: 'GB',
-                    entity_type: 'lp',
-                    onboarding_id: '{{ onboarding_id }}'
+                    fund_size: fundSize,
+                    services: services,
+                    num_investors: numInvestors,
+                    num_directors: numDirectors,
+                    complexity: 'low',
+                    include_setup: true,
+                    fee_structure: feeStructure,
+                    estimated_transactions: estimatedTransactions
                 })
             });
 
-            const data = await response.json();
+            const result = await response.json();
 
-            // Complete progress
-            clearInterval(progressInterval);
-            progressBar.style.width = '100%';
-            progressText.textContent = 'Screening complete!';
-
-            setTimeout(() => {
-                // Re-enable buttons first to ensure UI is responsive
-                progressDiv.classList.add('d-none');
-                runBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Re-run Screening';
-                runBtn.disabled = false;
-                continueBtn.disabled = false; // Enable continue regardless of display success
-
-                // Display results with error handling
-                try {
-                    displayResults(data);
-                } catch (displayError) {
-                    console.error('Error displaying results:', displayError);
-                    alert('Screening completed but there was an error displaying results. Check console for details.');
+            if (result.status === 'ok') {
+                // Update service breakdown table with editable inputs
+                const feeTableBody = document.getElementById('fee-table-body');
+                if (feeTableBody) {
+                    let html = '';
+                    result.service_breakdown.forEach((service, i) => {
+                        html += renderFeeRow(service, false, i);
+                    });
+                    // Add custom rows
+                    customRows.forEach((cr, i) => {
+                        html += renderFeeRow(cr, true, i);
+                    });
+                    feeTableBody.innerHTML = html;
                 }
-            }, 500);
 
+                // Update setup table (editable)
+                const setupTableBody = document.getElementById('setup-table-body');
+                if (setupTableBody) {
+                    let html = '';
+                    for (const setup of result.setup_breakdown) {
+                        html += `
+                            <tr>
+                                <td>${setup.name}</td>
+                                <td class="text-end">
+                                    <input type="number" class="form-control form-control-sm text-end setup-fee-input" value="${setup.amount || 0}" style="width:110px;display:inline-block;" onchange="window.recalcTotals()">
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    setupTableBody.innerHTML = html;
+                }
+
+                // Recalculate all totals from the rendered inputs
+                recalcTotals();
+            }
         } catch (error) {
-            clearInterval(progressInterval);
-            progressDiv.classList.add('d-none');
-            runBtn.innerHTML = '<i class="bi bi-play-fill me-1"></i> Run Screening';
-            runBtn.disabled = false;
-            alert('Screening failed: ' + error.message);
+            console.error('Fee calculation error:', error);
+        }
+    }
+
+    // Add custom service row
+    window.addCustomService = function() {
+        customRows.push({
+            name: 'Custom Service',
+            per_unit: null,
+            adjusted_fee: 0,
+            cost_per_transaction: 0,
+            transactions_per_year: 0
+        });
+        updateFees();
+    };
+
+    // Remove custom row
+    window.removeCustomRow = function(index) {
+        customRows.splice(index, 1);
+        updateFees();
+    };
+
+    // Expose recalcTotals globally for inline onchange
+    window.recalcTotals = recalcTotals;
+
+    // Collect fee table data as JSON
+    function collectFeeData() {
+        const feeRows = [];
+        document.querySelectorAll('#fee-table-body tr').forEach(row => {
+            const nameInput = row.querySelector('.fee-name');
+            const name = nameInput ? nameInput.value : row.querySelector('td:first-child').textContent.trim();
+            const feeTypeSelect = row.querySelector('.fee-type-select');
+            feeRows.push({
+                name: name,
+                fee_type: feeTypeSelect ? feeTypeSelect.value : 'fixed',
+                annual_fee: parseCurrency(row.querySelector('.fee-annual')?.value),
+                cost_per_transaction: parseCurrency(row.querySelector('.fee-cost-per-tx')?.value),
+                transactions_per_year: parseCurrency(row.querySelector('.fee-tx-per-year')?.value)
+            });
+        });
+        const setupRows = [];
+        document.querySelectorAll('#setup-table-body tr').forEach(row => {
+            const name = row.querySelector('td:first-child')?.textContent.trim();
+            const input = row.querySelector('.setup-fee-input');
+            setupRows.push({
+                name: name || '',
+                amount: input ? parseCurrency(input.value) : 0
+            });
+        });
+        return { fees: feeRows, setup: setupRows };
+    }
+
+    // Export Proposal - open admin agreement PDF
+    document.getElementById('btn-export').addEventListener('click', function() {
+        window.open('/api/onboarding/' + onboardingId + '/admin-agreement', '_blank');
+    });
+
+    // Save Draft
+    document.getElementById('btn-save-draft').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Saving...';
+
+        try {
+            const feeData = collectFeeData();
+            const services = getSelectedServices();
+
+            const response = await fetch('/api/onboarding/' + onboardingId + '/save-fees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    services: services,
+                    fee_data: feeData,
+                    fee_structure: feeStructureSelect ? feeStructureSelect.value : 'fixed',
+                    estimated_transactions: estimatedTransactionsInput ? parseInt(estimatedTransactionsInput.value) || 100 : 100
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'ok') {
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Saved!';
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-success');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Draft';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-primary');
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                alert('Save failed: ' + (result.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Draft';
+            }
+        } catch (error) {
+            console.error('Save draft error:', error);
+            alert('Failed to save draft. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Draft';
         }
     });
 
-    function displayResults(data) {
-        const results = data.results;
-        const demoMode = data.demo_mode;
-        const auditTrail = data.audit_trail;
+    // Add service button
+    document.getElementById('btn-add-service').addEventListener('click', function() {
+        window.addCustomService();
+    });
 
-        // Show demo mode banner if applicable
-        const demoBanner = document.getElementById('demo-mode-banner');
-        if (demoMode) {
-            demoBanner.classList.remove('d-none');
-        } else {
-            demoBanner.classList.add('d-none');
+    // Bind change listeners to all service checkboxes
+    for (const checkboxId of Object.keys(serviceCheckboxes)) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.addEventListener('change', updateFees);
         }
-
-        // Show audit trail status
-        if (auditTrail && auditTrail.saved) {
-            const auditBanner = document.createElement('div');
-            auditBanner.className = 'alert alert-success m-3 mb-0';
-            auditBanner.innerHTML = auditTrail.gdrive_demo_mode
-                ? '<i class="bi bi-folder-check me-2"></i><strong>Audit Trail:</strong> Screening results logged (demo mode - not uploaded to Google Drive)'
-                : '<i class="bi bi-cloud-check me-2"></i><strong>Audit Trail:</strong> Screening results saved to Google Drive';
-            const cardBody = document.querySelector('#results-card .card-body');
-            cardBody.insertBefore(auditBanner, cardBody.firstChild);
-        }
-
-        // Update table statuses
-        results.forEach(result => {
-            const row = document.querySelector(`tr[data-name="${result.name}"]`);
-            if (row) {
-                const statusCell = row.querySelector('.screening-status');
-                let badge = '';
-                if (result.risk_level === 'clear') {
-                    badge = '<span class="badge bg-success"><i class="bi bi-check"></i> Clear</span>';
-                } else if (result.risk_level === 'review') {
-                    badge = '<span class="badge bg-warning text-dark"><i class="bi bi-eye"></i> Review</span>';
-                } else if (result.risk_level === 'medium' || result.risk_level === 'high') {
-                    badge = `<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> ${result.risk_level.charAt(0).toUpperCase() + result.risk_level.slice(1)}</span>`;
-                } else if (result.risk_level === 'critical') {
-                    badge = '<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Hit</span>';
-                } else {
-                    badge = '<span class="badge bg-success"><i class="bi bi-check"></i> Clear</span>';
-                }
-                statusCell.innerHTML = badge;
-            }
-        });
-
-        // Show results card
-        resultsCard.style.display = 'block';
-
-        // Calculate summary
-        let clear = 0, review = 0, hits = 0;
-        results.forEach(r => {
-            if (r.risk_level === 'clear') clear++;
-            else if (r.risk_level === 'review' || r.risk_level === 'medium') review++;
-            else if (r.risk_level === 'high' || r.risk_level === 'critical') hits++;
-            else clear++;
-        });
-
-        document.getElementById('total-screened').textContent = results.length;
-        document.getElementById('total-clear').textContent = clear;
-        document.getElementById('total-review').textContent = review;
-        document.getElementById('total-hits').textContent = hits;
-
-        // Generate detailed results
-        const detailedDiv = document.getElementById('detailed-results');
-        detailedDiv.innerHTML = results.map(r => {
-            const matchesHtml = r.matches && r.matches.length > 0
-                ? `<div class="mt-2 small">
-                    <strong>Potential Matches:</strong>
-                    <ul class="mb-0 mt-1">
-                        ${r.matches.slice(0, 3).map(m => `
-                            <li>${m.name} (Score: ${(m.score * 100).toFixed(0)}%) - ${m.type || 'Unknown'}</li>
-                        `).join('')}
-                    </ul>
-                   </div>`
-                : '';
-
-            let statusClass = 'success';
-            let statusText = 'Clear';
-            if (r.risk_level === 'review' || r.risk_level === 'medium') {
-                statusClass = 'warning';
-                statusText = 'Review Required';
-            } else if (r.risk_level === 'high' || r.risk_level === 'critical') {
-                statusClass = 'danger';
-                statusText = 'Match Found';
-            }
-
-            return `
-                <div class="border rounded p-3 mb-2">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <strong>${r.name}</strong>
-                            <div class="small text-muted">
-                                PEP: ${r.has_pep_hit ? '<span class="text-warning">Potential match</span>' : '<span class="text-success">Clear</span>'} |
-                                Sanctions: ${r.has_sanctions_hit ? '<span class="text-danger">Match</span>' : '<span class="text-success">Clear</span>'} |
-                                Adverse Media: ${r.has_adverse_media ? '<span class="text-warning">Found</span>' : '<span class="text-success">Clear</span>'}
-                            </div>
-                        </div>
-                        <span class="badge bg-${statusClass}">${statusText}</span>
-                    </div>
-                    ${matchesHtml}
-                </div>
-            `;
-        }).join('');
-
-        // Update checklist
-        document.querySelector('#check-screening i').className = 'bi bi-check-circle text-success';
-        document.querySelector('#check-review i').className = 'bi bi-check-circle text-success';
-
-        // Enable continue button
-        continueBtn.disabled = false;
     }
+
+    // Initial calculation on page load
+    updateFees();
 });
 </script>
-{% endblock %}
+{% endblock extra_js %}

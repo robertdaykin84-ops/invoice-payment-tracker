@@ -15,7 +15,7 @@ from flask import (
 from flask_cors import CORS
 from dotenv import load_dotenv
 from services.sheets_db import get_client as get_sheets_client
-from services.pdf_report import generate_report, REPORT_TYPES
+from services.pdf_report import generate_report, generate_screening_report, _get_screening_demo_data, generate_admin_agreement, REPORT_TYPES
 from services import (
     notify_edd_triggered,
     notify_approval_required,
@@ -62,7 +62,7 @@ ROLES = {
     'bd': {'name': 'Business Development', 'can_approve': False},
     'compliance': {'name': 'Compliance Analyst', 'can_approve': 'standard'},
     'mlro': {'name': 'MLRO', 'can_approve': 'all'},
-    'admin': {'name': 'Administrator', 'can_approve': False}
+    'admin': {'name': 'Administrator', 'can_approve': 'all'}
 }
 
 # Demo users for POC
@@ -102,6 +102,7 @@ MOCK_ENQUIRIES = {
         'target_size': '500,000,000',
         'investment_strategy': 'Mid-market buyout investments in UK and European technology and healthcare sectors. Target companies with EBITDA of $10-50M.',
         'target_countries': ['uk', 'eu'],
+        'services_required': ['nav', 'investor', 'accounting', 'ta', 'director', 'cosec'],
         'principals': [
             {
                 'name': 'John Smith',
@@ -472,6 +473,7 @@ def login():
         user_id = request.form.get('user_id')
         if user_id in DEMO_USERS:
             session['user_id'] = user_id
+            session['kyc_phase_active'] = {}
             flash(f'Welcome, {DEMO_USERS[user_id]["name"]}!', 'success')
             return redirect(url_for('dashboard'))
         flash('Invalid user selection.', 'danger')
@@ -492,27 +494,22 @@ def switch_user(user_id):
     """Quick user switch for demo"""
     if DEMO_MODE and user_id in DEMO_USERS:
         session['user_id'] = user_id
+        session['kyc_phase_active'] = {}
         flash(f'Switched to {DEMO_USERS[user_id]["name"]} ({ROLES[DEMO_USERS[user_id]["role"]]["name"]})', 'info')
     return redirect(url_for('dashboard'))
 
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    """Main dashboard - role-specific view"""
-    user = get_current_user()
-
-    # Get onboardings from Sheets
+def _get_onboardings_with_session():
+    """Get onboardings from Sheets with session overrides (shared by dashboard and reports API)."""
     onboardings = sheets_db.get_onboardings()
 
-    # Fallback to mock data if Sheets is empty/demo mode
     if not onboardings:
         onboardings = [
             {
                 'onboarding_id': 'ONB-001',
                 'sponsor_name': 'Granite Capital Partners LLP',
                 'fund_name': 'Granite Capital Fund III LP',
-                'current_phase': 4,
+                'current_phase': 5,
                 'status': 'in_progress',
                 'risk_level': 'low',
                 'assigned_to': 'James Smith',
@@ -558,18 +555,37 @@ def dashboard():
             }
         ]
     else:
-        # Enrich onboardings with sponsor names if not present
         for onb in onboardings:
             if not onb.get('sponsor_name') and onb.get('sponsor_id'):
                 sponsor = sheets_db.get_sponsor(onb['sponsor_id'])
                 if sponsor:
                     onb['sponsor_name'] = sponsor.get('legal_name', 'Unknown')
-            # Convert string booleans
             if isinstance(onb.get('is_existing_sponsor'), str):
                 onb['is_existing_sponsor'] = onb['is_existing_sponsor'].lower() == 'true'
-            # Ensure phase is int
             if isinstance(onb.get('current_phase'), str):
                 onb['current_phase'] = int(onb['current_phase'])
+
+    # Filter out deleted onboardings
+    deleted_ids = session.get('deleted_onboardings', [])
+    onboardings = [o for o in onboardings if o.get('onboarding_id', o.get('id', '')) not in deleted_ids]
+
+    # Merge session phase progress
+    phase_progress = session.get('phase_progress', {})
+    for onb in onboardings:
+        onb_id = onb.get('onboarding_id', onb.get('id', ''))
+        if onb_id in phase_progress:
+            onb['current_phase'] = phase_progress[onb_id]
+
+    return onboardings
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Main dashboard - role-specific view"""
+    user = get_current_user()
+
+    onboardings = _get_onboardings_with_session()
 
     # Calculate stats
     stats = {
@@ -733,6 +749,7 @@ def onboarding_phase(onboarding_id, phase):
                             'investment_strategy': form_data.get('investment_strategy'),
                             'target_size': form_data.get('target_fund_size'),
                             'declaration_accepted': request.form.get('declaration') == 'on',
+                            'services_required': json.loads(form_data.get('services_required_json', '[]')),
                             'status': 'in_progress',
                             'notes': ''
                         }
@@ -840,6 +857,10 @@ def onboarding_phase(onboarding_id, phase):
                 session['initial_investors'] = json.loads(form_data.get('investors_json', '[]'))
                 session['current_sponsor'] = form_data.get('legal_name')
                 session['current_fund'] = form_data.get('fund_name')
+                try:
+                    session['services_required'] = json.loads(form_data.get('services_required_json', '[]'))
+                except (json.JSONDecodeError, TypeError):
+                    session['services_required'] = []
 
         # On phase 1, ensure folder structure is created
         if phase == 1 and sponsor_name != 'Unknown Sponsor':
@@ -853,9 +874,22 @@ def onboarding_phase(onboarding_id, phase):
             # Continue to next phase
             if phase < len(phases):
                 next_phase = phase + 1
+
+                # Store phase progress in session for demo mode
+                if 'phase_progress' not in session:
+                    session['phase_progress'] = {}
+                session['phase_progress'][onboarding_id] = next_phase
+                session.modified = True
+
                 flash(f'Phase {phase} completed. Proceeding to {phases[next_phase - 1]["name"]}.', 'success')
                 return redirect(url_for('onboarding_phase', onboarding_id=onboarding_id, phase=next_phase))
             else:
+                # Store final phase completion in session for demo mode
+                if 'phase_progress' not in session:
+                    session['phase_progress'] = {}
+                session['phase_progress'][onboarding_id] = len(phases)
+                session.modified = True
+
                 flash('Onboarding complete!', 'success')
                 return redirect(url_for('dashboard'))
 
@@ -933,6 +967,23 @@ def onboarding_phase(onboarding_id, phase):
         'uploaded': uploaded
     }
 
+    # Phase 3: Calculate dynamic director count from enquiry + fund principals
+    if phase == 3:
+        num_directors = 0
+        if enquiry:
+            # Count GP directors from enquiry
+            num_directors += len(enquiry.get('gp_directors', []))
+            # Count fund principals with director roles
+            fund_principals = sheets_db.query('FundPrincipals', filters={'onboarding_id': onboarding_id}) if onboarding_id != 'NEW' else []
+            for fp in fund_principals:
+                pos = (fp.get('position') or '').lower()
+                if 'director' in pos:
+                    num_directors += 1
+            # For demo NEW onboarding, add Robert Jones
+            if onboarding_id == 'NEW' or (DEMO_MODE and num_directors == len(enquiry.get('gp_directors', []))):
+                num_directors += 1  # Robert Jones (fund principal director)
+        context['num_directors'] = max(num_directors, 1)
+
     # Phase 2: Add additional principals (not from enquiry)
     if phase == 2 and onboarding_id != 'NEW':
         try:
@@ -956,16 +1007,168 @@ def onboarding_phase(onboarding_id, phase):
                 'nationality': 'British',
                 'residential_address': '78 Mayfair Gardens, London, W1K 3AB',
                 'country_of_residence': 'UK',
-                'position': 'independent_director',
+                'position': 'director',
                 'source': 'manual'
             }
         ]
 
-    # Phase 5: Add screening and risk data
+    # Phase 4: Build dynamic screening entities from enquiry data
+    if phase == 4 and enquiry:
+        screening_entities = []
+        seen_names = set()
+
+        # Sponsor principals (individuals)
+        for p in enquiry.get('principals', []):
+            name = p.get('full_name') or p.get('name', '')
+            if name and name not in seen_names:
+                seen_names.add(name)
+                screening_entities.append({
+                    'name': name,
+                    'type': 'person',
+                    'role': p.get('role', 'Principal'),
+                    'nationality': p.get('nationality', ''),
+                    'group': 'principals'
+                })
+
+        # GP Directors (may overlap with principals)
+        for d in enquiry.get('gp_directors', []):
+            name = d.get('full_name') or d.get('name', '')
+            if name and name not in seen_names:
+                seen_names.add(name)
+                screening_entities.append({
+                    'name': name,
+                    'type': 'person',
+                    'role': 'GP Director',
+                    'nationality': d.get('nationality', ''),
+                    'group': 'principals'
+                })
+
+        # Fund principals (e.g. Robert Jones)
+        fund_principals = []
+        if onboarding_id != 'NEW':
+            try:
+                fund_principals = sheets_db.query('FundPrincipals', filters={'onboarding_id': onboarding_id})
+            except Exception:
+                fund_principals = []
+        if not fund_principals and DEMO_MODE:
+            fund_principals = [{'full_name': 'Robert Jones', 'nationality': 'British', 'position': 'director'}]
+        for fp in fund_principals:
+            name = fp.get('full_name') or fp.get('name', '')
+            if name and name not in seen_names:
+                seen_names.add(name)
+                screening_entities.append({
+                    'name': name,
+                    'type': 'person',
+                    'role': fp.get('position', 'Director').replace('_', ' ').title(),
+                    'nationality': fp.get('nationality', ''),
+                    'group': 'principals'
+                })
+
+        # Initial investors
+        for inv in enquiry.get('initial_investors', []):
+            name = inv.get('name', '')
+            inv_type = inv.get('type', 'institutional')
+            if name and name not in seen_names:
+                seen_names.add(name)
+                screening_entities.append({
+                    'name': name,
+                    'type': 'company' if inv_type != 'individual' else 'person',
+                    'role': f"Investor ({inv.get('commitment_pct', '')}%)" if inv.get('commitment_pct') else 'Investor',
+                    'nationality': inv.get('jurisdiction', ''),
+                    'group': 'investors'
+                })
+
+        # Sponsor entity
+        sponsor_name = enquiry.get('sponsor_name', '')
+        if sponsor_name and sponsor_name not in seen_names:
+            seen_names.add(sponsor_name)
+            screening_entities.append({
+                'name': sponsor_name,
+                'type': 'company',
+                'role': 'Sponsor Entity',
+                'nationality': enquiry.get('jurisdiction', ''),
+                'registration_number': enquiry.get('registration_number', ''),
+                'group': 'companies'
+            })
+
+        # Get stored screening results from session
+        stored_screening = session.get('screening_results', {}).get(onboarding_id, {})
+
+        context.update({
+            'screening_entities': screening_entities,
+            'stored_screening_results': stored_screening
+        })
+
+    # Clear kyc_phase_active flag when visiting non-KYC pages (Phase 5)
+    # This ensures navigating through the workflow starts fresh
+    if phase != 5 and 'kyc_phase_active' in session:
+        session['kyc_phase_active'].pop(onboarding_id, None)
+        session.modified = True
+
+    # Phase 5 (KYC & CDD): Clear stale documents on fresh entry
     if phase == 5:
-        # Get screening results from sheets_db
-        screening_results = sheets_db.get_screening_results(onboarding_id)
+        if 'kyc_phase_active' not in session:
+            session['kyc_phase_active'] = {}
+
+        if not session['kyc_phase_active'].get(onboarding_id):
+            # First visit to KYC phase for this onboarding - clear any stale documents
+            all_docs = session.get('kyc_documents', {})
+            stale_ids = [doc_id for doc_id, doc in all_docs.items()
+                         if doc.get('onboarding_id') == onboarding_id]
+            for doc_id in stale_ids:
+                del all_docs[doc_id]
+
+            if stale_ids:
+                logger.info(f"KYC phase fresh entry: cleared {len(stale_ids)} stale documents for {onboarding_id}")
+
+            session['kyc_phase_active'][onboarding_id] = True
+            session.modified = True
+
+        # KYC phase also needs risk data for display
         risk_data = sheets_db.get_risk_assessment(onboarding_id)
+        kyc_approvals = session.get('kyc_approvals', {}).get(onboarding_id, {
+            'compliance': {'status': 'pending'},
+            'mlro': {'status': 'pending'}
+        })
+        context.update({
+            'risk_score': risk_data.get('score') if risk_data else None,
+            'risk_rating': risk_data.get('rating') if risk_data else None,
+            'jurisdiction_risk': risk_data.get('jurisdiction') if risk_data else None,
+            'business_risk': risk_data.get('business_type') if risk_data else None,
+            'screening_risk': risk_data.get('screening') if risk_data else None,
+            'kyc_approvals': kyc_approvals
+        })
+
+    # Phase 6 (Approval): Add screening, risk, and Board approval data
+    if phase == 6:
+        screening_results = sheets_db.get_screenings(onboarding_id)
+        risk_data = sheets_db.get_risk_assessment(onboarding_id)
+
+        # Pre-seed KYC approvals in demo mode for Phase 6
+        # (In production, these would come from Phase 5 sign-offs)
+        if 'kyc_approvals' not in session:
+            session['kyc_approvals'] = {}
+        if onboarding_id not in session.get('kyc_approvals', {}):
+            session['kyc_approvals'][onboarding_id] = {
+                'compliance': {'status': 'approved', 'approved': True, 'by': 'Jane Cooper (Compliance)', 'at': '2026-02-05 10:30'},
+                'mlro': {'status': 'approved', 'approved': True, 'by': 'David Wright (MLRO)', 'at': '2026-02-05 11:00'}
+            }
+        session.modified = True
+
+        # Board approval state
+        approvals = session.get('approvals', {}).get(onboarding_id, {
+            'board': {'status': 'pending'}
+        })
+
+        # Calculate fees for display
+        fee_data = None
+        if enquiry:
+            from services.fee_calculator import calculate_fees
+            services = enquiry.get('services_required', ['nav', 'investor', 'accounting', 'ta', 'director', 'cosec'])
+            fund_size_str = enquiry.get('target_size', '500000000')
+            fund_size = int(str(fund_size_str).replace(',', ''))
+            num_investors = len(enquiry.get('initial_investors', [])) or 50
+            fee_data = calculate_fees(fund_size, services, num_investors=num_investors)
 
         context.update({
             'screening_results': screening_results,
@@ -973,7 +1176,55 @@ def onboarding_phase(onboarding_id, phase):
             'risk_rating': risk_data.get('rating') if risk_data else None,
             'jurisdiction_risk': risk_data.get('jurisdiction') if risk_data else None,
             'business_risk': risk_data.get('business_type') if risk_data else None,
-            'screening_risk': risk_data.get('screening') if risk_data else None
+            'screening_risk': risk_data.get('screening') if risk_data else None,
+            'approvals': approvals,
+            'fee_data': fee_data
+        })
+
+    # Phase 7 (Complete): Add dates, risk, fee data, and signed agreement status
+    if phase == 7:
+        risk_data = sheets_db.get_risk_assessment(onboarding_id)
+
+        # Calculate fees for display
+        fee_data = None
+        if enquiry:
+            from services.fee_calculator import calculate_fees
+            services = enquiry.get('services_required', ['nav', 'investor', 'accounting', 'ta', 'director', 'cosec'])
+            fund_size_str = enquiry.get('target_size', '500000000')
+            fund_size = int(str(fund_size_str).replace(',', ''))
+            num_investors = len(enquiry.get('initial_investors', [])) or 50
+            fee_data = calculate_fees(fund_size, services, num_investors=num_investors)
+
+        # Parse enquiry submitted_at to generate realistic phase dates
+        from datetime import timedelta
+        enquiry_submitted = enquiry.get('submitted_at', '') if enquiry else ''
+        try:
+            base_date = datetime.strptime(enquiry_submitted, '%Y-%m-%d %H:%M')
+        except (ValueError, TypeError):
+            base_date = datetime.now()
+
+        # Generate phase completion dates relative to enquiry submission
+        phase_dates = {
+            'enquiry_received': base_date,
+            'phase1': base_date.replace(hour=9, minute=0),
+            'phase2': base_date.replace(hour=14, minute=30),
+            'phase3': (base_date + timedelta(days=1)).replace(hour=10, minute=0),
+            'phase4': (base_date + timedelta(days=1)).replace(hour=11, minute=30),
+            'phase5': None,  # EDD skipped for low risk
+            'phase6': (base_date + timedelta(days=1)).replace(hour=15, minute=0),
+            'phase7': (base_date + timedelta(days=2)).replace(hour=9, minute=30),
+            'completed': (base_date + timedelta(days=2)).replace(hour=10, minute=0),
+        }
+
+        # Signed Admin Agreement status from session
+        signed_agreement = session.get('signed_agreements', {}).get(onboarding_id, None)
+
+        context.update({
+            'risk_score': risk_data.get('score') if risk_data else 28,
+            'risk_rating': risk_data.get('rating') if risk_data else 'Low',
+            'fee_data': fee_data,
+            'phase_dates': phase_dates,
+            'signed_agreement': signed_agreement,
         })
 
     return render_template(f'onboarding/phase{phase}.html', **context)
@@ -1431,6 +1682,18 @@ def api_run_screening():
     if risk_assessment.get('approval_level') != 'compliance':
         notify_approval_required(onboarding_data, risk_assessment)
 
+    # Store screening results in session for persistence across page navigation
+    if 'screening_results' not in session:
+        session['screening_results'] = {}
+    oid = onboarding_id or 'NEW'
+    session['screening_results'][oid] = {
+        'results': screening_results,
+        'risk_assessment': risk_assessment,
+        'demo_mode': demo_mode,
+        'screened_at': datetime.now().isoformat()
+    }
+    session.modified = True
+
     return jsonify({
         'status': 'ok',
         'demo_mode': demo_mode,
@@ -1625,6 +1888,13 @@ def api_delete_onboarding(onboarding_id):
     success = sheets_db.delete_onboarding(onboarding_id)
 
     if success:
+        # Track deleted onboardings in session for demo mode persistence
+        if 'deleted_onboardings' not in session:
+            session['deleted_onboardings'] = []
+        if onboarding_id not in session['deleted_onboardings']:
+            session['deleted_onboardings'].append(onboarding_id)
+        session.modified = True
+
         logger.info(f"Onboarding {onboarding_id} deleted by {user['name']}")
         return jsonify({
             'status': 'ok',
@@ -1637,111 +1907,293 @@ def api_delete_onboarding(onboarding_id):
         }), 500
 
 
+@app.route('/api/kyc/<onboarding_id>/compliance-signoff', methods=['POST'])
+@login_required
+@role_required('compliance', 'mlro', 'admin')
+def api_kyc_compliance_signoff(onboarding_id):
+    """API: Compliance or MLRO sign-off on KYC documentation (Phase 5)"""
+    user = get_current_user()
+    data = request.get_json() or {}
+    role_step = data.get('role')  # 'compliance' or 'mlro'
+    action = data.get('action', 'approve')
+    comments = data.get('comments', '')
+
+    if role_step not in ['compliance', 'mlro']:
+        return jsonify({'status': 'error', 'message': 'Invalid role'}), 400
+
+    # Check role permission (admin can do both)
+    user_role = user['role']
+    if user_role != 'admin' and user_role != role_step:
+        return jsonify({'status': 'error', 'message': f'Your role cannot sign off as {role_step}'}), 403
+
+    status_map = {'approve': 'approved', 'reject': 'rejected'}
+    new_status = status_map.get(action, 'pending')
+
+    # Initialise kyc_approvals in session
+    if 'kyc_approvals' not in session:
+        session['kyc_approvals'] = {}
+    if onboarding_id not in session['kyc_approvals']:
+        session['kyc_approvals'][onboarding_id] = {
+            'compliance': {'status': 'pending'},
+            'mlro': {'status': 'pending'}
+        }
+
+    session['kyc_approvals'][onboarding_id][role_step] = {
+        'status': new_status,
+        'signed_by': user['name'],
+        'role': user_role,
+        'comments': comments,
+        'timestamp': datetime.now().strftime('%d %b %Y, %H:%M')
+    }
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': f'{role_step.title()} sign-off recorded',
+        'kyc_approvals': session['kyc_approvals'][onboarding_id]
+    })
+
+
 @app.route('/api/onboarding/<onboarding_id>/approve', methods=['POST'])
 @login_required
-@role_required('mlro', 'compliance')
+@role_required('mlro', 'compliance', 'admin')
 def api_approve(onboarding_id):
-    """API: Approve, reject, or request info for onboarding"""
-    from services.gdrive_audit import get_client as get_gdrive_client
-
+    """API: Board approval for onboarding (Phase 6)"""
     user = get_current_user()
     data = request.get_json() or {}
 
-    action = data.get('action', 'approve')  # 'approve', 'reject', 'request_info'
+    action = data.get('action', 'approve')
+    step = data.get('step', 'board')
     comments = data.get('comments', '')
 
-    # Map action to status
+    # Only board step is valid on Phase 6
+    if step != 'board':
+        return jsonify({'status': 'error', 'message': 'Only board approval is handled here. Compliance/MLRO sign off on Phase 5 (KYC).'}), 400
+
     status_map = {
         'approve': 'approved',
         'reject': 'rejected',
         'request_info': 'pending_info'
     }
-
     if action not in status_map:
         return jsonify({'status': 'error', 'message': f'Invalid action: {action}'}), 400
 
+    # Check role permission (admin, mlro, or compliance can approve board)
+    role = user['role']
+    if role not in ('admin', 'mlro', 'compliance'):
+        return jsonify({'status': 'error', 'message': 'Only admin/board members can approve this step'}), 403
+
+    # Check KYC sign-offs are complete
+    kyc_approvals = session.get('kyc_approvals', {}).get(onboarding_id, {})
+    if kyc_approvals.get('compliance', {}).get('status') != 'approved':
+        return jsonify({'status': 'error', 'message': 'Compliance must sign off on KYC first (Phase 5)'}), 400
+    if kyc_approvals.get('mlro', {}).get('status') != 'approved':
+        return jsonify({'status': 'error', 'message': 'MLRO must sign off on KYC first (Phase 5)'}), 400
+
     new_status = status_map[action]
 
-    # Get current onboarding data
+    # Initialise approval state in session
+    if 'approvals' not in session:
+        session['approvals'] = {}
+    if onboarding_id not in session['approvals']:
+        session['approvals'][onboarding_id] = {
+            'board': {'status': 'pending'}
+        }
+
+    approvals = session['approvals'][onboarding_id]
+
+    # Update board step
+    approvals['board'] = {
+        'status': new_status,
+        'approved_by': user['name'],
+        'approver_role': role,
+        'comments': comments,
+        'timestamp': datetime.now().strftime('%d %b %Y, %H:%M')
+    }
+
+    all_approved = approvals.get('board', {}).get('status') == 'approved'
+    session['approval_status'] = 'approved' if all_approved else 'pending'
+    session.modified = True
+
+    # Update onboarding in Sheets
     onboarding = sheets_db.get_onboarding(onboarding_id)
-    if not onboarding and onboarding_id != 'NEW':
-        # Create mock onboarding for demo mode
+    if not onboarding:
         onboarding = {
             'onboarding_id': onboarding_id,
-            'status': 'pending_mlro',
             'sponsor_name': session.get('current_sponsor', 'Demo Sponsor'),
             'fund_name': session.get('current_fund', 'Demo Fund')
         }
 
-    # Validate MLRO can approve (compliance can only approve standard risk)
-    risk_assessment = sheets_db.get_risk_assessment(onboarding_id) or {}
-    risk_level = risk_assessment.get('risk_rating', 'low')
-
-    if user['role'] == 'compliance' and risk_level in ['medium', 'high']:
-        return jsonify({
-            'status': 'error',
-            'message': 'Only MLRO can approve medium/high risk onboardings'
-        }), 403
-
-    # Update onboarding status in Sheets
-    update_data = {
-        'status': new_status,
+    sheets_db.update_onboarding(onboarding_id, {
+        'status': 'approved' if all_approved else f'pending_{step}',
         'approval_action': action,
         'approval_comments': comments,
         'approved_by': user['name'],
         'approved_at': datetime.now().isoformat(),
-        'approver_role': user['role']
-    }
+        'approver_role': role
+    })
 
-    sheets_db.update_onboarding(onboarding_id, update_data)
-
-    # Save approval to audit trail in Google Drive
-    gdrive_client = get_gdrive_client()
+    # Save audit trail
     sponsor_name = onboarding.get('sponsor_name') or session.get('current_sponsor', 'Unknown')
     fund_name = onboarding.get('fund_name') or session.get('current_fund', 'Unknown')
+    try:
+        from services.gdrive_audit import get_client
+        audit_client = get_client()
+        audit_client.save_json_audit(
+            data={
+                'onboarding_id': onboarding_id,
+                'step': step,
+                'action': action,
+                'new_status': new_status,
+                'comments': comments,
+                'approved_by': user['name'],
+                'approver_role': role,
+                'approved_at': datetime.now().isoformat(),
+                'all_approved': all_approved
+            },
+            filename=f'approval_{step}_{action}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json',
+            sponsor_name=sponsor_name,
+            fund_name=fund_name
+        )
+    except Exception as e:
+        logger.warning(f"Audit trail save failed (non-critical): {e}")
 
-    audit_data = {
-        'onboarding_id': onboarding_id,
-        'action': action,
-        'new_status': new_status,
-        'comments': comments,
-        'approved_by': user['name'],
-        'approver_role': user['role'],
-        'approved_at': datetime.now().isoformat(),
-        'risk_level': risk_level
-    }
-
-    from services.gdrive_audit import save_json_audit
-    save_json_audit(
-        data=audit_data,
-        filename=f'approval_{action}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json',
-        sponsor_name=sponsor_name,
-        fund_name=fund_name,
-        phase='Phase-6-Approval'
-    )
-
-    # Send email notifications
-    onboarding_data = {
-        'onboarding_id': onboarding_id,
-        'sponsor_name': sponsor_name,
-        'fund_name': fund_name
-    }
-
-    if action == 'approve':
-        notify_onboarding_decision(onboarding_data, 'approved', user['name'], comments)
-    elif action == 'reject':
-        notify_onboarding_decision(onboarding_data, 'rejected', user['name'], comments)
-
-    # Store approval status in session for template access
-    session['approval_status'] = new_status
-    session['approval_action'] = action
+    # Notify on final approval or rejection
+    try:
+        from services.email_notify import notify_onboarding_decision
+        onboarding_data = {
+            'onboarding_id': onboarding_id,
+            'sponsor_name': sponsor_name,
+            'fund_name': fund_name
+        }
+        if all_approved:
+            notify_onboarding_decision(onboarding_data, 'approved', user['name'], comments)
+        elif action == 'reject':
+            notify_onboarding_decision(onboarding_data, 'rejected', user['name'], comments)
+    except Exception as e:
+        logger.warning(f"Notification failed (non-critical): {e}")
 
     return jsonify({
         'status': 'ok',
+        'step': step,
         'action': action,
         'new_status': new_status,
         'approved_by': user['name'],
-        'message': f'Onboarding {action}d successfully'
+        'all_approved': all_approved,
+        'approvals': approvals,
+        'message': f'{step.title()} {action}d successfully'
+    })
+
+
+@app.route('/api/onboarding/<onboarding_id>/generate-memo', methods=['GET', 'POST'])
+@login_required
+def generate_memo(onboarding_id):
+    """API: Generate or regenerate the client acceptance memo for Phase 6."""
+    # Get enquiry data for memo content
+    onboarding = sheets_db.get_onboarding(onboarding_id)
+    enquiry_id = None
+    if onboarding:
+        enquiry_id = onboarding.get('enquiry_id')
+    if not enquiry_id:
+        enquiry_id = session.get('current_enquiry_id', 'ENQ-001')
+
+    enquiry = MOCK_ENQUIRIES.get(enquiry_id) or MOCK_ENQUIRIES.get('ENQ-001')
+
+    # Build memo data from enquiry
+    sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor')
+    fund_name = enquiry.get('fund_name', 'Unknown Fund')
+    fund_type = enquiry.get('fund_type', 'jpf').upper()
+    jurisdiction = enquiry.get('jurisdiction', 'Jersey')
+    target_size = enquiry.get('target_size', '500,000,000')
+    investment_strategy = enquiry.get('investment_strategy', 'N/A')
+    regulatory_status = enquiry.get('regulatory_status', 'regulated')
+    regulator = enquiry.get('regulator', 'FCA')
+    license_number = enquiry.get('license_number', 'N/A')
+    date_of_incorporation = enquiry.get('date_of_incorporation', 'N/A')
+    principals = enquiry.get('principals', [])
+    source_of_wealth = enquiry.get('source_of_wealth', 'N/A')
+
+    # Get risk data
+    risk_data = sheets_db.get_risk_assessment(onboarding_id)
+    risk_score = risk_data.get('score', 28) if risk_data else 28
+    risk_rating = risk_data.get('rating', 'Low') if risk_data else 'Low'
+    edd_required = risk_data.get('edd_required', False) if risk_data else False
+
+    # Build principal summary
+    principal_lines = []
+    for p in principals:
+        name = p.get('full_name') or p.get('name', 'Unknown')
+        ownership = p.get('ownership', 'N/A')
+        nationality = p.get('nationality', 'N/A')
+        principal_lines.append(f'{name} ({nationality}, {ownership}% ownership)')
+    principals_text = ', '.join(principal_lines) if principal_lines else 'No principals listed'
+
+    user = get_current_user()
+
+    memo_html = f'''
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <h5 class="mb-0">CLIENT ACCEPTANCE MEMORANDUM</h5>
+        <span class="badge bg-primary"><i class="bi bi-robot me-1"></i>AI Generated</span>
+    </div>
+    <hr>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p class="small mb-1"><strong>Sponsor:</strong></p>
+            <p class="mb-2">{sponsor_name}</p>
+            <p class="small mb-1"><strong>Fund:</strong></p>
+            <p class="mb-2">{fund_name} ({fund_type})</p>
+            <p class="small mb-1"><strong>Jurisdiction:</strong></p>
+            <p class="mb-2">{jurisdiction}</p>
+        </div>
+        <div class="col-md-6">
+            <p class="small mb-1"><strong>Risk Rating:</strong></p>
+            <p class="mb-2"><span class="badge badge-risk-low">{risk_rating} ({risk_score})</span></p>
+            <p class="small mb-1"><strong>EDD Required:</strong></p>
+            <p class="mb-2">{"Yes" if edd_required else "No"}</p>
+            <p class="small mb-1"><strong>Prepared By:</strong></p>
+            <p class="mb-2">{user["name"]}, {user["role"].title()}</p>
+        </div>
+    </div>
+    <hr>
+    <h6>1. EXECUTIVE SUMMARY</h6>
+    <p class="small">
+        This memorandum presents the findings of our client acceptance due diligence for
+        {sponsor_name}, seeking appointment as administrator for {fund_name},
+        structured as a {jurisdiction} {fund_type}. Based on our comprehensive assessment,
+        the client presents a {"low" if risk_score < 40 else "medium" if risk_score < 70 else "high"} risk
+        profile with an overall score of {risk_score}/100.
+    </p>
+    <h6>2. FUND OVERVIEW</h6>
+    <p class="small">
+        <strong>Sponsor:</strong> {sponsor_name} is a {regulator}-authorised entity
+        (Licence: {license_number}), incorporated on {date_of_incorporation}.
+        The fund targets a size of ${target_size} with an investment strategy focused on
+        {investment_strategy[:200]}.
+    </p>
+    <p class="small">
+        <strong>Key Principals:</strong> {principals_text}.
+    </p>
+    <h6>3. RISK ASSESSMENT</h6>
+    <p class="small">
+        Overall risk rated <strong>{risk_rating} ({risk_score}/100)</strong>. Key factors:<br>
+        &bull; Jurisdiction: {jurisdiction} - {"Low risk (established regulatory framework)" if jurisdiction in ["UK", "Jersey", "GB"] else "Standard risk"}<br>
+        &bull; Regulatory: {regulator} regulated with valid licence<br>
+        &bull; Screening: All principals cleared - no PEP, sanctions, or adverse media matches<br>
+        &bull; Source of Wealth: {source_of_wealth[:150]}
+    </p>
+    <h6>4. RECOMMENDATION</h6>
+    <p class="small mb-0">
+        Based on the due diligence conducted, this client presents an acceptable risk profile.
+        <strong>Recommendation: {"APPROVE" if risk_score < 70 else "REFER FOR EDD"}</strong>
+        for {"standard onboarding with annual periodic review" if risk_score < 40 else "onboarding with enhanced monitoring"}.
+    </p>
+    '''
+
+    return jsonify({
+        'status': 'ok',
+        'memo_html': memo_html,
+        'generated_at': datetime.now().isoformat(),
+        'generated_by': user['name']
     })
 
 
@@ -1793,6 +2245,187 @@ def api_get_services():
     })
 
 
+@app.route('/api/onboarding/<onboarding_id>/admin-agreement')
+@login_required
+def api_admin_agreement(onboarding_id):
+    """Generate Administration Agreement PDF for an onboarding."""
+    from services.fee_calculator import calculate_fees, SERVICE_FEES
+
+    download = request.args.get('download', '0') == '1'
+
+    try:
+        # Get enquiry data
+        enquiry = None
+
+        # Try to find the onboarding record to get enquiry_id
+        onboarding = None
+        try:
+            onboardings = sheets_db.get_onboardings()
+            onboarding = next(
+                (o for o in onboardings if o.get('onboarding_id') == onboarding_id),
+                None
+            )
+        except Exception:
+            pass
+
+        if onboarding:
+            enquiry_id = onboarding.get('enquiry_id', 'ENQ-001')
+        else:
+            enquiry_id = 'ENQ-001'
+
+        # Get enquiry from MOCK_ENQUIRIES or sheets
+        enquiry = MOCK_ENQUIRIES.get(enquiry_id)
+        if not enquiry:
+            enquiry = MOCK_ENQUIRIES.get('ENQ-001', {})
+
+        # Extract parameters
+        fund_name = enquiry.get('fund_name', 'Unknown Fund')
+        sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor')
+        services_required = enquiry.get('services_required', ['nav', 'investor', 'accounting', 'ta', 'director', 'cosec'])
+
+        # Parse fund size
+        target_size_str = enquiry.get('target_size', '500000000')
+        try:
+            fund_size = int(str(target_size_str).replace(',', '').replace('$', '').replace(' ', ''))
+        except (ValueError, TypeError):
+            fund_size = 500_000_000
+
+        # Calculate fees
+        fee_result = calculate_fees(
+            fund_size=fund_size,
+            services=services_required,
+            num_investors=50,
+            num_directors=2,
+            complexity='low',
+            include_setup=True
+        )
+
+        # Build service list with fee_type for the PDF
+        services_for_pdf = []
+        for svc_breakdown in fee_result.get('service_breakdown', []):
+            svc_id = svc_breakdown.get('service_id', '')
+            svc_def = SERVICE_FEES.get(svc_id, {})
+            per_unit = svc_breakdown.get('per_unit')
+            if per_unit == 'investor':
+                fee_type = 'Per investor (50)'
+            elif per_unit == 'director':
+                fee_type = 'Per director (2)'
+            else:
+                fee_type = 'Fixed annual'
+            services_for_pdf.append({
+                'name': svc_breakdown.get('name', 'Unknown'),
+                'description': svc_def.get('description', svc_breakdown.get('description', '')),
+                'fee_type': fee_type,
+                'annual_fee': svc_breakdown.get('adjusted_fee', 0),
+            })
+
+        # Build setup fees list
+        setup_fees_for_pdf = []
+        for sf in fee_result.get('setup_breakdown', []):
+            setup_fees_for_pdf.append({
+                'name': sf.get('name', 'Unknown'),
+                'description': sf.get('description', ''),
+                'amount': sf.get('amount', 0),
+            })
+
+        # Assemble data for PDF generation
+        agreement_data = {
+            'fund_name': fund_name,
+            'sponsor_name': sponsor_name,
+            'services': services_for_pdf,
+            'setup_fees': setup_fees_for_pdf,
+            'annual_total': fee_result.get('annual_total', 0),
+            'setup_total': fee_result.get('setup_total', 0),
+            'effective_bps': fee_result.get('effective_bps', 0),
+            'fund_size_formatted': fee_result.get('fund_size_formatted', f'${fund_size:,.0f}'),
+            'complexity': fee_result.get('complexity', 'low'),
+            'generated_at': datetime.now().isoformat(),
+        }
+
+        pdf_bytes = generate_admin_agreement(agreement_data)
+
+        # Build response
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+
+        timestamp = datetime.now().strftime('%Y-%m-%d')
+        filename = f"{onboarding_id}-admin-agreement-{timestamp}.pdf"
+
+        if download:
+            response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        else:
+            response.headers['Content-Disposition'] = f'inline; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        logger.exception(f"Error generating admin agreement: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to generate administration agreement'}), 500
+
+
+@app.route('/api/onboarding/<onboarding_id>/signed-agreement', methods=['POST', 'GET', 'DELETE'])
+@login_required
+def api_signed_agreement(onboarding_id):
+    """Upload, check, or remove the signed Administration Agreement."""
+    if request.method == 'GET':
+        signed = session.get('signed_agreements', {}).get(onboarding_id)
+        return jsonify({'status': 'ok', 'signed_agreement': signed})
+
+    if request.method == 'DELETE':
+        if 'signed_agreements' in session and onboarding_id in session['signed_agreements']:
+            del session['signed_agreements'][onboarding_id]
+            session.modified = True
+        return jsonify({'status': 'ok', 'message': 'Signed agreement removed'})
+
+    # POST - upload signed agreement
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No file provided'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'status': 'error', 'message': 'No file selected'}), 400
+
+    # Store in session
+    if 'signed_agreements' not in session:
+        session['signed_agreements'] = {}
+
+    user = get_current_user()
+    session['signed_agreements'][onboarding_id] = {
+        'filename': file.filename,
+        'uploaded_at': datetime.now().strftime('%d %b %Y %H:%M'),
+        'uploaded_by': user.get('name', 'Unknown'),
+        'confirmed': False
+    }
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'Signed agreement uploaded successfully',
+        'agreement': session['signed_agreements'][onboarding_id]
+    })
+
+
+@app.route('/api/onboarding/<onboarding_id>/signed-agreement/confirm', methods=['POST'])
+@login_required
+def api_confirm_signed_agreement(onboarding_id):
+    """Confirm the signed Administration Agreement has been reviewed."""
+    signed = session.get('signed_agreements', {}).get(onboarding_id)
+    if not signed:
+        return jsonify({'status': 'error', 'message': 'No signed agreement uploaded'}), 400
+
+    session['signed_agreements'][onboarding_id]['confirmed'] = True
+    session['signed_agreements'][onboarding_id]['confirmed_at'] = datetime.now().strftime('%d %b %Y %H:%M')
+    user = get_current_user()
+    session['signed_agreements'][onboarding_id]['confirmed_by'] = user.get('name', 'Unknown')
+    session.modified = True
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'Signed agreement confirmed',
+        'agreement': session['signed_agreements'][onboarding_id]
+    })
+
+
 @app.route('/api/report/generate/<onboarding_id>')
 def api_generate_report(onboarding_id):
     """Generate PDF risk report for an onboarding."""
@@ -1835,6 +2468,88 @@ def api_generate_report(onboarding_id):
         return jsonify({'status': 'error', 'message': 'Failed to generate report'}), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/screening-report')
+@login_required
+def api_screening_report(onboarding_id):
+    """Generate Sanctions & PEP Screening Report PDF."""
+    download = request.args.get('download', '0') == '1'
+
+    try:
+        # In demo mode or if no real screening data, use demo data
+        screening_data = None
+
+        if not sheets_db.demo_mode:
+            # Try to get real screening data from database
+            try:
+                screenings = sheets_db.get_screenings(onboarding_id)
+                if screenings:
+                    # Get onboarding info for context
+                    onboardings = sheets_db.get_onboardings()
+                    onboarding = next(
+                        (o for o in onboardings if o.get('onboarding_id') == onboarding_id),
+                        {}
+                    )
+                    current_user = get_current_user()
+                    screening_data = {
+                        'onboarding_id': onboarding_id,
+                        'fund_name': onboarding.get('fund_name', session.get('current_fund', 'Unknown Fund')),
+                        'sponsor_name': onboarding.get('sponsor_name', session.get('current_sponsor', 'Unknown Sponsor')),
+                        'screening_provider': 'OpenSanctions',
+                        'screened_by': current_user['name'] if current_user else 'System',
+                        'screened_at': screenings[0].get('screened_at', datetime.now().isoformat()) if screenings else datetime.now().isoformat(),
+                        'demo_mode': False,
+                        'entities': [
+                            {
+                                'name': s.get('name', s.get('person_name', 'Unknown')),
+                                'type': s.get('entity_type', 'person'),
+                                'dob': s.get('birth_date'),
+                                'nationality': s.get('nationality'),
+                                'role': s.get('role', ''),
+                                'result': 'Clear' if s.get('risk_level') == 'clear' else ('Match' if s.get('risk_level') in ('high', 'critical') else 'Possible Match'),
+                                'has_pep_hit': s.get('has_pep_hit', False),
+                                'has_sanctions_hit': s.get('has_sanctions_hit', False),
+                                'has_adverse_media': s.get('has_adverse_media', False),
+                                'match_details': s.get('match_details'),
+                            }
+                            for s in screenings
+                        ],
+                        'datasets_checked': [
+                            'OFAC Specially Designated Nationals (SDN)',
+                            'EU Consolidated Sanctions List',
+                            'UN Security Council Consolidated List',
+                            'UK HMT Financial Sanctions',
+                            'Politically Exposed Persons (PEP) Lists',
+                            'Interpol Red Notices',
+                            'National Crime Agency (NCA)',
+                        ],
+                    }
+            except Exception as e:
+                logger.warning(f"Could not fetch screening data from SheetsDB: {e}")
+
+        # Fall back to demo data
+        if not screening_data:
+            screening_data = _get_screening_demo_data(onboarding_id)
+
+        result = generate_screening_report(screening_data)
+
+        # Create response with PDF
+        response = make_response(result['pdf_bytes'])
+        response.headers['Content-Type'] = 'application/pdf'
+
+        if download:
+            response.headers['Content-Disposition'] = f'attachment; filename="{result["filename"]}"'
+        else:
+            response.headers['Content-Disposition'] = f'inline; filename="{result["filename"]}"'
+
+        response.headers['X-Demo-Mode'] = 'true' if result.get('demo_mode') else 'false'
+
+        return response
+
+    except Exception as e:
+        logger.exception(f"Error generating screening report: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to generate screening report'}), 500
+
+
 @app.route('/api/reports/data')
 @login_required
 def api_reports_data():
@@ -1850,22 +2565,8 @@ def api_reports_data():
     risk_filter = request.args.get('risk_level')
     output_format = request.args.get('format', 'json')
 
-    # Get all onboardings
-    onboardings = sheets_db.get_onboardings()
-
-    # Fallback to mock data if empty
-    if not onboardings:
-        onboardings = [
-            {'onboarding_id': 'ONB-001', 'sponsor_name': 'Test Corp', 'fund_name': 'Fund I',
-             'current_phase': 4, 'status': 'in_progress', 'risk_level': 'low',
-             'created_at': '2026-01-15', 'updated_at': '2026-02-01'},
-            {'onboarding_id': 'ONB-002', 'sponsor_name': 'Alpha Partners', 'fund_name': 'Growth Fund',
-             'current_phase': 6, 'status': 'pending_mlro', 'risk_level': 'medium',
-             'created_at': '2026-01-20', 'updated_at': '2026-02-01'},
-            {'onboarding_id': 'ONB-003', 'sponsor_name': 'Beta Capital', 'fund_name': 'Value Fund',
-             'current_phase': 8, 'status': 'approved', 'risk_level': 'low',
-             'created_at': '2026-01-10', 'updated_at': '2026-01-25'},
-        ]
+    # Get onboardings (same data as dashboard)
+    onboardings = _get_onboardings_with_session()
 
     # Apply filters
     filtered = onboardings
@@ -2119,11 +2820,56 @@ def api_kyc_checklist(onboarding_id):
     # Get risk assessment from session or default
     risk_assessment = session.get('risk_assessment', {})
 
-    # Generate checklist
-    checklist = generate_checklist(enquiry, risk_assessment)
+    # Get fund principals for extended key parties
+    fund_principals = []
+    if onboarding_id != 'NEW':
+        try:
+            fund_principals = sheets_db.query('FundPrincipals', filters={'onboarding_id': onboarding_id})
+        except Exception:
+            fund_principals = []
+    if not fund_principals and DEMO_MODE:
+        fund_principals = [{'full_name': 'Robert Jones', 'principal_id': 'principal_rj_123', 'nationality': 'British', 'position': 'director'}]
+
+    # Generate checklist with fund principals
+    checklist = generate_checklist(enquiry, risk_assessment, fund_principals=fund_principals)
     checklist['onboarding_id'] = onboarding_id
 
-    # Get progress
+    # Merge session documents into checklist to reflect actual uploads
+    kyc_docs = session.get('kyc_documents', {})
+    onboarding_docs = [doc for doc in kyc_docs.values()
+                       if doc.get('onboarding_id') == onboarding_id]
+
+    if onboarding_docs:
+        # Build lookup of verified docs by type and person
+        verified_docs = {}
+        for doc in onboarding_docs:
+            if doc.get('analysis', {}).get('overall_status') == 'pass':
+                suggested = doc.get('suggested_assignment', {})
+                doc_type = suggested.get('document_type', '').lower().replace(' ', '_')
+                person_name = suggested.get('person_name', '')
+                assign_type = suggested.get('type', '')
+
+                if assign_type == 'sponsor' and doc_type:
+                    verified_docs[('sponsor', doc_type)] = doc.get('document_id')
+                elif assign_type == 'key_party' and person_name and doc_type:
+                    verified_docs[('key_party', person_name, doc_type)] = doc.get('document_id')
+
+        # Update sponsor document statuses
+        for sponsor_doc in checklist.get('sponsor_documents', []):
+            key = ('sponsor', sponsor_doc['item'])
+            if key in verified_docs:
+                sponsor_doc['status'] = 'complete'
+                sponsor_doc['document_id'] = verified_docs[key]
+
+        # Update key party document statuses
+        for party in checklist.get('key_parties', []):
+            for party_doc in party.get('documents', []):
+                key = ('key_party', party['name'], party_doc['item'])
+                if key in verified_docs:
+                    party_doc['status'] = 'complete'
+                    party_doc['document_id'] = verified_docs[key]
+
+    # Get progress (now reflects merged session docs)
     progress = get_checklist_progress(checklist)
 
     return jsonify({
@@ -2171,13 +2917,42 @@ def api_kyc_upload(onboarding_id):
         enquiry = MOCK_ENQUIRIES.get('ENQ-001')
 
     key_parties = []
+    seen_names = set()
     for i, p in enumerate(enquiry.get('principals', [])):
-        key_parties.append({
-            'person_id': f'principal_{i}',
-            'name': p.get('full_name') or p.get('name')
-        })
+        name = p.get('full_name') or p.get('name')
+        if name and name not in seen_names:
+            seen_names.add(name)
+            key_parties.append({
+                'person_id': f'principal_{i}',
+                'name': name
+            })
 
+    # Add fund principals (e.g. Robert Jones from Phase 2)
+    upload_fund_principals = []
+    if onboarding_id != 'NEW':
+        try:
+            upload_fund_principals = sheets_db.query('FundPrincipals', filters={'onboarding_id': onboarding_id})
+        except Exception:
+            upload_fund_principals = []
+    if not upload_fund_principals and DEMO_MODE:
+        upload_fund_principals = [{'full_name': 'Robert Jones', 'principal_id': 'principal_rj_123'}]
+    for fp in upload_fund_principals:
+        fp_name = fp.get('full_name') or fp.get('name', '')
+        if fp_name and fp_name not in seen_names:
+            seen_names.add(fp_name)
+            key_parties.append({
+                'person_id': fp.get('principal_id', f'fund_principal_{len(key_parties)}'),
+                'name': fp_name
+            })
+
+    # Add sponsor entity
     sponsor_name = enquiry.get('sponsor_name', 'Unknown Sponsor')
+    if sponsor_name and sponsor_name not in seen_names:
+        seen_names.add(sponsor_name)
+        key_parties.append({
+            'person_id': 'sponsor_entity',
+            'name': sponsor_name
+        })
 
     # Process each file
     import os
@@ -2862,6 +3637,26 @@ def save_onboarding_progress(onboarding_id):
         }), 500
 
 
+@app.route('/api/onboarding/<onboarding_id>/save-fees', methods=['POST'])
+@login_required
+def save_fee_draft(onboarding_id):
+    """Save fee draft data to session."""
+    try:
+        data = request.get_json() or {}
+        session.setdefault('fee_drafts', {})[onboarding_id] = {
+            'services': data.get('services', []),
+            'fee_data': data.get('fee_data', []),
+            'fee_structure': data.get('fee_structure', 'fixed'),
+            'estimated_transactions': data.get('estimated_transactions', 100),
+            'saved_at': datetime.now().isoformat()
+        }
+        session.modified = True
+        return jsonify({'status': 'ok', 'message': 'Fee draft saved'})
+    except Exception as e:
+        logger.error(f"Error saving fee draft: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.route('/api/onboarding/<onboarding_id>/principals/<principal_id>', methods=['GET'])
 @login_required
 def api_get_principal(onboarding_id, principal_id):
@@ -2985,6 +3780,11 @@ def api_kyc_signoff(onboarding_id):
         logger.info(f"MLRO/MLCO override applied for {onboarding_id} by {current_user['name']}")
 
     session['kyc_signed_off'] = signoff_data
+
+    # Clear kyc_phase_active flag so revisiting KYC phase starts fresh
+    if 'kyc_phase_active' in session:
+        session['kyc_phase_active'].pop(onboarding_id, None)
+
     session.modified = True
 
     return jsonify({
@@ -3051,8 +3851,8 @@ def generate_document_requirements(onboarding_id):
         person_name = principal.get('full_name') or principal.get('name', '')
         person_role = principal.get('role', '')
 
-        # All principals need passport and proof of address
-        for doc_type in ['passport', 'proof_of_address']:
+        # All principals need passport and address proof
+        for doc_type in ['passport', 'address_proof']:
             requirement = {
                 'requirement_id': str(uuid.uuid4()),
                 'onboarding_id': onboarding_id,
@@ -3100,11 +3900,11 @@ def get_phases():
     return [
         {'num': 1, 'name': 'Enquiry', 'icon': 'bi-clipboard-check', 'description': 'Merged enquiry, sponsor, and principals'},
         {'num': 2, 'name': 'Fund', 'icon': 'bi-diagram-3', 'description': 'Fund vehicles and GP setup'},
-        {'num': 3, 'name': 'Screening', 'icon': 'bi-search', 'description': 'PEP, Sanctions, Risk assessment'},
-        {'num': 4, 'name': 'KYC & CDD', 'icon': 'bi-file-earmark-check', 'description': 'Document collection and AI review'},
-        {'num': 5, 'name': 'Approval', 'icon': 'bi-check-circle', 'description': 'MLRO and Board sign-off'},
-        {'num': 6, 'name': 'Commercial', 'icon': 'bi-currency-pound', 'description': 'Engagement letter execution'},
-        {'num': 7, 'name': 'Complete', 'icon': 'bi-flag', 'description': 'Onboarding finalization'}
+        {'num': 3, 'name': 'Commercial', 'icon': 'bi-currency-pound', 'description': 'Service agreement and fee schedule'},
+        {'num': 4, 'name': 'Screening', 'icon': 'bi-search', 'description': 'PEP, Sanctions, Risk assessment'},
+        {'num': 5, 'name': 'KYC & CDD', 'icon': 'bi-file-earmark-check', 'description': 'Document collection, AI review, and Compliance/MLRO sign-off'},
+        {'num': 6, 'name': 'Approval', 'icon': 'bi-check-circle', 'description': 'Client acceptance memo and Board sign-off'},
+        {'num': 7, 'name': 'Complete', 'icon': 'bi-flag', 'description': 'Onboarding finalization and contract execution'}
     ]
 
 
