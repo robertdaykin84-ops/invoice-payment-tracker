@@ -1,26 +1,30 @@
-# Fund Admin Tools
+# CoreWorker Tools
 
-A suite of tools for fund administration operations, featuring AI-powered automation and Google Sheets integration.
+A modular platform for fund administration operations, featuring AI-powered automation and Google Sheets integration.
 
-## Overview
+## Modules
 
-This monorepo contains multiple tools designed to streamline fund administration workflows:
-
-| Tool | Description | Status |
-|------|-------------|--------|
-| [Invoice Tracker](./packages/invoice-tracker/) | Automated invoice processing with AI extraction and Google Sheets sync | ✅ Active |
-| [Shared Utilities](./packages/shared/) | Common utilities across all tools | 🚧 In Progress |
+| Module | Description | Status |
+|--------|-------------|--------|
+| [Invoice Tracker](./modules/invoice-tracker/) | Automated invoice processing with AI extraction and Google Sheets sync | Live (Render) |
+| [Client Onboarding](./modules/client-onboarding/) | JFSC-compliant 7-phase client onboarding with KYC/CDD document review | Development |
+| [Welcome Terminal](./modules/welcome-terminal/) | Visitor management and reception system | Planning |
+| [Shared](./modules/shared/) | Common utilities across all modules | Planned |
 
 ## Repository Structure
 
 ```
-fund-admin-tools/
-├── packages/
-│   ├── invoice-tracker/     # Invoice processing application
-│   └── shared/              # Shared utilities and components
-├── docs/                    # Documentation and process flows
-│   └── fund_admin_processes.drawio
-├── .gitignore
+coreworker-tools/
+├── docs/
+│   ├── design/              # Architecture diagrams (draw.io)
+│   ├── guides/              # Setup guides (Google Drive, Sheets)
+│   ├── plans/               # Design & implementation plans per module
+│   └── testing/             # Test reports and summaries
+├── modules/
+│   ├── invoice-tracker/     # Flask app - deployed on Render
+│   ├── client-onboarding/   # Flask app - 7-phase onboarding workflow
+│   ├── shared/              # Shared Python utilities
+│   └── welcome-terminal/    # Planned module
 └── README.md
 ```
 
@@ -29,40 +33,45 @@ fund-admin-tools/
 ### Invoice Tracker
 
 ```bash
-cd packages/invoice-tracker
+cd modules/invoice-tracker
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 python app.py
 ```
 
-See [Invoice Tracker README](./packages/invoice-tracker/README.md) for detailed setup instructions.
+See [Invoice Tracker README](./modules/invoice-tracker/README.md) for full setup.
 
-## Planned Tools
+### Client Onboarding
 
-Based on our [fund administration process flows](./docs/fund_admin_processes.drawio):
+```bash
+cd modules/client-onboarding
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+DEMO_MODE=true python app.py
+```
 
-- **Capital Call Manager** - Automate capital call calculations and investor notifications
-- **Distribution Processor** - Handle fund distributions with waterfall calculations
-- **NAV Calculator** - Net Asset Value calculations and capital account statements
-- **KYC/AML Tracker** - Investor onboarding and compliance tracking
-- **Static Data Manager** - Centralized investor and fund data management
+See [Client Onboarding README](./modules/client-onboarding/README.md) for full setup.
 
 ## Tech Stack
 
 - **Backend**: Python, Flask
-- **AI**: Claude API for document processing
-- **Integration**: Google Sheets API
+- **AI**: Claude API (document processing, risk analysis)
+- **Database**: Google Sheets API
+- **Storage**: Google Drive API (audit trail)
 - **Deployment**: Render
 
 ## Documentation
 
-Process flow diagrams are available in the `docs/` folder and can be viewed with [draw.io](https://app.diagrams.net/).
+- [Design diagrams](./docs/design/) - Process flows viewable with [draw.io](https://app.diagrams.net/)
+- [Setup guides](./docs/guides/) - Google Drive and Sheets configuration
+- [Implementation plans](./docs/plans/) - Design and implementation docs per module
 
 ## Contributing
 
 1. Create a feature branch from `main`
-2. Make changes in the appropriate package
+2. Make changes in the appropriate module
 3. Submit a pull request
 
 ## License
