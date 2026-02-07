@@ -402,6 +402,18 @@ def dashboard():
 
 # ========== Upload Routes ==========
 
+@app.route('/download-samples')
+@login_required
+def download_samples():
+    """Serve the sample invoices ZIP file."""
+    samples_dir = os.path.join(app.static_folder, 'samples')
+    return send_file(
+        os.path.join(samples_dir, 'sample-invoices.zip'),
+        as_attachment=True,
+        download_name='sample-invoices.zip'
+    )
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 @handle_errors
 @login_required
