@@ -251,7 +251,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- AI Processing Warning Banner -->
+<!-- AI Processing Warning Banner - Only shown in production mode -->
+{% if not demo_mode %}
 {% if config_status and not config_status.anthropic_configured %}
 <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert" style="border-left: 4px solid #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 0.5rem;">
     <i class="bi bi-robot" style="color: #d97706; font-size: 1.5rem; flex-shrink: 0;"></i>
@@ -260,6 +261,7 @@
         <p class="mb-0" style="color: #78350f; font-size: 0.875rem;">Invoice upload is currently unavailable. The ANTHROPIC_API_KEY environment variable is not configured. Please contact your administrator to enable AI-powered invoice extraction.</p>
     </div>
 </div>
+{% endif %}
 {% endif %}
 
 <div class="upload-container">

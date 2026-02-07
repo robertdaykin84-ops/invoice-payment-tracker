@@ -426,7 +426,8 @@
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
-<!-- Configuration Warning Banner - Shows when services are not configured -->
+<!-- Configuration Warning Banner - Only shown in production mode -->
+{% if not demo_mode %}
 {% if config_status and not config_status.google_sheets_configured %}
 <div class="config-warning-banner" role="alert">
     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
@@ -445,6 +446,7 @@
         <p style="color: #b91c1c;">Invoice extraction requires an Anthropic API key. Configure ANTHROPIC_API_KEY in your environment variables to enable AI-powered extraction.</p>
     </div>
 </div>
+{% endif %}
 {% endif %}
 
 <!-- Welcome Section - CoreWorker Branded -->

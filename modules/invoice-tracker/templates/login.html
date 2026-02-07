@@ -1,103 +1,265 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Fund Admin Hub</title>
 
-{% block title %}Login - Invoice Tracker{% endblock %}
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 24 C6 12 14 6 24 6' stroke='%2354A6ED' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M42 24 C42 36 34 42 24 42' stroke='%2354A6ED' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='6' r='3' fill='%2310B981'/%3E%3Ccircle cx='24' cy='42' r='3' fill='%2310B981'/%3E%3Ccircle cx='24' cy='24' r='5' fill='%2310B981'/%3E%3C/svg%3E">
 
-{% block extra_css %}
-<style>
-    body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-        min-height: 100vh;
-    }
+    <style>
+        :root {
+            --primary: #54A6ED;
+            --primary-dark: #3B8FD9;
+            --accent: #10B981;
+            --dark-900: #1a1a2e;
+            --dark-800: #16213e;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+        }
 
-    .login-container {
-        max-width: 400px;
-        margin: 100px auto;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .login-card {
-        background: #fff;
-        border-radius: 1rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--dark-900) 0%, var(--dark-800) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
 
-    .login-header {
-        background: var(--primary-blue);
-        color: #fff;
-        padding: 2rem;
-        text-align: center;
-    }
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
 
-    .login-header i {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
-    }
+        .login-container {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    .login-header h2 {
-        margin: 0;
-        font-weight: 600;
-    }
+        .login-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
 
-    .login-body {
-        padding: 2rem;
-    }
+        .login-header {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
 
-    .form-control {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        border-radius: 0.5rem;
-    }
+        .login-header i { font-size: 3rem; margin-bottom: 0.5rem; }
+        .login-header h1 { font-size: 1.5rem; margin: 0; }
+        .login-header p { margin: 0.5rem 0 0 0; font-size: 0.875rem; opacity: 0.9; }
 
-    .btn-login {
-        width: 100%;
-        padding: 0.75rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
-    }
+        .login-body { padding: 2rem; }
 
-    .alert {
-        border-radius: 0.5rem;
-    }
-</style>
-{% endblock %}
+        .instruction-text {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
 
-{% block content %}
-<div class="login-container">
-    <article class="login-card" role="region" aria-labelledby="login-heading">
-        <header class="login-header">
-            <i class="bi bi-receipt-cutoff" aria-hidden="true"></i>
-            <h1 id="login-heading">Invoice Tracker</h1>
-        </header>
-        <div class="login-body">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        .account-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
 
-            <form method="POST" action="{{ url_for('login') }}" aria-label="Login form">
-                <div class="mb-4">
-                    <label for="password" class="form-label fw-semibold" id="password-label">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text" aria-hidden="true"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password"
-                               placeholder="Enter password" required autofocus
-                               aria-labelledby="password-label"
-                               aria-required="true"
-                               autocomplete="current-password">
+        .account-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: white;
+        }
+
+        .account-card:hover {
+            border-color: var(--primary);
+            background: rgba(84, 166, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .account-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .account-name {
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .account-role {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-bottom: 0;
+        }
+
+        .role-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 1rem;
+            margin-top: 0.4rem;
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .role-badge.admin { background: #fee2e2; color: #dc2626; }
+        .role-badge.fund-admin { background: #d1fae5; color: #059669; }
+        .role-badge.compliance { background: #ede9fe; color: #7c3aed; }
+        .role-badge.operations { background: #fef3c7; color: #d97706; }
+
+        /* Password form for non-demo mode */
+        .input-group { position: relative; margin-bottom: 1.5rem; }
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1.1rem;
+            z-index: 4;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(84, 166, 237, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 576px) {
+            .account-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+                <h1>Fund Admin Hub</h1>
+                <p>Sign in to access your modules</p>
+            </div>
+            <div class="login-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if demo_mode %}
+                    <p class="instruction-text">Select an account to continue</p>
+                    <div class="account-grid">
+                        {% for id, profile in profiles.items() %}
+                        <form method="POST" action="{{ url_for('login', next=request.args.get('next', '')) }}" style="display:contents;">
+                            <input type="hidden" name="profile_id" value="{{ profile.id }}">
+                            <button type="submit" class="account-card" style="all: unset; display: block; border: 2px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; transition: all 0.3s ease; text-align: center; background: white;"
+                                    onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(84,166,237,0.05)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.1)';"
+                                    onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='white'; this.style.transform='none'; this.style.boxShadow='none';">
+                                <div class="account-avatar" style="background: {{ profile.color }};">
+                                    {{ profile.avatar }}
+                                </div>
+                                <div class="account-name">{{ profile.name }}</div>
+                                <div class="account-role">{{ profile.role }}</div>
+                                {% if profile.role == 'Admin' %}
+                                    <span class="role-badge admin">All Access</span>
+                                {% elif profile.role == 'Fund Administrator' %}
+                                    <span class="role-badge fund-admin">{{ profile.modules|length }} Modules</span>
+                                {% elif profile.role == 'Compliance Officer' %}
+                                    <span class="role-badge compliance">{{ profile.modules|length }} Module</span>
+                                {% else %}
+                                    <span class="role-badge operations">{{ profile.modules|length }} Modules</span>
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% endfor %}
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-login" aria-label="Sign in to Invoice Tracker">
-                    <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Sign In
-                </button>
-            </form>
+                {% else %}
+                    <p class="instruction-text">Enter your password to continue</p>
+                    <form method="POST" action="{{ url_for('login') }}" aria-label="Login form">
+                        <div class="input-group">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" class="form-control" name="password"
+                                   placeholder="Enter password" required autofocus
+                                   autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn-login">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
-    </article>
-</div>
-{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

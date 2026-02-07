@@ -243,7 +243,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark" role="navigation" aria-label="Main navigation">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}" aria-label="Invoice Tracker - Go to homepage">
+            <a class="navbar-brand" href="{{ url_for('hub') }}" aria-label="Fund Admin Hub - Go to homepage">
                 <svg class="logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
                     <path d="M6 24 C6 12 14 6 24 6" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
                     <path d="M42 24 C42 36 34 42 24 42" stroke="#54A6ED" stroke-width="3" fill="none" stroke-linecap="round"/>
@@ -252,7 +252,7 @@
                     <circle cx="24" cy="24" r="5" fill="#10B981"/>
                 </svg>
                 <span class="brand-text">
-                    <span class="brand-main">Invoice Tracker</span>
+                    <span class="brand-main">Fund Admin Hub</span>
                     <span class="brand-sub">POWERED BY COREWORKER AI</span>
                 </span>
             </a>
@@ -260,17 +260,34 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'hub' %}active{% endif %}" href="{{ url_for('hub') }}">
+                            <i class="bi bi-house"></i> Hub
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}" href="{{ url_for('upload') }}">
-                            <i class="bi bi-cloud-upload"></i>Upload
+                            <i class="bi bi-cloud-upload"></i> Upload
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
-                            <i class="bi bi-speedometer2"></i>Dashboard
+                            <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
+                    {% if current_user %}
+                    <li class="nav-item ms-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;font-family:'Outfit',sans-serif;background:{{ current_user.color }};">
+                                {{ current_user.avatar }}
+                            </div>
+                            <a class="nav-link py-0 px-1" href="{{ url_for('logout') }}" title="Sign out" style="font-size:0.8rem;">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </a>
+                        </div>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -329,7 +346,7 @@
                             <circle cx="24" cy="42" r="3" fill="#10B981"/>
                             <circle cx="24" cy="24" r="5" fill="#10B981"/>
                         </svg>
-                        <span style="color: #fff; font-weight: 500;">Invoice Tracker</span>
+                        <span style="color: #fff; font-weight: 500;">Fund Admin Hub</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-center mt-2 mt-md-0">

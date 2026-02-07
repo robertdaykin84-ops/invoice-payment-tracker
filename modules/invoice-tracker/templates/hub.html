@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Fund Admin Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== Hub Page Styles ========== */
+
+    .welcome-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .welcome-section h1 {
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+    }
+
+    .welcome-section p {
+        color: var(--gray-600, #4b5563);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        color: var(--gray-800);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+    }
+
+    /* Module Cards */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .module-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid transparent;
+    }
+
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .module-card.coming-soon {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .module-card.coming-soon:hover {
+        transform: none;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .module-card.no-access {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .module-card.no-access:hover {
+        transform: none;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .module-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .module-card h3 {
+        font-size: 1.25rem;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .module-card p {
+        color: var(--gray-600, #4b5563);
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .module-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--gray-100);
+        color: var(--gray-700, #374151);
+    }
+
+    .stat-badge.danger { background: #fee2e2; color: #dc2626; }
+    .stat-badge.warning { background: #fef3c7; color: #d97706; }
+
+    .coming-soon-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--gray-200);
+        color: var(--gray-700, #374151);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .no-access-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Tasks Section */
+    .tasks-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .tasks-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .tasks-header h2 {
+        font-size: 1.5rem;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Outfit', sans-serif;
+        margin-bottom: 0;
+    }
+
+    .task-count {
+        background: var(--primary-blue);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .task-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+        border: 1px solid var(--gray-200);
+    }
+
+    .task-item:hover {
+        background: var(--gray-50);
+    }
+
+    .task-icon {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--gray-400, #9ca3af);
+        border-radius: 0.25rem;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+    }
+
+    .task-content { flex: 1; }
+
+    .task-title {
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.25rem;
+    }
+
+    .task-meta {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .task-module {
+        font-size: 0.75rem;
+        color: var(--gray-600, #4b5563);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .priority-badge {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .priority-badge.high { background: #fee2e2; color: #dc2626; }
+    .priority-badge.medium { background: #fef3c7; color: #d97706; }
+    .priority-badge.low { background: #dbeafe; color: #2563eb; }
+
+    /* User info in navbar */
+    .user-info-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar-small {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .user-details-nav {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-name-nav {
+        font-weight: 600;
+        color: white;
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    .user-role-nav {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.2;
+    }
+
+    @media (max-width: 768px) {
+        .module-grid { grid-template-columns: 1fr; }
+        .welcome-section { padding: 1.5rem; }
+        .tasks-section { padding: 1.5rem; }
+        .user-details-nav { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="welcome-section">
+    <h1>Welcome back, {{ session.get('user_name', 'User').split(' ')[0] }}</h1>
+    <p>Here's an overview of your fund administration workspace</p>
+</div>
+
+<!-- Modules Section -->
+<h2 class="section-title">
+    <i class="bi bi-grid-3x3-gap"></i>
+    Your Modules
+</h2>
+<div class="module-grid">
+    <!-- Invoice Tracker -->
+    {% set has_invoice = 'invoice_tracker' in session.get('user_modules', []) %}
+    <a href="{{ url_for('dashboard') if has_invoice else '#' }}"
+       class="module-card {{ '' if has_invoice else 'no-access' }}"
+       {% if not has_invoice %}onclick="event.preventDefault(); alert('You do not have access to this module.');"{% endif %}>
+        {% if not has_invoice %}<span class="no-access-badge">No Access</span>{% endif %}
+        <div class="module-icon" style="background: #54A6ED;">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <h3>Invoice Tracker</h3>
+        <p>Process and track invoice payments with AI-powered extraction</p>
+        {% if has_invoice %}
+        <div class="module-stats">
+            <span class="stat-badge warning">3 Pending</span>
+            <span class="stat-badge danger">1 Overdue</span>
+        </div>
+        {% endif %}
+    </a>
+
+    <!-- Client Onboarding (port 5001) -->
+    {% set has_onboarding = 'client_onboarding' in session.get('user_modules', []) %}
+    <a href="{{ 'http://localhost:5001/' if has_onboarding else '#' }}"
+       class="module-card {{ '' if has_onboarding else 'no-access' }}"
+       {% if not has_onboarding %}onclick="event.preventDefault(); alert('You do not have access to this module.');"{% endif %}
+       {% if has_onboarding %}target="_blank"{% endif %}>
+        {% if not has_onboarding %}<span class="no-access-badge">No Access</span>{% endif %}
+        <div class="module-icon" style="background: #10B981;">
+            <i class="bi bi-person-plus"></i>
+        </div>
+        <h3>Client Onboarding</h3>
+        <p>Streamline new client KYC/AML verification and documentation</p>
+        {% if has_onboarding %}
+        <div class="module-stats">
+            <span class="stat-badge">2 In Progress</span>
+            <span class="stat-badge warning">1 Pending</span>
+        </div>
+        {% endif %}
+    </a>
+
+    <!-- Capital Call Manager -->
+    {% set has_capital = 'capital_calls' in session.get('user_modules', []) %}
+    <a href="#"
+       class="module-card {{ '' if has_capital else 'no-access' }} {{ 'coming-soon' if has_capital else '' }}"
+       onclick="event.preventDefault(); {% if has_capital %}alert('Capital Call Manager - Coming soon!');{% else %}alert('You do not have access to this module.');{% endif %}">
+        {% if has_capital %}<span class="coming-soon-badge">Coming Soon</span>{% endif %}
+        {% if not has_capital %}<span class="no-access-badge">No Access</span>{% endif %}
+        <div class="module-icon" style="background: #8B5CF6;">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <h3>Capital Call Manager</h3>
+        <p>Manage capital calls and investor commitments</p>
+    </a>
+
+    <!-- Distribution Processor (port 5002) -->
+    {% set has_distributions = 'distributions' in session.get('user_modules', []) %}
+    <a href="{{ 'http://localhost:5002/' if has_distributions else '#' }}"
+       class="module-card {{ '' if has_distributions else 'no-access' }}"
+       {% if not has_distributions %}onclick="event.preventDefault(); alert('You do not have access to this module.');"{% endif %}
+       {% if has_distributions %}target="_blank"{% endif %}>
+        {% if not has_distributions %}<span class="no-access-badge">No Access</span>{% endif %}
+        <div class="module-icon" style="background: #F59E0B;">
+            <i class="bi bi-arrow-repeat"></i>
+        </div>
+        <h3>Distribution Processor</h3>
+        <p>Calculate and process investor distributions</p>
+    </a>
+</div>
+
+<!-- Tasks Section -->
+<h2 class="section-title">
+    <i class="bi bi-list-check"></i>
+    Outstanding Tasks
+</h2>
+<div class="tasks-section">
+    <div class="tasks-header">
+        <h2>
+            To Do
+            <span class="task-count">5</span>
+        </h2>
+    </div>
+    <ul class="task-list">
+        <li class="task-item">
+            <div class="task-icon"></div>
+            <div class="task-content">
+                <div class="task-title">Review pending invoices</div>
+                <div class="task-meta">
+                    <span class="task-module"><i class="bi bi-folder"></i> Invoice Tracker</span>
+                    <span class="priority-badge high">High Priority</span>
+                </div>
+            </div>
+        </li>
+        <li class="task-item">
+            <div class="task-icon"></div>
+            <div class="task-content">
+                <div class="task-title">Complete KYC documentation for ABC Capital</div>
+                <div class="task-meta">
+                    <span class="task-module"><i class="bi bi-folder"></i> Client Onboarding</span>
+                    <span class="priority-badge high">High Priority</span>
+                </div>
+            </div>
+        </li>
+        <li class="task-item">
+            <div class="task-icon"></div>
+            <div class="task-content">
+                <div class="task-title">Follow up on overdue payment - XYZ Fund</div>
+                <div class="task-meta">
+                    <span class="task-module"><i class="bi bi-folder"></i> Invoice Tracker</span>
+                    <span class="priority-badge medium">Medium Priority</span>
+                </div>
+            </div>
+        </li>
+        <li class="task-item">
+            <div class="task-icon"></div>
+            <div class="task-content">
+                <div class="task-title">Upload AML verification documents</div>
+                <div class="task-meta">
+                    <span class="task-module"><i class="bi bi-folder"></i> Client Onboarding</span>
+                    <span class="priority-badge medium">Medium Priority</span>
+                </div>
+            </div>
+        </li>
+        <li class="task-item">
+            <div class="task-icon"></div>
+            <div class="task-content">
+                <div class="task-title">Reconcile Q4 invoice payments</div>
+                <div class="task-meta">
+                    <span class="task-module"><i class="bi bi-folder"></i> Invoice Tracker</span>
+                    <span class="priority-badge low">Low Priority</span>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+{% endblock %}

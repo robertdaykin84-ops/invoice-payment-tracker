@@ -88,18 +88,66 @@ def add_security_headers(response):
 # Set DEMO_MODE=true in environment to disable password protection
 DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
 
+
+# ========== User Profiles ==========
+
+# Profile definitions with role-based module access
+USER_PROFILES = {
+    1: {
+        'id': 1,
+        'name': 'Rob Daykin',
+        'email': 'robert.daykin84@gmail.com',
+        'role': 'Admin',
+        'avatar': 'RD',
+        'color': '#54A6ED',
+        'modules': ['invoice_tracker', 'client_onboarding', 'capital_calls', 'distributions']
+    },
+    2: {
+        'id': 2,
+        'name': 'Sarah Mitchell',
+        'email': 'sarah.mitchell@fundadmin.com',
+        'role': 'Fund Administrator',
+        'avatar': 'SM',
+        'color': '#10B981',
+        'modules': ['invoice_tracker', 'client_onboarding']
+    },
+    3: {
+        'id': 3,
+        'name': 'James Chen',
+        'email': 'james.chen@fundadmin.com',
+        'role': 'Compliance Officer',
+        'avatar': 'JC',
+        'color': '#8B5CF6',
+        'modules': ['client_onboarding']
+    },
+    4: {
+        'id': 4,
+        'name': 'Emma Rodriguez',
+        'email': 'emma.rodriguez@fundadmin.com',
+        'role': 'Operations Manager',
+        'avatar': 'ER',
+        'color': '#F59E0B',
+        'modules': ['invoice_tracker', 'capital_calls', 'distributions']
+    }
+}
+
+
 @app.context_processor
 def inject_demo_mode():
-    """Inject demo_mode flag and configuration status into all templates"""
-    # Check configuration status for graceful error handling
+    """Inject demo_mode flag, user profile, and configuration status into all templates"""
     config_status = {
         'google_sheets_configured': bool(os.environ.get('GOOGLE_SHEET_ID')),
         'anthropic_configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
         'google_credentials_configured': bool(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') or os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON'))
     }
+    # Get current user profile from session
+    current_user = None
+    if session.get('user_id'):
+        current_user = USER_PROFILES.get(session['user_id'])
     return {
         'demo_mode': DEMO_MODE,
-        'config_status': config_status
+        'config_status': config_status,
+        'current_user': current_user
     }
 
 
@@ -145,18 +193,14 @@ def login_required(f):
     """Decorator to require login for routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if DEMO_MODE:
-            # Auto-authenticate for POC demo - no password required
-            if not session.get('authenticated'):
-                session['authenticated'] = True
-                session.permanent = True
-            return f(*args, **kwargs)
-        else:
-            # Normal authentication required
-            if not session.get('authenticated'):
+        if not session.get('authenticated'):
+            if DEMO_MODE:
+                # In demo mode, redirect to profile selection instead of auto-auth
+                return redirect(url_for('login', next=request.url))
+            else:
                 flash('Please log in to access this page.', 'warning')
                 return redirect(url_for('login', next=request.url))
-            return f(*args, **kwargs)
+        return f(*args, **kwargs)
     return decorated_function
 
 
@@ -233,44 +277,65 @@ def get_sheets_manager():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Login page"""
-    # Demo mode: auto-authenticate and redirect
-    if DEMO_MODE:
-        session['authenticated'] = True
-        session.permanent = True
-        next_url = request.args.get('next')
-        return redirect(next_url or url_for('index'))
-
-    # Normal mode: require password
+    """Login page with profile selection"""
+    # Already logged in - redirect to hub
     if session.get('authenticated'):
-        return redirect(url_for('index'))
+        return redirect(url_for('hub'))
 
     if request.method == 'POST':
-        password = request.form.get('password', '')
-        app_password = os.environ.get('APP_PASSWORD', '')
-
-        if not app_password:
-            flash('APP_PASSWORD not configured. Please set it in your .env file.', 'error')
-            return render_template('login.html')
-
-        if password == app_password:
-            session['authenticated'] = True
-            session.permanent = True
-            logger.info("User logged in successfully")
-            next_url = request.args.get('next')
-            return redirect(next_url or url_for('index'))
+        if DEMO_MODE:
+            # Profile selection login
+            profile_id = request.form.get('profile_id')
+            if profile_id:
+                profile_id = int(profile_id)
+                profile = USER_PROFILES.get(profile_id)
+                if profile:
+                    session['authenticated'] = True
+                    session['user_id'] = profile['id']
+                    session['user_name'] = profile['name']
+                    session['user_role'] = profile['role']
+                    session['user_avatar'] = profile['avatar']
+                    session['user_color'] = profile['color']
+                    session['user_modules'] = profile['modules']
+                    session.permanent = True
+                    logger.info(f"User logged in: {profile['name']} ({profile['role']})")
+                    next_url = request.args.get('next')
+                    return redirect(next_url or url_for('hub'))
+            flash('Please select a profile to continue.', 'warning')
         else:
-            flash('Invalid password. Please try again.', 'error')
-            logger.warning("Failed login attempt")
+            # Password-based login (non-demo mode)
+            password = request.form.get('password', '')
+            app_password = os.environ.get('APP_PASSWORD', '')
 
-    return render_template('login.html')
+            if not app_password:
+                flash('APP_PASSWORD not configured. Please set it in your .env file.', 'error')
+                return render_template('login.html', profiles=USER_PROFILES, demo_mode=DEMO_MODE)
+
+            if password == app_password:
+                # In non-demo mode with password, default to Admin profile
+                admin_profile = USER_PROFILES[1]
+                session['authenticated'] = True
+                session['user_id'] = admin_profile['id']
+                session['user_name'] = admin_profile['name']
+                session['user_role'] = admin_profile['role']
+                session['user_avatar'] = admin_profile['avatar']
+                session['user_color'] = admin_profile['color']
+                session['user_modules'] = admin_profile['modules']
+                session.permanent = True
+                logger.info("User logged in via password (Admin)")
+                next_url = request.args.get('next')
+                return redirect(next_url or url_for('hub'))
+            else:
+                flash('Invalid password. Please try again.', 'error')
+                logger.warning("Failed login attempt")
+
+    return render_template('login.html', profiles=USER_PROFILES, demo_mode=DEMO_MODE)
 
 
 @app.route('/logout')
 def logout():
     """Logout and clear session"""
     session.clear()
-    flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
 
@@ -280,7 +345,23 @@ def logout():
 @handle_errors
 @login_required
 def index():
-    """Home page with dashboard"""
+    """Root redirect to hub"""
+    return redirect(url_for('hub'))
+
+
+@app.route('/hub')
+@handle_errors
+@login_required
+def hub():
+    """Hub landing page with module navigation"""
+    return render_template('hub.html')
+
+
+@app.route('/invoice-dashboard')
+@handle_errors
+@login_required
+def invoice_dashboard():
+    """Invoice dashboard - original home page"""
     try:
         manager = get_sheets_manager()
         stats = manager.get_invoice_stats()
